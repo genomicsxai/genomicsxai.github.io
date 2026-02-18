@@ -1,0 +1,38 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ScholarlyArticle",
+  "headline": "{{ .Title | htmlEscape }}",
+  "datePublished": "{{ .Date | dateFormat "2006-01-02" }}",
+  "dateModified": "{{ .Params.date_accepted | default .Date | dateFormat "2006-01-02" }}",
+  "author": [
+    {{- range $index, $author := .Params.authors -}}
+      {{- if $index }},{{ end }}
+      {
+        "@type": "Person",
+        "name": "{{ $author.name | htmlEscape }}",
+        "affiliation": "{{ $author.affiliation | htmlEscape }}",
+        {{ with $author.orcid }}
+        "identifier": "https://orcid.org/{{ . }}"
+        {{ end }}
+      }
+    {{- end }}
+  ],
+  "publisher": {
+    "@type": "Organization",
+    "name": "Genomics × AI Blog",
+    "url": "https://genomicsxai.github.io"
+  },
+  {{ with .Params.doi }}
+  "identifier": "https://doi.org/{{ . }}",
+  {{ end }}
+  "keywords": [
+    {{- range $index, $tag := .Params.tags -}}
+      {{- if $index }},{{ end }}
+      "{{ $tag | htmlEscape }}"
+    {{- end }}
+  ],
+  "url": "{{ .Permalink }}"
+}
+</script>
+

@@ -1,0 +1,27 @@
+<div class="citation-box" style="border:1px solid #ccc; padding:1em; margin-bottom:2em;">
+  <h3>Citation</h3>
+
+  <!-- Display citation text -->
+  <p>
+    {{ with .Params.authors }}
+      {{ range $index, $author := . }}
+        {{ if $index }}, {{ end }}
+        {{ $author.name }}
+      {{ end }}
+    {{ end }}. 
+    "{{ .Title }}." 
+    <em>{{ .Params.journal | default "Genomics × AI Blog" }}</em>, 
+    {{ .Date | dateFormat "2006" }}.
+    {{ with .Params.doi }} <a href="https://doi.org/{{ . }}">DOI: {{ . }}</a>{{ end }}
+  </p>
+
+  <!-- Download links -->
+  <div style="margin-top:0.5em;">
+    <a href="{{ "bib/" | relURL }}{{ .Params.paper_id }}.bib" download>Download BibTeX</a> |
+    <a href="{{ "bib/" | relURL }}{{ .Params.paper_id }}.ris" download>Download RIS</a>
+  </div>
+
+  <!-- Copy citation button -->
+  <button onclick="navigator.clipboard.writeText(`{{ .Title }}. {{ range .Params.authors }}{{ .name }}{{ end }}. Genomics × AI Blog. {{ .Date | dateFormat "2006" }}.`)">Copy Citation</button>
+</div>
+

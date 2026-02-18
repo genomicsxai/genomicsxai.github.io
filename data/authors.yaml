@@ -1,0 +1,37 @@
+{{ define "main" }}
+<article class="author-page">
+  {{ $author := index site.Data.authors (.Params.id) }}
+
+  <!-- Author Bio -->
+  <header>
+    <h1>{{ $author.name }}</h1>
+    <p><strong>Affiliation:</strong> {{ $author.affiliation }}</p>
+    {{ with $author.orcid }}
+      <p><strong>ORCID:</strong> <a href="https://orcid.org/{{ . }}" target="_blank">{{ . }}</a></p>
+    {{ end }}
+    {{ with $author.website }}
+      <p><strong>Website:</strong> <a href="{{ . }}" target="_blank">{{ . }}</a></p>
+    {{ end }}
+    {{ with $author.bio }}
+      <p>{{ . }}</p>
+    {{ end }}
+  </header>
+
+  <!-- List of publications -->
+  <section class="author-papers">
+    <h2>Publications</h2>
+    <ul>
+      {{ range where .Site.Pages "Params.authors.id" $author.id }}
+        <li>
+          <a href="{{ .Permalink }}">{{ .Title }}</a>
+          <span class="paper-meta">
+            {{ with .Params.date_accepted }} (Accepted: {{ . }}){{ end }}
+            {{ with .Params.doi }} | <a href="https://doi.org/{{ . }}">DOI</a>{{ end }}
+          </span>
+        </li>
+      {{ end }}
+    </ul>
+  </section>
+</article>
+{{ end }}
+

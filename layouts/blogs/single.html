@@ -1,0 +1,14 @@
+{{ define "main" }}
+<article>
+  <h1>{{ .Title }}</h1>
+
+  {{ partial "citation.html" . }}
+
+  {{ .Content }}
+
+  {{ partial "discuss.html" . }}
+</article>
+
+{{ partial "jsonld.html" . }}
+{{ end }}
+
