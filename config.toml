@@ -1,0 +1,17 @@
+baseURL = "https://genomicsxai.github.io/"
+title = "Genomics X AI"
+theme = "Stack"
+enableRobotsTXT = true
+
+[params]
+  defaultTheme = "auto"
+  ShowReadingTime = true
+  ShowBreadCrumbs = true
+
+[taxonomies]
+  tag = "tags"                # scientific tags
+  scope = "scope"
+  audience = "audience"
+  lab = "labs"
+  author = "authors"
+  category = "categories"
