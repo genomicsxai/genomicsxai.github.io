@@ -1,0 +1,17 @@
+name: Validate Frontmatter
+
+on: pull_request
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate required fields
+        run: |
+          for file in $(find content/blogs -name index.md); do
+            grep -q "paper_id" $file || exit 1
+            grep -q "authors:" $file || exit 1
+            grep -q "date_submitted" $file || exit 1
+          done
+
