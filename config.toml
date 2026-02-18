@@ -10,7 +10,7 @@ enableRobotsTXT = true
 
 [taxonomies]
   tag = "tags"                # scientific tags
-  scope = "scope"
+  scope = "scope"                #other tags
   audience = "audience"
   lab = "labs"
   author = "authors"
