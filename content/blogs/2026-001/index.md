@@ -35,6 +35,7 @@ revision_history:
 ---
 
 ![Genomics × AI](genomics_x_ai_title.png)
+{width=400}
 
 Welcome to the **Genomics × AI** blog.
 

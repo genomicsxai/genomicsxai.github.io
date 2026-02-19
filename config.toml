@@ -3,6 +3,13 @@ title = "Genomics X AI"
 theme = "Stack"
 enableRobotsTXT = true
 
+# So image attributes (e.g. {width=400px}) apply to the image, not the wrapping <p>
+[markup.goldmark.parser]
+  wrapStandAloneImageWithinParagraph = false
+
+[markup.goldmark.parser.attribute]
+  block = true
+
 [permalinks]
   # Page section: /forum/, /policies/, etc. (Stack theme convention)
   page = "/:slug/"

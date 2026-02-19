@@ -2,3 +2,10 @@
 #main-menu {
   display: flex !important;
 }
+
+/* Keep article images from overflowing; width= from markdown attributes is respected */
+.main-article img,
+article img {
+  max-width: 100%;
+  height: auto;
+}

@@ -29,7 +29,6 @@
         if (format === 'bib') {
           var authors = (d.authors && d.authors.length) ? d.authors.join(' and ') : 'Unknown';
           var rb = '\u007D';
-          var lb = '\u007B';
           var titleBib = (d.title || '').replace(/\{/g, '{{').replace(/\}/g, rb + rb);
           var bib = '@article{' + (d.postId || 'post') + ',\n  author = {' + authors + '},\n  title = {' + titleBib + '},\n  journal = {' + (d.blogName || 'Genomics × AI Blog') + '},\n  year = {' + (d.year || '') + '},\n  url = {' + (d.url || '') + '}' + (d.doi ? ',\n  doi = {' + d.doi + '}' : '') + '\n' + rb;
           blob = new Blob([bib], { type: 'application/x-bibtex' });

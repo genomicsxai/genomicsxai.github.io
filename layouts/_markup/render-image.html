@@ -1,25 +1,24 @@
 {{- $image := partial "helper/image" (dict "Resources" .Page.Resources "Image" .Destination) -}}
 {{- $alt := .PlainText | safeHTML -}}
 {{- $title := .Title | markdownify -}}
+{{- $attrWidth := .Attributes.width -}}
+{{- $attrHeight := .Attributes.height -}}
+{{- $attrClass := .Attributes.class -}}
 
 {{/* Theme helper returns empty string when resource not found; then avoid accessing .Height on string */}}
 {{- with $image -}}
 	{{- if .Permalink -}}
-		{{- $galleryImage := and .Height .Width -}}
+		{{- $galleryImage := and .Height .Width (not $attrWidth) (not $attrHeight) -}}
 		<img src="{{ .Permalink }}"
-			{{ with .Width }}width="{{ . }}"{{ end }}
-			{{ with .Height }}height="{{ . }}"{{ end }}
+			{{- if $attrWidth }} width="{{ $attrWidth }}"{{ else }}{{ with .Width }} width="{{ . }}"{{ end }}{{ end -}}
+			{{- if $attrHeight }} height="{{ $attrHeight }}"{{ else }}{{ with .Height }} height="{{ . }}"{{ end }}{{ end -}}
 			loading="lazy"
 			{{ with $alt }}alt="{{ . }}"{{ end }}
 			{{ with $title }}title="{{ . }}" data-title-escaped="{{ $title | htmlEscape }}"{{ end }}
-			{{ if $galleryImage }}
-				class="gallery-image"
-				data-flex-grow="{{ div (mul .Width 100) .Height }}"
-				data-flex-basis="{{ div (mul .Width 240) .Height }}px"
-			{{ end }}>
+			{{- if $attrClass }} class="{{ $attrClass }}"{{ else if $galleryImage }} class="gallery-image" data-flex-grow="{{ div (mul .Width 100) .Height }}" data-flex-basis="{{ div (mul .Width 240) .Height }}px"{{ end }}>
 	{{- else -}}
-		<img src="{{ $.Destination | safeURL }}" loading="lazy"{{ with $alt }} alt="{{ . }}"{{ end }}>
+		<img src="{{ $.Destination | safeURL }}" loading="lazy"{{ with $attrWidth }} width="{{ . }}"{{ end }}{{ with $attrHeight }} height="{{ . }}"{{ end }}{{ with $attrClass }} class="{{ . }}"{{ end }}{{ with $alt }} alt="{{ . }}"{{ end }}>
 	{{- end -}}
 {{- else -}}
-	<img src="{{ .Destination | safeURL }}" loading="lazy"{{ with $alt }} alt="{{ . }}"{{ end }}>
+	<img src="{{ .Destination | safeURL }}" loading="lazy"{{ with $attrWidth }} width="{{ . }}"{{ end }}{{ with $attrHeight }} height="{{ . }}"{{ end }}{{ with $attrClass }} class="{{ . }}"{{ end }}{{ with $alt }} alt="{{ . }}"{{ end }}>
 {{- end -}}

@@ -34,4 +34,4 @@ The Genomics × AI blog uses a Git-native, PR-based submission workflow. All sub
 
 ### Required Frontmatter
 
-All blog posts must include:
+There is no strict criteria on the style that your blog post should follow but aim to make it clear and engaging!
