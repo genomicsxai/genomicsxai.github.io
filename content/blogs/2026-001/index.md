@@ -1,7 +1,7 @@
 ---
 post_id: "2026-001"
 title: "Welcome to the Genomics × AI Blog"
-image: "genomics_x_ai_title.jpg"
+image: "genomics_x_ai_title.png"
 # Taxonomy: list of author names (for /authors/<slug>/)
 author: ["Genomics X AI Editors"]
 
@@ -34,7 +34,7 @@ revision_history:
     notes: "Initial welcome post"
 ---
 
-![Genomics × AI](genomics_x_ai_title.jpg)
+![Genomics × AI](genomics_x_ai_title.png)
 
 Welcome to the **Genomics × AI** blog.
 

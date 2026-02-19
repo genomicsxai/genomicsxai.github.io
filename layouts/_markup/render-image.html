@@ -1,0 +1,22 @@
+{{- $image := partial "helper/image" (dict "Resources" .Page.Resources "Image" .Destination) -}}
+{{- $alt := .PlainText | safeHTML -}}
+{{- $title := .Title | markdownify -}}
+
+{{/* Theme helper can return empty string when resource not found; avoid accessing .Height on string */}}
+{{- if kindIs "map" $image -}}
+	{{- $galleryImage := and $image.Height $image.Width -}}
+	<img src="{{ $image.Permalink }}"
+		{{ with $image.Width }}width="{{ . }}"{{ end }}
+		{{ with $image.Height }}height="{{ . }}"{{ end }}
+		loading="lazy"
+		{{ with $alt }}alt="{{ . }}"{{ end }}
+		{{ with $title }}title="{{ . }}" data-title-escaped="{{ . | htmlEscape }}"{{ end }}
+		{{ if $galleryImage }}
+			class="gallery-image"
+			data-flex-grow="{{ div (mul $image.Width 100) $image.Height }}"
+			data-flex-basis="{{ div (mul $image.Width 240) $image.Height }}px"
+		{{ end }}>
+{{- else -}}
+	{{/* Fallback when image not in bundle (e.g. missing file or external URL) */}}
+	<img src="{{ .Destination | safeURL }}" loading="lazy"{{ with $alt }} alt="{{ . }}"{{ end }}>
+{{- end -}}
