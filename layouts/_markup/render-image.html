@@ -2,21 +2,24 @@
 {{- $alt := .PlainText | safeHTML -}}
 {{- $title := .Title | markdownify -}}
 
-{{/* Theme helper can return empty string when resource not found; avoid accessing .Height on string */}}
-{{- if kindIs "map" $image -}}
-	{{- $galleryImage := and $image.Height $image.Width -}}
-	<img src="{{ $image.Permalink }}"
-		{{ with $image.Width }}width="{{ . }}"{{ end }}
-		{{ with $image.Height }}height="{{ . }}"{{ end }}
-		loading="lazy"
-		{{ with $alt }}alt="{{ . }}"{{ end }}
-		{{ with $title }}title="{{ . }}" data-title-escaped="{{ . | htmlEscape }}"{{ end }}
-		{{ if $galleryImage }}
-			class="gallery-image"
-			data-flex-grow="{{ div (mul $image.Width 100) $image.Height }}"
-			data-flex-basis="{{ div (mul $image.Width 240) $image.Height }}px"
-		{{ end }}>
+{{/* Theme helper returns empty string when resource not found; then avoid accessing .Height on string */}}
+{{- with $image -}}
+	{{- if .Permalink -}}
+		{{- $galleryImage := and .Height .Width -}}
+		<img src="{{ .Permalink }}"
+			{{ with .Width }}width="{{ . }}"{{ end }}
+			{{ with .Height }}height="{{ . }}"{{ end }}
+			loading="lazy"
+			{{ with $alt }}alt="{{ . }}"{{ end }}
+			{{ with $title }}title="{{ . }}" data-title-escaped="{{ $title | htmlEscape }}"{{ end }}
+			{{ if $galleryImage }}
+				class="gallery-image"
+				data-flex-grow="{{ div (mul .Width 100) .Height }}"
+				data-flex-basis="{{ div (mul .Width 240) .Height }}px"
+			{{ end }}>
+	{{- else -}}
+		<img src="{{ $.Destination | safeURL }}" loading="lazy"{{ with $alt }} alt="{{ . }}"{{ end }}>
+	{{- end -}}
 {{- else -}}
-	{{/* Fallback when image not in bundle (e.g. missing file or external URL) */}}
 	<img src="{{ .Destination | safeURL }}" loading="lazy"{{ with $alt }} alt="{{ . }}"{{ end }}>
 {{- end -}}
