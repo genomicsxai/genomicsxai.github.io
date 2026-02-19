@@ -2,3 +2,44 @@
 #main-menu {
   display: flex !important;
 }
+
+/* Keep article images from overflowing; width= from markdown attributes is respected */
+.main-article img,
+article img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Prettier typography for blog posts: readability and line length */
+.article-content {
+  --article-line-height: 1.75;
+  line-height: var(--article-line-height);
+  /* Comfortable max line length for reading (~65–75 characters) */
+  max-width: 42em;
+  letter-spacing: 0.01em;
+}
+
+.article-content > p:first-of-type {
+  font-size: 1.05em;
+}
+
+.article-content p {
+  margin: 1.25em 0;
+}
+
+.article-content h1,
+.article-content h2,
+.article-content h3,
+.article-content h4,
+.article-content h5,
+.article-content h6 {
+  line-height: 1.3;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.article-content h1:first-child,
+.article-content h2:first-child,
+.article-content h3:first-child {
+  margin-top: 0;
+}

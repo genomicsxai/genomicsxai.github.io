@@ -21,7 +21,7 @@ enableRobotsTXT = true
   # Include blogs section in main sections for homepage
   mainSections = ["blogs", "post"]
 
-# Homepage right sidebar: filter blogs by tags, scope, audience, lab, author
+# Homepage right sidebar: filter by tags, scope, audience, lab, author, and archives by year
 [params.widgets]
   homepage = [
     { type = "taxonomy", params = { taxonomy = "tags", title = "Scientific tags", limit = 20, showLink = true, icon = "tag" } },
@@ -29,6 +29,7 @@ enableRobotsTXT = true
     { type = "taxonomy", params = { taxonomy = "audience", title = "Audience", limit = 10, showLink = true, icon = "user" } },
     { type = "taxonomy", params = { taxonomy = "labs", title = "Lab", limit = 15, showLink = true, icon = "home" } },
     { type = "taxonomy", params = { taxonomy = "authors", title = "Author", limit = 15, showLink = true, icon = "user" } },
+    { type = "archives", params = { limit = 10 } },
   ]
 
 [taxonomies]

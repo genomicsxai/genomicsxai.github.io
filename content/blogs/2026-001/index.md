@@ -34,11 +34,14 @@ revision_history:
     notes: "Initial welcome post"
 ---
 
-![Genomics × AI](genomics_x_ai_title.png)
-{width=400}
+![Genomics × AI](genomics_x_ai_title.png "width=400")
 
-Welcome to the **Genomics × AI** blog.
+## Welcome to the **Genomics × AI** blog.
 
-We’re using this space to share short, opinionated posts about how genomics and machine learning actually get done in real labs: what works, what doesn’t, and the ideas we’re still testing. Posts will be written in Git, reviewed internally within your lab, editorially reviewed in public, and published only when an editor is happy with them—so every article has a clear history and a clear home.
+
+We created this space for the community to use to share short, opinionated blog posts about how genomics and machine learning actually get done in real labs: what works, what doesn’t, and the ideas we’re still testing. Posts will be written in Git, reviewed internally within your lab, editorially reviewed in public, and published only when an editor is happy with them—so every article has a clear history and a clear home.
+
+**Note:** This is to disseminate ideas, incremental results, negative results and tutorials quickly using blog posts as a more personalised, free-form format. 
+
 
 If you’d like to contribute, start by reading the [Submission Guidelines](/submission-guidelines/) and opening a discussion with us on [GitHub Discussions](https://github.com/genomicsxai/genomicsxai.github.io/discussions).

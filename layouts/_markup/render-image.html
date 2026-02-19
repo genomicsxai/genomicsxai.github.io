@@ -1,8 +1,10 @@
 {{- $image := partial "helper/image" (dict "Resources" .Page.Resources "Image" .Destination) -}}
 {{- $alt := .PlainText | safeHTML -}}
 {{- $title := .Title | markdownify -}}
-{{- $attrWidth := .Attributes.width -}}
-{{- $attrHeight := .Attributes.height -}}
+{{- $parsedW := partial "parse-image-width" . | strings.TrimSpace -}}
+{{- $parsedH := partial "parse-image-height" . | strings.TrimSpace -}}
+{{- $attrWidth := or .Attributes.width $parsedW -}}
+{{- $attrHeight := or .Attributes.height $parsedH -}}
 {{- $attrClass := .Attributes.class -}}
 
 {{/* Theme helper returns empty string when resource not found; then avoid accessing .Height on string */}}
