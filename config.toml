@@ -3,6 +3,10 @@ title = "Genomics X AI"
 theme = "Stack"
 enableRobotsTXT = true
 
+[permalinks]
+  # Page section: /forum/, /policies/, etc. (Stack theme convention)
+  page = "/:slug/"
+
 [params]
   defaultTheme = "auto"
   ShowReadingTime = true
