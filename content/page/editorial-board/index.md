@@ -1,6 +1,7 @@
 ---
 title: "Editorial Board"
 date: 2026-01-01
+url: "/editorial-board/"
 ---
 
 ## Editorial Team
@@ -11,10 +12,10 @@ The Genomics × AI blog is managed by a team of editors who review submissions a
 
 Editors review submissions via GitHub Pull Requests and provide feedback to authors. They ensure that:
 
-- Content meets quality and relevance standards
-- Scientific accuracy is maintained
-- Submission guidelines are followed
-- Community standards are upheld
+- Content meets quality and relevance standards  
+- Scientific accuracy is maintained  
+- Submission guidelines are followed  
+- Community standards are upheld  
 
 ### Becoming an Editor
 
