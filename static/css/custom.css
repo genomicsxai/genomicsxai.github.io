@@ -71,7 +71,7 @@ article img {
 }
 
 .citation-box__text {
-  margin: 0 0 1em 0;
+  margin: 0 0 1.25em 0;
   color: var(--card-text-color-main, #000);
   font-size: 1em;
 }
@@ -81,6 +81,7 @@ article img {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem 1rem;
+  margin-top: 0.5rem;
 }
 
 .citation-btn {
