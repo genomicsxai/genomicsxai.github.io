@@ -17,3 +17,34 @@ enableRobotsTXT = true
   lab = "labs"
   author = "authors"
   category = "categories"
+
+# Main navigation menu
+[[menu.main]]
+  identifier = "home"
+  name = "Home"
+  url = "/"
+  weight = 1
+
+[[menu.main]]
+  identifier = "forum"
+  name = "Forum"
+  url = "/forum/"
+  weight = 2
+
+[[menu.main]]
+  identifier = "editorial-board"
+  name = "Editorial Board"
+  url = "/editorial-board/"
+  weight = 3
+
+[[menu.main]]
+  identifier = "submission-guidelines"
+  name = "Submission Guidelines"
+  url = "/submission-guidelines/"
+  weight = 4
+
+[[menu.main]]
+  identifier = "policies"
+  name = "Policies"
+  url = "/policies/"
+  weight = 5
