@@ -1,7 +1,11 @@
 ---
-paper_id: "2026-001"
+post_id: "2026-001"
 title: "Causal Interpretation of Spatial Omics"
 
+# Taxonomy: list of author names (for /authors/author-name/ pages)
+author: ["Author Name"]
+
+# Display: full author details for citation and JSON-LD
 authors:
   - name: "Author Name"
     affiliation: "Institution"
@@ -10,7 +14,7 @@ authors:
 editor: "Editor Name"
 
 tags: ["genomics", "causal-inference"]
-categories: ["Research Article"]
+categories: ["Blog Post"]
 
 scope: ["insights"]
 audience: ["within-field"]
@@ -34,5 +38,5 @@ revision_history:
     notes: "Revised per reviewer comments"
 ---
 
-Manuscript content here.
+Post content here.
 

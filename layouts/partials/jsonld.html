@@ -1,7 +1,7 @@
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "ScholarlyArticle",
+  "@type": "BlogPosting",
   "headline": "{{ .Title | htmlEscape }}",
   "datePublished": "{{ .Date | dateFormat "2006-01-02" }}",
   "dateModified": "{{ .Params.date_accepted | default .Date | dateFormat "2006-01-02" }}",

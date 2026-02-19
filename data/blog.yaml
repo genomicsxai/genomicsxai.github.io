@@ -1,0 +1,6 @@
+# Site-wide blog configuration (optional).
+# Used for shared settings, e.g. blog name, default license.
+
+blog_name: "Genomics × AI Blog"
+base_url: "https://genomicsxai.github.io"
+discussions_url: "https://github.com/genomicsxai/genomicsxai.github.io/discussions"
