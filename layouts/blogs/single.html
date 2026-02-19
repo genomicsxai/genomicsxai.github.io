@@ -22,9 +22,10 @@
     {{ .Content | replaceRE "(<table>(?:.|\n)+?</table>)" $wrappedTable | safeHTML }}
   </section>
 
-  {{ partial "discuss.html" . }}
-
-  {{ partial "citation.html" . }}
+  <div class="article-extra">
+    {{ partial "discuss.html" . }}
+    {{ partial "citation.html" . }}
+  </div>
 </article>
 
 {{ partial "jsonld.html" . }}
