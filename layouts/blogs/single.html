@@ -2,11 +2,11 @@
 <article>
   <h1>{{ .Title }}</h1>
 
-  {{ partial "citation.html" . }}
-
   {{ .Content }}
 
   {{ partial "discuss.html" . }}
+
+  {{ partial "citation.html" . }}
 </article>
 
 {{ partial "jsonld.html" . }}

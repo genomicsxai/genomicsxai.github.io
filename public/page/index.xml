@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Pages on Genomics X AI</title><link>https://genomicsxai.github.io/page/</link><description>Recent content in Pages on Genomics X AI</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Thu, 01 Jan 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://genomicsxai.github.io/page/index.xml" rel="self" type="application/rss+xml"/><item><title>Editorial Board</title><link>https://genomicsxai.github.io/editorial-board/</link><pubDate>Thu, 01 Jan 2026 00:00:00 +0000</pubDate><guid>https://genomicsxai.github.io/editorial-board/</guid><description>&lt;h2 id="editorial-team"&gt;Editorial Team
+&lt;/h2&gt;&lt;p&gt;The Genomics × AI blog is managed by a team of editors who review submissions and ensure quality standards.&lt;/p&gt;
+&lt;h3 id="editors"&gt;Editors
+&lt;/h3&gt;&lt;p&gt;Editors review submissions via GitHub Pull Requests and provide feedback to authors. They ensure that:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Content meets quality and relevance standards&lt;/li&gt;
+&lt;li&gt;Scientific accuracy is maintained&lt;/li&gt;
+&lt;li&gt;Submission guidelines are followed&lt;/li&gt;
+&lt;li&gt;Community standards are upheld&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="becoming-an-editor"&gt;Becoming an Editor
+&lt;/h3&gt;&lt;p&gt;If you&amp;rsquo;re interested in joining the editorial board, please contact us through &lt;a class="link" href="https://github.com/genomicsxai/genomicsxai.github.io/discussions" target="_blank" rel="noopener"
+ &gt;GitHub Discussions&lt;/a&gt;.&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;&lt;strong&gt;Current Editors&lt;/strong&gt;: See &lt;a class="link" href="https://github.com/orgs/genomicsxai/teams/editors" target="_blank" rel="noopener"
+ &gt;@genomicsxai/editors&lt;/a&gt; team on GitHub.&lt;/p&gt;</description></item><item><title>Forum</title><link>https://genomicsxai.github.io/forum/</link><pubDate>Thu, 01 Jan 2026 00:00:00 +0000</pubDate><guid>https://genomicsxai.github.io/forum/</guid><description>&lt;h2 id="community-discussion"&gt;Community Discussion
+&lt;/h2&gt;&lt;p&gt;Join the conversation on GitHub Discussions:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;&lt;a class="link" href="https://github.com/genomicsxai/genomicsxai.github.io/discussions/categories/general" target="_blank" rel="noopener"
+ &gt;General Discussion&lt;/a&gt;&lt;/strong&gt; - General topics and announcements&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;a class="link" href="https://github.com/genomicsxai/genomicsxai.github.io/discussions/categories/methods" target="_blank" rel="noopener"
+ &gt;Methods&lt;/a&gt;&lt;/strong&gt; - Discussion about methods and techniques&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;a class="link" href="https://github.com/genomicsxai/genomicsxai.github.io/discussions/categories/post-discussions" target="_blank" rel="noopener"
+ &gt;Post Discussions&lt;/a&gt;&lt;/strong&gt; - Discussions about published posts&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;a class="link" href="https://github.com/genomicsxai/genomicsxai.github.io/discussions/categories/calls-for-papers" target="_blank" rel="noopener"
+ &gt;Calls for Posts&lt;/a&gt;&lt;/strong&gt; - Open calls and opportunities&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;p&gt;&lt;strong&gt;Note&lt;/strong&gt;: Each blog post also has a dedicated discussion thread. Look for the &amp;ldquo;Discuss this post&amp;rdquo; link on individual posts.&lt;/p&gt;</description></item><item><title>Policies</title><link>https://genomicsxai.github.io/policies/</link><pubDate>Thu, 01 Jan 2026 00:00:00 +0000</pubDate><guid>https://genomicsxai.github.io/policies/</guid><description>&lt;h2 id="editorial-and-community-policies"&gt;Editorial and Community Policies
+&lt;/h2&gt;&lt;p&gt;The Genomics × AI blog follows transparent, Git-native policies for submissions, review, and discussion.&lt;/p&gt;
+&lt;h3 id="submission-and-review"&gt;Submission and Review
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;All posts are submitted via &lt;strong&gt;Pull Request&lt;/strong&gt; and require &lt;strong&gt;at least one editor approval&lt;/strong&gt; before merge.&lt;/li&gt;
+&lt;li&gt;Authors are expected to complete lab-internal review before submitting.&lt;/li&gt;
+&lt;li&gt;Editors review for suitability, scientific accuracy, and adherence to &lt;a class="link" href="https://genomicsxai.github.io/submission-guidelines/" &gt;Submission Guidelines&lt;/a&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="access-and-permissions"&gt;Access and Permissions
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Authors&lt;/strong&gt;: Submit and revise posts via PRs.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Editors&lt;/strong&gt;: Review, request changes, and merge to &lt;code&gt;main&lt;/code&gt;. Implemented via GitHub branch protection and the &lt;a class="link" href="https://github.com/orgs/genomicsxai/teams/editors" target="_blank" rel="noopener"
+ &gt;@genomicsxai/editors&lt;/a&gt; team (CODEOWNERS).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Readers&lt;/strong&gt;: View content and participate in &lt;a class="link" href="https://github.com/genomicsxai/genomicsxai.github.io/discussions" target="_blank" rel="noopener"
+ &gt;GitHub Discussions&lt;/a&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="code-of-conduct-and-reuse"&gt;Code of Conduct and Reuse
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;Content is published under the site’s default license (see footer or per-post notices).&lt;/li&gt;
+&lt;li&gt;By submitting, you confirm you have the rights to publish the content and that it meets our &lt;a class="link" href="https://genomicsxai.github.io/submission-guidelines/" &gt;Submission Guidelines&lt;/a&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="changes-to-these-policies"&gt;Changes to These Policies
+&lt;/h3&gt;&lt;p&gt;Policy updates are proposed and discussed via the repository (e.g. issues or discussions) and reflected in this page after consensus.&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;For questions, use &lt;a class="link" href="https://github.com/genomicsxai/genomicsxai.github.io/discussions" target="_blank" rel="noopener"
+ &gt;GitHub Discussions&lt;/a&gt; or open an issue.&lt;/p&gt;</description></item><item><title>Submission Guidelines</title><link>https://genomicsxai.github.io/submission-guidelines/</link><pubDate>Thu, 01 Jan 2026 00:00:00 +0000</pubDate><guid>https://genomicsxai.github.io/submission-guidelines/</guid><description>&lt;h2 id="how-to-submit-a-blog-post"&gt;How to Submit a Blog Post
+&lt;/h2&gt;&lt;h3 id="overview"&gt;Overview
+&lt;/h3&gt;&lt;p&gt;The Genomics × AI blog uses a Git-native, PR-based submission workflow. All submissions go through peer review before the post goes live.&lt;/p&gt;
+&lt;h3 id="submission-process"&gt;Submission Process
+&lt;/h3&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Write Your Post&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Use the blog post template (see below)&lt;/li&gt;
+&lt;li&gt;Conduct internal lab review first&lt;/li&gt;
+&lt;li&gt;Ensure all required frontmatter fields are complete&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Create a Pull Request&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Fork the repository&lt;/li&gt;
+&lt;li&gt;Add your post to &lt;code&gt;content/blogs/YYYY-NNN/index.md&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Create a PR with the submission template filled out&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Editor Review&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Editors will review your submission&lt;/li&gt;
+&lt;li&gt;They may request changes via PR comments&lt;/li&gt;
+&lt;li&gt;Address feedback and update your PR&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Going live&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Once approved, editors will merge your PR&lt;/li&gt;
+&lt;li&gt;The post will be automatically deployed via GitHub Actions&lt;/li&gt;
+&lt;li&gt;Your post will appear on the blog&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id="required-frontmatter"&gt;Required Frontmatter
+&lt;/h3&gt;&lt;p&gt;All blog posts must include:&lt;/p&gt;</description></item></channel></rss>

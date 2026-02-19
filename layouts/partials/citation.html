@@ -1,29 +1,34 @@
-<div class="citation-box" style="border:1px solid #ccc; padding:1em; margin-bottom:2em;">
+{{- $authList := .Params.authors_display | default .Params.authors -}}
+{{- $authorNames := slice -}}
+{{- with $authList -}}
+  {{- range . -}}
+    {{- $authorNames = $authorNames | append (cond (reflect.IsMap .) .name .) -}}
+  {{- end -}}
+{{- end -}}
+{{- $authorStr := delimit $authorNames ", " -}}
+{{- $blogName := .Params.blog_name | default (site.Data.blog.blog_name | default "Genomics × AI Blog") -}}
+{{- $year := .Date | dateFormat "2006" -}}
+{{- $citationPlain := printf "%s. \"%s.\" %s, %s." $authorStr .Title $blogName $year -}}
+{{- $citationData := dict "citation" $citationPlain "title" .Title "authors" $authorNames "year" $year "doi" (.Params.doi | default "") "postId" (.Params.post_id | default "") "url" .Permalink "blogName" $blogName -}}
+
+<div class="citation-box" style="border:1px solid #ccc; padding:1em; margin-top:2em;">
   <h3>Citation</h3>
 
-  <!-- Display citation text (authors_display = full details; authors = taxonomy strings) -->
   <p>
-    {{ $authList := .Params.authors_display | default .Params.authors }}
-    {{ with $authList }}
-      {{ range $index, $author := . }}
-        {{ if $index }}, {{ end }}
-        {{ if reflect.IsMap $author }}{{ $author.name }}{{ else }}{{ $author }}{{ end }}
-      {{ end }}
-    {{ end }}. 
-    "{{ .Title }}." 
-    <em>{{ .Params.blog_name | default (site.Data.blog.blog_name | default "Genomics × AI Blog") }}</em>, 
-    {{ .Date | dateFormat "2006" }}.
+    {{ $authorStr }}.
+    "{{ .Title }}."
+    <em>{{ $blogName }}</em>,
+    {{ $year }}.
     {{ with .Params.doi }} <a href="https://doi.org/{{ . }}">DOI: {{ . }}</a>{{ end }}
   </p>
 
-  <!-- Download links -->
   <div style="margin-top:0.5em;">
-    <a href="{{ "bib/" | relURL }}{{ .Params.post_id }}.bib" download>Download BibTeX</a> |
-    <a href="{{ "bib/" | relURL }}{{ .Params.post_id }}.ris" download>Download RIS</a>
+    <button type="button" class="citation-copy-btn" data-citation-data="{{ $citationData | jsonify | safeHTMLAttr }}">Copy Citation</button>
+    <span class="citation-copy-feedback" aria-live="polite"></span>
+    <span style="margin:0 0.5em;">|</span>
+    <button type="button" class="citation-download-btn" data-download="bib" data-citation-data="{{ $citationData | jsonify | safeHTMLAttr }}">Download BibTeX</button>
+    <span style="margin:0 0.25em;">|</span>
+    <button type="button" class="citation-download-btn" data-download="ris" data-citation-data="{{ $citationData | jsonify | safeHTMLAttr }}">Download RIS</button>
   </div>
-
-  <!-- Copy citation button -->
-  {{ $authList := .Params.authors_display | default .Params.authors }}
-  <button onclick="navigator.clipboard.writeText(`{{ .Title }}. {{ with $authList }}{{ range $i, $a := . }}{{ if $i }}, {{ end }}{{ if reflect.IsMap $a }}{{ $a.name }}{{ else }}{{ $a }}{{ end }}{{ end }}{{ end }}. Genomics × AI Blog. {{ .Date | dateFormat "2006" }}.`)">Copy Citation</button>
 </div>
-
+<script src="{{ "js/citation.js" | relURL }}" defer></script>
