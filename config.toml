@@ -7,6 +7,8 @@ enableRobotsTXT = true
   defaultTheme = "auto"
   ShowReadingTime = true
   ShowBreadCrumbs = true
+  # Include blogs section in main sections for homepage
+  mainSections = ["blogs", "post"]
 
 [taxonomies]
   tag = "tags"                # scientific tags

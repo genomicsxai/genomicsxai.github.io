@@ -27,6 +27,18 @@ jobs:
       - name: Build
         run: hugo --minify
 
+      # 3.5. Verify build output
+      - name: List built files
+        run: |
+          echo "Build output directory contents:"
+          ls -la public/ || echo "public directory not found!"
+          echo ""
+          echo "Checking for index.html:"
+          ls -la public/index.html || echo "index.html not found!"
+          echo ""
+          echo "First few files in public:"
+          find public -type f -name "*.html" | head -10
+
       # 4. Deploy to GitHub Pages
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
