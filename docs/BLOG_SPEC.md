@@ -69,10 +69,10 @@ The PR represents the post under review; **merge** means the post goes live.
 ---
 post_id: "2026-001"
 title: "Causal Interpretation of Spatial Omics"
-# Taxonomy: list of author names (for /authors/<slug>/)
-author: ["Author Name"]
-# Display: full details for citation and JSON-LD
-authors:
+# Taxonomy: author slugs for /authors/<slug>/ (Hugo uses plural key)
+authors: ["Author Name"]
+# Display: full details for citation and JSON-LD (optional; fallback: authors as names)
+authors_display:
   - name: "Author Name"
     affiliation: "Institution"
     orcid: "0000-0000-0000-0000"
