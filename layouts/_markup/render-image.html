@@ -1,10 +1,14 @@
 {{- $image := partial "helper/image" (dict "Resources" .Page.Resources "Image" .Destination) -}}
 {{- $alt := .PlainText | safeHTML -}}
 {{- $title := .Title | markdownify -}}
-{{- $parsedW := partial "parse-image-width" . | strings.TrimSpace -}}
-{{- $parsedH := partial "parse-image-height" . | strings.TrimSpace -}}
-{{- $attrWidth := or .Attributes.width $parsedW -}}
-{{- $attrHeight := or .Attributes.height $parsedH -}}
+{{/* Parse width=N / height=N from image title (Goldmark does not pass attribute blocks to image hooks) */}}
+{{- $titleStr := printf "%s" .Title -}}
+{{- $mw := findRESubmatch "width=(\\d+)" $titleStr -}}
+{{- $mh := findRESubmatch "height=(\\d+)" $titleStr -}}
+{{- .Page.Scratch.Set "imgw" "" -}}{{- with $mw }}{{- with index . 0 }}{{- $.Page.Scratch.Set "imgw" (index . 1 | printf "%spx") -}}{{- end }}{{- end -}}
+{{- .Page.Scratch.Set "imgh" "" -}}{{- with $mh }}{{- with index . 0 }}{{- $.Page.Scratch.Set "imgh" (index . 1 | printf "%spx") -}}{{- end }}{{- end -}}
+{{- $attrWidth := or .Attributes.width (.Page.Scratch.Get "imgw") -}}
+{{- $attrHeight := or .Attributes.height (.Page.Scratch.Get "imgh") -}}
 {{- $attrClass := .Attributes.class -}}
 
 {{/* Theme helper returns empty string when resource not found; then avoid accessing .Height on string */}}

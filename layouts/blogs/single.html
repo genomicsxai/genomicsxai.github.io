@@ -1,6 +1,21 @@
+{{ define "body-class" }}
+    article-page
+    {{- $TOCWidgetEnabled := false -}}
+    {{- range .Site.Params.widgets.page -}}
+        {{- if eq .type "toc" }}{{ $TOCWidgetEnabled = true }}{{ end -}}
+    {{- end -}}
+    {{- $TOCManuallyDisabled := eq .Params.toc false -}}
+    {{- $TOCEnabled := and (not $TOCManuallyDisabled) $TOCWidgetEnabled -}}
+    {{- $hasTOC := gt (len .TableOfContents) 50 -}}
+    {{- .Scratch.Set "TOCEnabled" (and $TOCEnabled $hasTOC) -}}
+    {{- .Scratch.Set "hasWidget" (and $TOCEnabled $hasTOC) -}}
+{{ end }}
+
 {{ define "main" }}
 <article class="main-article">
-  <h1 class="article-title">{{ .Title }}</h1>
+  <div class="article-details">
+    <h1 class="article-title">{{ .Title }}</h1>
+  </div>
 
   <section class="article-content">
     {{ $wrappedTable := printf "<div class=\"table-wrapper\">${1}</div>" }}
@@ -15,3 +30,6 @@
 {{ partial "jsonld.html" . }}
 {{ end }}
 
+{{ define "right-sidebar" }}
+  {{ if .Scratch.Get "hasWidget" }}{{ partial "sidebar/right.html" (dict "Context" . "Scope" "page") }}{{ end }}
+{{ end }}
