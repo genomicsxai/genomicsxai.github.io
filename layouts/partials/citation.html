@@ -1,12 +1,13 @@
 <div class="citation-box" style="border:1px solid #ccc; padding:1em; margin-bottom:2em;">
   <h3>Citation</h3>
 
-  <!-- Display citation text -->
+  <!-- Display citation text (authors_display = full details; authors = taxonomy strings) -->
   <p>
-    {{ with .Params.authors }}
+    {{ $authList := .Params.authors_display | default .Params.authors }}
+    {{ with $authList }}
       {{ range $index, $author := . }}
         {{ if $index }}, {{ end }}
-        {{ $author.name }}
+        {{ if reflect.IsMap $author }}{{ $author.name }}{{ else }}{{ $author }}{{ end }}
       {{ end }}
     {{ end }}. 
     "{{ .Title }}." 
@@ -22,6 +23,7 @@
   </div>
 
   <!-- Copy citation button -->
-  <button onclick="navigator.clipboard.writeText(`{{ .Title }}. {{ range .Params.authors }}{{ .name }}{{ end }}. Genomics × AI Blog. {{ .Date | dateFormat "2006" }}.`)">Copy Citation</button>
+  {{ $authList := .Params.authors_display | default .Params.authors }}
+  <button onclick="navigator.clipboard.writeText(`{{ .Title }}. {{ with $authList }}{{ range $i, $a := . }}{{ if $i }}, {{ end }}{{ if reflect.IsMap $a }}{{ $a.name }}{{ else }}{{ $a }}{{ end }}{{ end }}{{ end }}. Genomics × AI Blog. {{ .Date | dateFormat "2006" }}.`)">Copy Citation</button>
 </div>
 

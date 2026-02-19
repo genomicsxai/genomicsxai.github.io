@@ -2,11 +2,11 @@
 post_id: "2026-001"
 title: "Welcome to the Genomics × AI Blog"
 image: "genomics_x_ai_title.png"
-# Taxonomy: list of author names (for /authors/<slug>/)
-author: ["Genomics X AI Editors"]
+# Taxonomy: list of author slugs (for /authors/<slug>/); use plural key for Hugo
+authors: ["Genomics X AI Editors"]
 
 # Display: full author details for citation and JSON-LD
-authors:
+authors_display:
   - name: "Genomics X AI Editors"
     affiliation: "Genomics × AI"
     orcid: ""

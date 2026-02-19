@@ -6,8 +6,10 @@
   "datePublished": "{{ .Date | dateFormat "2006-01-02" }}",
   "dateModified": "{{ .Params.date_accepted | default .Date | dateFormat "2006-01-02" }}",
   "author": [
-    {{- range $index, $author := .Params.authors -}}
+    {{- $authList := .Params.authors_display | default .Params.authors -}}
+    {{- range $index, $author := $authList -}}
       {{- if $index }},{{ end }}
+      {{- if reflect.IsMap $author -}}
       {
         "@type": "Person",
         "name": "{{ $author.name | htmlEscape }}",
@@ -16,6 +18,9 @@
         "identifier": "https://orcid.org/{{ . }}"
         {{ end }}
       }
+      {{- else -}}
+      { "@type": "Person", "name": "{{ $author | htmlEscape }}" }
+      {{- end -}}
     {{- end }}
   ],
   "publisher": {
