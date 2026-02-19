@@ -1,0 +1,4 @@
+/* Always show the main navigation menu in the left sidebar (Stack theme) */
+#main-menu {
+  display: flex !important;
+}
