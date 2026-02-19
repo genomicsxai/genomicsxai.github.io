@@ -49,4 +49,8 @@ jobs:
           publish_dir: ./public
           # Optional: keep history of previous deployments
           keep_files: true
+          # Explicitly set the branch name
+          publish_branch: gh-pages
+          # Force push to ensure updates are applied
+          force_orphan: false
 
