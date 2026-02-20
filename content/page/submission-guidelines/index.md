@@ -13,7 +13,7 @@ The Genomics × AI blog uses a Git-native, PR-based submission workflow. All sub
 ### Submission Process
 
 1. **Write Your Post**  
-   - Use the blog post template (see below)  
+   - Use the [blog post template](https://github.com/genomicsxai/genomicsxai.github.io/blob/main/docs/blog-post-template.md) (copy the frontmatter and adapt)  
    - Conduct internal lab review first  
    - Ensure all required frontmatter fields are complete  
 
@@ -32,6 +32,6 @@ The Genomics × AI blog uses a Git-native, PR-based submission workflow. All sub
    - The post will be automatically deployed via GitHub Actions  
    - Your post will appear on the blog  
 
-### Required Frontmatter
+### Writing Note
 
 There is no strict criteria on the style that your blog post should follow but aim to make it clear and engaging!
