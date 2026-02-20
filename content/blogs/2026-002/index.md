@@ -1,8 +1,8 @@
 ---
 post_id: "2026-002"
 title: "Adapting AlphaGenome to MPRA data"
-# Optional: image filename in the same folder
-# image: "modular_generalists_manuscript.png"
+# Featured image (homepage thumbnail and optional top of post)
+image: "modular_generalists_manuscript.png"
 
 # Author(s): list of names (used for /authors/<slug>/)
 authors: ["Alan Murphy"]
@@ -28,8 +28,8 @@ status: "submitted"
 revision: 1
 
 date_submitted: 2026-02-20
-date_accepted: 
-date:
+date_accepted:
+date: 2026-02-20
 
 doi: ""
 revision_history:
@@ -37,8 +37,6 @@ revision_history:
     date: 2026-02-20
     notes: "Initial submission"
 ---
-
-# Adapting AlphaGenome to MPRA data
 
 Foundation-scale sequence-to-function models have rapidly advanced regulatory genomics. Architectures like [AlphaGenome](https://www.nature.com/articles/s41586-025-10014-0) and [Enformer](https://www.nature.com/articles/s41592-021-01252-x) predict thousands of regulatory tracks across large genomic contexts and achieve impressive genome-wide accuracy (hence the term generalists).
 

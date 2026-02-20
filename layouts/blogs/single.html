@@ -12,10 +12,18 @@
 {{ end }}
 
 {{ define "main" }}
-<article class="main-article">
-  <div class="article-details">
-    <h1 class="article-title">{{ .Title }}</h1>
-  </div>
+<article class="main-article {{ if .Params.image }}has-image{{ end }}">
+  <header class="article-header">
+    {{- $image := partial "helper/image" (dict "Image" .Params.image "Resources" .Resources) -}}
+    {{ if $image }}
+    <div class="article-image">
+      <img src="{{ $image.Permalink }}" width="{{ $image.Width }}" height="{{ $image.Height }}" loading="eager" alt="Featured image: {{ .Title }}" />
+    </div>
+    {{ end }}
+    <div class="article-details">
+      <h1 class="article-title">{{ .Title }}</h1>
+    </div>
+  </header>
 
   <section class="article-content">
     {{ $wrappedTable := printf "<div class=\"table-wrapper\">${1}</div>" }}

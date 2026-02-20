@@ -3,6 +3,14 @@
   display: flex !important;
 }
 
+/* Ensure blog article card and title are visible (theme uses these variables) */
+.article-page .main-article {
+  background: var(--card-background);
+}
+.article-page .main-article .article-details .article-title {
+  color: var(--card-text-color-main);
+}
+
 /* Keep article images from overflowing; width= from markdown attributes is respected */
 .main-article img,
 article img {
