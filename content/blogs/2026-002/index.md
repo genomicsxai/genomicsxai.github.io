@@ -42,7 +42,9 @@ Foundation-scale sequence-to-function models have rapidly advanced regulatory ge
 
 _Side note_: sequence-to-function (seq2func) models learn a direct mapping from DNA sequence to one or more experimentally measured molecular readouts from assays such as chromatin accessibility, transcription factor binding, or gene expression.
 
-These models also just continue to increase in their number of parameters, receptive fields and number of tasks they predict - if you're skeptical just look at a ![selection of these recent models](generalists_genomic_ai_recep_field_tasks_params_bp_res_tasks.png "width=400 The Landscape of seq2func models by genomic receptive field and task breadth. Shown is the number of prediction tasks versus the input receptive field for representative generalist seq2func models. Marker size is proportional to the reported parameter count. A red marker edge indicates models that produce base-pair–aligned predictions.")
+These models also just continue to increase in their number of parameters, receptive fields and number of tasks they predict - if you're skeptical just look at a selection of these recent models:
+
+![The Landscape of seq2func models by genomic receptive field and task breadth](generalists_genomic_ai_recep_field_tasks_params_bp_res_tasks.png "width=400 The Landscape of seq2func models by genomic receptive field and task breadth. Shown is the number of prediction tasks versus the input receptive field for representative generalist seq2func models. Marker size is proportional to the reported parameter count. A red marker edge indicates models that produce base-pair–aligned predictions.")
 
 But many real experimental workflows don’t look like the genome.
 
@@ -66,7 +68,9 @@ Modern seq2func models like AlphaGenome can be decomposed into three functional 
 
 For short perturbation sequences, long-range context is often irrelevant. The encoder, however, contains rich regulatory representations learned from genome-scale supervision.
 
-We extract and reuse this encoder (![see the image below](modular_generalists_manuscript.png "width=700 Generalist seq2func models as modular regulatory encoders. Left, AlphaGenome's U-Net architecture with encoder, long-range context integration (transformer), and decoder modules. Right, proposed modular view in which the pretrained encoder is extracted as a reusable cis-regulatory representation module and fine-tuned on short, variable-length perturbation sequences such as MPRA constructs, while the transformer and decoder remain in the full stack for tasks requiring long-range context.")).
+We extract and reuse this encoder see the image below:
+
+![Generalist seq2func models as modular regulatory encoders](modular_generalists_manuscript.png "width=900 Generalist seq2func models as modular regulatory encoders. Left, AlphaGenome's U-Net architecture with encoder, long-range context integration (transformer), and decoder modules. Right, proposed modular view in which the pretrained encoder is extracted as a reusable cis-regulatory representation module and fine-tuned on short, variable-length perturbation sequences such as MPRA constructs, while the transformer and decoder remain in the full stack for tasks requiring long-range context.").
 
 
 ### What we do:
@@ -121,9 +125,11 @@ Results:
 
 * AlphaGenome required minimal adaptation → pretrained encoder already captures transferable signal
 
-This supports the idea that genome-scale training learns reusable regulatory structure.
+_Side note_: probing means the AlphaGenome encoder is frozen and only the added head is updated whereas fine-tuning means everything is updated (encoder and head).
 
-![The performance results.](lenti_starr_res.png "width=700 Benchmark on lentiMPRA and STARR-seq. Test-set Pearson correlation for (left) lentiMPRA and (right) STARR-seq. We compared against best-in-class models [MPRALegNet](https://www.nature.com/articles/s41586-024-08430-9), [DeepSTARR](https://www.nature.com/articles/s41588-022-01048-5), [DREAM-RNN](https://www.nature.com/articles/s41587-024-02414-w), and AlphaGenome (AG). We applied encoder extraction and fine-tuning to Enformer (Enf. MPRA) and AlphaGenome (AG MPRA), evaluated with probing (head-only) or encoder fine-tuning.")
+This supports the idea that genome-scale training learns reusable regulatory structure. The performance results:
+
+![Benchmark on lentiMPRA and STARR-seq](lenti_starr_res.png "width=700 Benchmark on lentiMPRA and STARR-seq. Test-set Pearson correlation for (left) lentiMPRA and (right) STARR-seq. We compared against best-in-class models [MPRALegNet](https://www.nature.com/articles/s41586-024-08430-9), [DeepSTARR](https://www.nature.com/articles/s41588-022-01048-5), [DREAM-RNN](https://www.nature.com/articles/s41587-024-02414-w), and AlphaGenome (AG). We applied encoder extraction and fine-tuning to Enformer (Enf. MPRA) and AlphaGenome (AG MPRA), evaluated with probing (head-only) or encoder fine-tuning.")
 
 ---
 
@@ -161,9 +167,9 @@ Key findings
 
 * task-specific fine-tuning can introduce assay bias - full fine-tuning rather than probing led to the models overfitting on the lentiMPRA data and thus worse performance on the CAGI5 data.
 
-This may highlight a trade-off of specialisation vs generalisation or with better regularisation maybe this could be controlled even with the larger number of free parameters.
+This may highlight a trade-off of specialisation vs generalisation or with better regularisation maybe this could be controlled even with the larger number of free parameters. The results:
 
-![The performance results.](cagi5_augmentation_comparison.png "width=700 Zero-shot CAGI5 performance for HepG2 and K562 variants; right, high-confidence SNP subset. Dark blue denotes a single prediction per variant whereas light blue is random shift and reverse complement augmentation. We compare against MPRALegNet and AlphaGenome (AG). We applied encoder extraction and fine-tuning to Enformer (Enf. MPRA) and AlphaGenome (AG MPRA), evaluated with probing (head-only) or encoder fine-tuning.")
+![Zero-shot CAGI5 performance for HepG2 and K562 variants](cagi5_augmentation_comparison.png "width=700 Zero-shot CAGI5 performance for HepG2 and K562 variants; right, high-confidence SNP subset. Dark blue denotes a single prediction per variant whereas light blue is random shift and reverse complement augmentation. We compare against MPRALegNet and AlphaGenome (AG). We applied encoder extraction and fine-tuning to Enformer (Enf. MPRA) and AlphaGenome (AG MPRA), evaluated with probing (head-only) or encoder fine-tuning.")
 
 ---
 
