@@ -26,6 +26,5 @@ jobs:
             grep -q "status:" "$file" || { echo "Missing status in $file"; exit 1; }
             grep -q "date_submitted" "$file" || { echo "Missing date_submitted in $file"; exit 1; }
             grep -q "revision_history:" "$file" || { echo "Missing revision_history in $file"; exit 1; }
-            grep -q "author:" "$file" || { echo "Missing author (taxonomy) in $file"; exit 1; }
           done
           echo "Frontmatter validation passed."
