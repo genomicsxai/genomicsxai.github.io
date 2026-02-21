@@ -1,0 +1,21 @@
+{{- $authorTerms := .GetTerms "authors" -}}
+{{- if $authorTerms -}}
+<div class="article-authors">
+  {{- range $i, $term := $authorTerms -}}
+    {{- if $i -}}, {{ end -}}
+    <a href="{{ $term.RelPermalink }}" class="article-author link">{{ $term.LinkTitle }}</a>
+  {{- end -}}
+</div>
+{{- else if .Params.authors -}}
+<div class="article-authors">
+  {{- $list := .Params.authors -}}
+  {{- if reflect.IsSlice $list -}}
+    {{- range $i, $name := $list -}}
+      {{- if $i -}}, {{ end -}}
+      <span class="article-author">{{ $name }}</span>
+    {{- end -}}
+  {{- else -}}
+    <span class="article-author">{{ $list }}</span>
+  {{- end -}}
+</div>
+{{- end -}}

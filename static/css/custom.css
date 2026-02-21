@@ -11,6 +11,25 @@
   color: var(--card-text-color-main);
 }
 
+/* Authors under title (post page and home cards) */
+.article-authors {
+  font-size: 0.95em;
+  margin-top: 0.35em;
+  color: var(--card-text-color-secondary, #666);
+}
+.article-authors .article-author,
+.article-authors .link {
+  color: inherit;
+  text-decoration: none;
+}
+.article-authors .article-author:hover,
+.article-authors .link:hover {
+  text-decoration: underline;
+}
+.article-page .main-article .article-details .article-authors {
+  color: var(--card-text-color-secondary, #555);
+}
+
 /* Keep article images from overflowing; width= from markdown attributes is respected */
 .main-article img,
 article img {
