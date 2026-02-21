@@ -1,0 +1,586 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Genomics on Genomics X AI</title><link>https://genomicsxai.github.io/tags/genomics/</link><description>Recent content in Genomics on Genomics X AI</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Fri, 20 Feb 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://genomicsxai.github.io/tags/genomics/index.xml" rel="self" type="application/rss+xml"/><item><title>Adapting AlphaGenome to MPRA data</title><link>https://genomicsxai.github.io/blogs/2026-002/</link><pubDate>Fri, 20 Feb 2026 00:00:00 +0000</pubDate><guid>https://genomicsxai.github.io/blogs/2026-002/</guid><description>&lt;img src="https://genomicsxai.github.io/" alt="Featured image of post Adapting AlphaGenome to MPRA data" /&gt;&lt;p&gt;Foundation-scale sequence-to-function models have rapidly advanced regulatory genomics. Architectures like &lt;a class="link" href="https://www.nature.com/articles/s41586-025-10014-0" target="_blank" rel="noopener"
+ &gt;AlphaGenome&lt;/a&gt; and &lt;a class="link" href="https://www.nature.com/articles/s41592-021-01252-x" target="_blank" rel="noopener"
+ &gt;Enformer&lt;/a&gt; predict thousands of regulatory tracks across large genomic contexts and achieve impressive genome-wide accuracy (hence the term generalists).&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Side note&lt;/em&gt;: sequence-to-function (seq2func) models learn a direct mapping from DNA sequence to one or more experimentally measured molecular readouts from assays such as chromatin accessibility, transcription factor binding, or gene expression.&lt;/p&gt;
+&lt;p&gt;These models also just continue to increase in their number of parameters, receptive fields and number of tasks they predict - if you&amp;rsquo;re skeptical just look at a selection of these recent models:&lt;/p&gt;
+&lt;figure&gt;&lt;a href="https://genomicsxai.github.io/blogs/2026-002/generalists_genomic_ai_recep_field_tasks_params_bp_res_tasks.png" class="image-link" data-pswp-width="8067" data-pswp-height="5031"&gt;
+		&lt;img src="https://genomicsxai.github.io/blogs/2026-002/generalists_genomic_ai_recep_field_tasks_params_bp_res_tasks.png" width="600px" height="5031"loading="lazy"
+			alt="The Landscape of seq2func models by genomic receptive field and task breadth"
+			title="The Landscape of seq2func models by genomic receptive field and task breadth. Shown is the number of prediction tasks versus the input receptive field for representative generalist seq2func models. Marker size is proportional to the reported parameter count. A red marker edge indicates models that produce base-pair–aligned predictions." data-title-escaped="The Landscape of seq2func models by genomic receptive field and task breadth. Shown is the number of prediction tasks versus the input receptive field for representative generalist seq2func models. Marker size is proportional to the reported parameter count. A red marker edge indicates models that produce base-pair–aligned predictions."&gt;
+		&lt;/a&gt;&lt;/figure&gt;&lt;p&gt;But many real experimental workflows don’t look like the genome.&lt;/p&gt;
+&lt;p&gt;Perturbation assays — including MPRAs, enhancer design screens, and synthetic element optimisation — evaluate short (~100–300 bp) sequences outside their native context. Applying these now megabase-scale predictors to such data introduces unnecessary padding, compute overhead, and arbitrary flanking sequence assumptions which are just unsatisfactory!&lt;/p&gt;
+&lt;p&gt;We asked a simple question:&lt;/p&gt;
+
+ &lt;blockquote&gt;
+ &lt;p&gt;What if we treated these models as reusable regulatory feature extractors instead of end-to-end predictors?&lt;/p&gt;
+
+ &lt;/blockquote&gt;
+&lt;hr&gt;
+&lt;h2 id="the-key-idea-modular-regulatory-encoders"&gt;The key idea: modular regulatory encoders
+&lt;/h2&gt;&lt;p&gt;Modern seq2func models like AlphaGenome can be decomposed into three functional components:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Sequence encoder - learns motifs, spacing rules, and local regulatory syntax (e.g. convolutions and pooling)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Long-range context module - (e.g. transformers) models distal regulatory dependencies&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Task decoder - predicts assay-specific outputs&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;For short perturbation sequences, long-range context is often irrelevant. The encoder, however, contains rich regulatory representations learned from genome-scale supervision.&lt;/p&gt;
+&lt;p&gt;We extract and reuse this encoder see the image below:&lt;/p&gt;
+&lt;p&gt;&lt;figure&gt;&lt;a href="https://genomicsxai.github.io/blogs/2026-002/modular_generalists_manuscript.png" class="image-link" data-pswp-width="850" data-pswp-height="300"&gt;
+		&lt;img src="https://genomicsxai.github.io/blogs/2026-002/modular_generalists_manuscript.png" width="1000px" height="300"loading="lazy"
+			alt="Generalist seq2func models as modular regulatory encoders"
+			title="Generalist seq2func models as modular regulatory encoders. Left, AlphaGenome&amp;#39;s U-Net architecture with encoder, long-range context integration (transformer), and decoder modules. Right, proposed modular view in which the pretrained encoder is extracted as a reusable cis-regulatory representation module and fine-tuned on short, variable-length perturbation sequences such as MPRA constructs, while the transformer and decoder remain in the full stack for tasks requiring long-range context." data-title-escaped="Generalist seq2func models as modular regulatory encoders. Left, AlphaGenome&amp;amp;#39;s U-Net architecture with encoder, long-range context integration (transformer), and decoder modules. Right, proposed modular view in which the pretrained encoder is extracted as a reusable cis-regulatory representation module and fine-tuned on short, variable-length perturbation sequences such as MPRA constructs, while the transformer and decoder remain in the full stack for tasks requiring long-range context."&gt;
+		&lt;/a&gt;&lt;/figure&gt;.&lt;/p&gt;
+&lt;h3 id="what-we-do"&gt;What we do:
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;isolate the convolutional encoder&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;adapt positional handling for short inputs&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;pool encoder embeddings&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;attach a lightweight regression head&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;optionally fine-tune or keep encoder frozen&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This allows direct training on short sequences while preserving pretrained regulatory features! We applied this to AlphaGenome and Enformer (the later to highlight the generalisation of the approach).&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id="why-this-helps"&gt;Why this helps
+&lt;/h2&gt;&lt;h3 id="practical-advantages"&gt;Practical advantages:
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;supports variable-length inputs&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;removes megabase padding overhead&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;standardises comparisons across architectures&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;dramatically reduces inference cost - in our testing it was 500 fold quicker to run the encoder model than full Alphagenome&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="conceptual-advantage"&gt;Conceptual advantage:
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;separates regulatory representation learning from task-specific prediction&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2 id="performance-on-mpra-and-starr-seq"&gt;Performance on MPRA and STARR-seq
+&lt;/h2&gt;&lt;p&gt;Before I get into the how for doing this, let me convince you that it&amp;rsquo;s worthwhile - We evaluated modular encoders on:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;lentiMPRA constructs (HepG2, K562, WTC11)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;STARR-seq enhancer activity in Drosophila&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Results:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;achieved state-of-the-art accuracy on both tasks (subplots a-b below)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;AlphaGenome encoder probing remained strong across species&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Enformer benefited more from fine-tuning - perhaps its encoder learned less cis-regulatory logic&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;AlphaGenome required minimal adaptation → pretrained encoder already captures transferable signal&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;em&gt;Side note&lt;/em&gt;: probing means the AlphaGenome encoder is frozen and only the added head is updated whereas fine-tuning means everything is updated (encoder and head).&lt;/p&gt;
+&lt;p&gt;This supports the idea that genome-scale training learns reusable regulatory structure. The performance results:&lt;/p&gt;
+&lt;figure&gt;&lt;a href="https://genomicsxai.github.io/blogs/2026-002/lenti_starr_res.png" class="image-link" data-pswp-width="1890" data-pswp-height="827"&gt;
+		&lt;img src="https://genomicsxai.github.io/blogs/2026-002/lenti_starr_res.png" width="900px" height="827"loading="lazy"
+			alt="Benchmark on lentiMPRA and STARR-seq"
+			title="Benchmark on lentiMPRA and STARR-seq. Test-set Pearson correlation for (left) lentiMPRA and (right) STARR-seq. We compared against best-in-class models [MPRALegNet](https://www.nature.com/articles/s41586-024-08430-9), [DeepSTARR](https://www.nature.com/articles/s41588-022-01048-5), [DREAM-RNN](https://www.nature.com/articles/s41587-024-02414-w), and AlphaGenome (AG). We applied encoder extraction and fine-tuning to Enformer (Enf. MPRA) and AlphaGenome (AG MPRA), evaluated with probing (head-only) or encoder fine-tuning." data-title-escaped="Benchmark on lentiMPRA and STARR-seq. Test-set Pearson correlation for (left) lentiMPRA and (right) STARR-seq. We compared against best-in-class models [MPRALegNet](https://www.nature.com/articles/s41586-024-08430-9), [DeepSTARR](https://www.nature.com/articles/s41588-022-01048-5), [DREAM-RNN](https://www.nature.com/articles/s41587-024-02414-w), and AlphaGenome (AG). We applied encoder extraction and fine-tuning to Enformer (Enf. MPRA) and AlphaGenome (AG MPRA), evaluated with probing (head-only) or encoder fine-tuning."&gt;
+		&lt;/a&gt;&lt;/figure&gt;&lt;hr&gt;
+&lt;h2 id="what-matters-when-adapting-encoders"&gt;What matters when adapting encoders?
+&lt;/h2&gt;&lt;p&gt;So in an attempt to push performance as much as possible we did a hyperparameter sweep which revealed:&lt;/p&gt;
+&lt;h3 id="most-important"&gt;Most important
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;deeper MLP heads&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;flattening encoder embeddings&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="less-important"&gt;Less important
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;optimiser choice&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;weight decay&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;learning rate schedule&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Progressive unfreezing provided modest gains, with slight benefit from delaying encoder updates. The results of this sweep is at the end of the post (apologies if it&amp;rsquo;s quite dense!).&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id="transfer-to-regulatory-variant-prediction-cagi5"&gt;Transfer to regulatory variant prediction (CAGI5)
+&lt;/h2&gt;&lt;p&gt;We next evaluated all models on the CAGI5 benchmark - we wanted to know if we also seen performance advantages for downstream applications.&lt;/p&gt;
+&lt;p&gt;Key findings&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;MPRA fine-tuning improved performance (using matched cell types with lentiMPRA models)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;frozen encoder probing generalised better out-of-distribution&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;task-specific fine-tuning can introduce assay bias - full fine-tuning rather than probing led to the models overfitting on the lentiMPRA data and thus worse performance on the CAGI5 data.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This may highlight a trade-off of specialisation vs generalisation or with better regularisation maybe this could be controlled even with the larger number of free parameters. The results:&lt;/p&gt;
+&lt;figure&gt;&lt;a href="https://genomicsxai.github.io/blogs/2026-002/cagi5_augmentation_comparison.png" class="image-link" data-pswp-width="17962" data-pswp-height="5721"&gt;
+		&lt;img src="https://genomicsxai.github.io/blogs/2026-002/cagi5_augmentation_comparison.png" width="900px" height="5721"loading="lazy"
+			alt="Zero-shot CAGI5 performance for HepG2 and K562 variants"
+			title="Zero-shot CAGI5 performance for HepG2 and K562 variants; right, high-confidence SNP subset. Dark blue denotes a single prediction per variant whereas light blue is random shift and reverse complement augmentation. We compare against MPRALegNet and AlphaGenome (AG). We applied encoder extraction and fine-tuning to Enformer (Enf. MPRA) and AlphaGenome (AG MPRA), evaluated with probing (head-only) or encoder fine-tuning." data-title-escaped="Zero-shot CAGI5 performance for HepG2 and K562 variants; right, high-confidence SNP subset. Dark blue denotes a single prediction per variant whereas light blue is random shift and reverse complement augmentation. We compare against MPRALegNet and AlphaGenome (AG). We applied encoder extraction and fine-tuning to Enformer (Enf. MPRA) and AlphaGenome (AG MPRA), evaluated with probing (head-only) or encoder fine-tuning."&gt;
+		&lt;/a&gt;&lt;/figure&gt;&lt;hr&gt;
+&lt;h2 id="what-transfers--and-why"&gt;What transfers — and why?
+&lt;/h2&gt;&lt;p&gt;So we should probably now take a step back, what are our results showing?&lt;/p&gt;
+&lt;p&gt;This highlights that encoder representations learned under genome-scale multitask supervision retain regulatory signal that transfers across:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;assays&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;perturbation regimes&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;species (STARR-seq data was in fly, Alphagenome was trained on human and mouse - this is pretty cool!)&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This transfer was observed across distinct architectures (AlphaGenome and Enformer), suggesting &lt;strong&gt;the modular encoder perspective is broadly applicable&lt;/strong&gt;.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id="implications-for-regulatory-design-workflows"&gt;Implications for regulatory design workflows
+&lt;/h2&gt;&lt;p&gt;Now to the so what? Well, encoder-only predictors have numerous advantages over their generalist parents, they enable:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;rapid scoring of candidate constructs&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;iterative design → score → optimise loops&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;compute-efficient large-scale screening&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Seq2func foundation models can therefore function as reusable regulatory representation engines inside perturbation pipelines - think for synthetic biology applications of DNA design, accelerating synthetic enhancer, promoter design workflows (see &lt;a class="link" href="https://pubmed.ncbi.nlm.nih.gov/39322281/" target="_blank" rel="noopener"
+ &gt;this work&lt;/a&gt; for example).&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id="open-questions"&gt;Open questions
+&lt;/h2&gt;&lt;p&gt;So what didn&amp;rsquo;t we explore enough here:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Which encoder layers contribute most to transfer?&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;How stable are representations across assays and species?&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Can modular encoders accelerate generative regulatory design?&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;All of this would be really interesting future directions.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id="takeaway---the-tldr"&gt;Takeaway - the TLDR
+&lt;/h2&gt;&lt;p&gt;Foundation seq2func models are typically used as monolithic predictors.&lt;/p&gt;
+&lt;p&gt;A modular view reveals something more useful:&lt;/p&gt;
+
+ &lt;blockquote&gt;
+ &lt;p&gt;their encoders are transferable regulatory representation modules.&lt;/p&gt;
+
+ &lt;/blockquote&gt;
+&lt;p&gt;Extracting and adapting these representations enables efficient perturbation modeling, fair cross-model comparison, and scalable regulatory design workflows.&lt;/p&gt;
+&lt;h2 id="code"&gt;Code
+&lt;/h2&gt;&lt;p&gt;Finally, how can you use this approach:&lt;/p&gt;
+&lt;p&gt;This analysis uses the native jax/haiku alphagenome wrapper package which is available from the &lt;a class="link" href="https://github.com/genomicsxai/alphagenome_ft" target="_blank" rel="noopener"
+ &gt;Genomics x AI community github&lt;/a&gt; (more on this in a future post) and all code to run the analysis is &lt;a class="link" href="https://github.com/Al-Murphy/alphagenome_FT_MPRA" target="_blank" rel="noopener"
+ &gt;here&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;But here is a minimum script or if you would prefer to run it yourself on lentiMPRA data, see our &lt;a class="link" href="https://colab.research.google.com/github/genomicsxai/alphagenome_ft/blob/main/notebooks/colab_encoder_only_mpra_finetune.ipynb" target="_blank" rel="noopener"
+ &gt;colab notebook&lt;/a&gt;:&lt;/p&gt;
+&lt;h3 id="tutorial"&gt;Tutorial
+&lt;/h3&gt;&lt;h3 id="1-model-initialisation"&gt;1. Model initialisation
+&lt;/h3&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;from&lt;/span&gt; alphagenome.models &lt;span style="color:#f92672"&gt;import&lt;/span&gt; dna_output
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;from&lt;/span&gt; alphagenome_ft &lt;span style="color:#f92672"&gt;import&lt;/span&gt; (
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; templates,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; CustomHeadConfig,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; CustomHeadType,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; register_custom_head,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; create_model_with_heads,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;# 1. Register an encoder-only head&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;register_custom_head(
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#e6db74"&gt;&amp;#34;mpra_head&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; templates&lt;span style="color:#f92672"&gt;.&lt;/span&gt;EncoderOnlyHead,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; CustomHeadConfig(
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; type&lt;span style="color:#f92672"&gt;=&lt;/span&gt;CustomHeadType&lt;span style="color:#f92672"&gt;.&lt;/span&gt;GENOME_TRACKS,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; output_type&lt;span style="color:#f92672"&gt;=&lt;/span&gt;dna_output&lt;span style="color:#f92672"&gt;.&lt;/span&gt;OutputType&lt;span style="color:#f92672"&gt;.&lt;/span&gt;RNA_SEQ,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; num_tracks&lt;span style="color:#f92672"&gt;=&lt;/span&gt;&lt;span style="color:#ae81ff"&gt;1&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; ),
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;# 2. Create a model that uses encoder output only&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;model &lt;span style="color:#f92672"&gt;=&lt;/span&gt; create_model_with_heads(
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#e6db74"&gt;&amp;#34;all_folds&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; heads&lt;span style="color:#f92672"&gt;=&lt;/span&gt;[&lt;span style="color:#e6db74"&gt;&amp;#34;mpra_head&amp;#34;&lt;/span&gt;],
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; use_encoder_output&lt;span style="color:#f92672"&gt;=&lt;/span&gt;&lt;span style="color:#66d9ef"&gt;True&lt;/span&gt;, &lt;span style="color:#75715e"&gt;# ← CRITICAL for encoder-only mode&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;# 3. Optionally freeze backbone to start with heads-only finetuning&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;model&lt;span style="color:#f92672"&gt;.&lt;/span&gt;freeze_except_head(&lt;span style="color:#e6db74"&gt;&amp;#34;mpra_head&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Key points:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;use_encoder_output=True&lt;/code&gt; bypasses the transformer/decoder stack and exposes encoder features at ~128 bp resolution.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;templates.EncoderOnlyHead&lt;/code&gt; applies a simple MLP on top of these embeddings.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="2-training-loop"&gt;2. Training Loop
+&lt;/h3&gt;&lt;p&gt;For MPRA-like data, you will typically have &lt;strong&gt;short sequences and scalar or low-dimensional outputs&lt;/strong&gt; (e.g. log expression).&lt;/p&gt;
+&lt;p&gt;You can either:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Use your own data loader and a custom training loop with &lt;code&gt;model.create_loss_fn_for_head&lt;/code&gt;, or&lt;/li&gt;
+&lt;li&gt;Follow the more complete MPRA scripts in the external repository.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Minimal example with a custom loop:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;import&lt;/span&gt; jax
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;import&lt;/span&gt; jax.numpy &lt;span style="color:#66d9ef"&gt;as&lt;/span&gt; jnp
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;import&lt;/span&gt; optax
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;from&lt;/span&gt; alphagenome_ft &lt;span style="color:#f92672"&gt;import&lt;/span&gt; CustomHead
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;# Suppose you have: sequences_onehot: (B, L, 4), targets: (B, 1)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;loss_fn &lt;span style="color:#f92672"&gt;=&lt;/span&gt; model&lt;span style="color:#f92672"&gt;.&lt;/span&gt;create_loss_fn_for_head(&lt;span style="color:#e6db74"&gt;&amp;#34;mpra_head&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;optimizer &lt;span style="color:#f92672"&gt;=&lt;/span&gt; optax&lt;span style="color:#f92672"&gt;.&lt;/span&gt;adamw(learning_rate&lt;span style="color:#f92672"&gt;=&lt;/span&gt;&lt;span style="color:#ae81ff"&gt;1e-3&lt;/span&gt;, weight_decay&lt;span style="color:#f92672"&gt;=&lt;/span&gt;&lt;span style="color:#ae81ff"&gt;1e-4&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;opt_state &lt;span style="color:#f92672"&gt;=&lt;/span&gt; optimizer&lt;span style="color:#f92672"&gt;.&lt;/span&gt;init(model&lt;span style="color:#f92672"&gt;.&lt;/span&gt;_params)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#66d9ef"&gt;def&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;train_step&lt;/span&gt;(params, state, opt_state, batch_sequences, batch_targets):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;def&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;loss_inner&lt;/span&gt;(current_params):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; preds_dict &lt;span style="color:#f92672"&gt;=&lt;/span&gt; model&lt;span style="color:#f92672"&gt;.&lt;/span&gt;_predict(
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; current_params,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; state,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; batch_sequences,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; jnp&lt;span style="color:#f92672"&gt;.&lt;/span&gt;zeros((batch_sequences&lt;span style="color:#f92672"&gt;.&lt;/span&gt;shape[&lt;span style="color:#ae81ff"&gt;0&lt;/span&gt;],), dtype&lt;span style="color:#f92672"&gt;=&lt;/span&gt;jnp&lt;span style="color:#f92672"&gt;.&lt;/span&gt;int32), &lt;span style="color:#75715e"&gt;# organism_index&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; negative_strand_mask&lt;span style="color:#f92672"&gt;=&lt;/span&gt;jnp&lt;span style="color:#f92672"&gt;.&lt;/span&gt;zeros((batch_sequences&lt;span style="color:#f92672"&gt;.&lt;/span&gt;shape[&lt;span style="color:#ae81ff"&gt;0&lt;/span&gt;],), dtype&lt;span style="color:#f92672"&gt;=&lt;/span&gt;bool),
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; strand_reindexing&lt;span style="color:#f92672"&gt;=&lt;/span&gt;model&lt;span style="color:#f92672"&gt;.&lt;/span&gt;_metadata[next(iter(model&lt;span style="color:#f92672"&gt;.&lt;/span&gt;_metadata))]&lt;span style="color:#f92672"&gt;.&lt;/span&gt;strand_reindexing,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; )
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; preds &lt;span style="color:#f92672"&gt;=&lt;/span&gt; preds_dict[&lt;span style="color:#e6db74"&gt;&amp;#34;mpra_head&amp;#34;&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; loss_dict &lt;span style="color:#f92672"&gt;=&lt;/span&gt; loss_fn(
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; preds,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; {&lt;span style="color:#e6db74"&gt;&amp;#34;targets&amp;#34;&lt;/span&gt;: batch_targets, &lt;span style="color:#e6db74"&gt;&amp;#34;organism_index&amp;#34;&lt;/span&gt;: &lt;span style="color:#66d9ef"&gt;None&lt;/span&gt;},
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; )
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;return&lt;/span&gt; loss_dict[&lt;span style="color:#e6db74"&gt;&amp;#34;loss&amp;#34;&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; loss, grads &lt;span style="color:#f92672"&gt;=&lt;/span&gt; jax&lt;span style="color:#f92672"&gt;.&lt;/span&gt;value_and_grad(loss_inner)(params)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; updates, new_opt_state &lt;span style="color:#f92672"&gt;=&lt;/span&gt; optimizer&lt;span style="color:#f92672"&gt;.&lt;/span&gt;update(grads, opt_state)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; new_params &lt;span style="color:#f92672"&gt;=&lt;/span&gt; optax&lt;span style="color:#f92672"&gt;.&lt;/span&gt;apply_updates(params, updates)
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;return&lt;/span&gt; new_params, new_opt_state, loss
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="hyperparameter-sweep-results"&gt;Hyperparameter sweep results
+&lt;/h2&gt;&lt;h3 id="stage-1-hyperparameter-sweep-for-lentimpra-with-a-frozen-encoder-probing-regime"&gt;Stage 1 hyperparameter sweep for lentiMPRA with a frozen encoder (probing regime).
+&lt;/h3&gt;&lt;p&gt;We varied the prediction head architecture and training hyperparameters while keeping encoder weights fixed. Note no reverse complement or random shift augementations were used for this benchmark. mlp-X-Y denotes a two-layer multilayer perceptron head with hidden dimensions X and Y; mlp-X denotes a single hidden layer of size X; pool-flatten uses global pooling followed by flattening; pool-center extracts the central token representation; do-p indicates dropout rate p applied to the head; wd-1eK indicates weight decay of $10^{-K}$; lr-plateau and lr-cosine denote ReduceLROnPlateau and cosine annealing learning rate schedules, respectively; opt-adamw indicates the AdamW optimiser; act-gelu replaces the default activation with GELU. Baseline used a single multilayer perceptron head of size 1024 with sum pooling, Adam optimiser and RELU activation, and no dropout, weight decay or learning rate plateau. Performance is reported as Pearson correlation on the held-out test fold for HepG2, K562, and WTC11, with average performance and rank across cell types.&lt;/p&gt;
+&lt;table&gt;
+ &lt;thead&gt;
+ &lt;tr&gt;
+ &lt;th&gt;Hyperparameter&lt;/th&gt;
+ &lt;th&gt;HepG2&lt;/th&gt;
+ &lt;th&gt;K562&lt;/th&gt;
+ &lt;th&gt;WTC11&lt;/th&gt;
+ &lt;th&gt;Average&lt;/th&gt;
+ &lt;th&gt;Rank&lt;/th&gt;
+ &lt;/tr&gt;
+ &lt;/thead&gt;
+ &lt;tbody&gt;
+ &lt;tr&gt;
+ &lt;td&gt;mlp-512-512&lt;/td&gt;
+ &lt;td&gt;&lt;strong&gt;0.8581&lt;/strong&gt;&lt;/td&gt;
+ &lt;td&gt;0.8258&lt;/td&gt;
+ &lt;td&gt;0.7825&lt;/td&gt;
+ &lt;td&gt;&lt;strong&gt;0.8221&lt;/strong&gt;&lt;/td&gt;
+ &lt;td&gt;1&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;mlp-512-256&lt;/td&gt;
+ &lt;td&gt;0.8573&lt;/td&gt;
+ &lt;td&gt;&lt;strong&gt;0.8273&lt;/strong&gt;&lt;/td&gt;
+ &lt;td&gt;0.7803&lt;/td&gt;
+ &lt;td&gt;0.8216&lt;/td&gt;
+ &lt;td&gt;2&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;pool-flatten&lt;/td&gt;
+ &lt;td&gt;0.8547&lt;/td&gt;
+ &lt;td&gt;0.8250&lt;/td&gt;
+ &lt;td&gt;0.7837&lt;/td&gt;
+ &lt;td&gt;&lt;strong&gt;0.8211&lt;/strong&gt;&lt;/td&gt;
+ &lt;td&gt;3&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;mlp-256-256&lt;/td&gt;
+ &lt;td&gt;0.8544&lt;/td&gt;
+ &lt;td&gt;0.8253&lt;/td&gt;
+ &lt;td&gt;0.7814&lt;/td&gt;
+ &lt;td&gt;0.8204&lt;/td&gt;
+ &lt;td&gt;4&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;mlp-128&lt;/td&gt;
+ &lt;td&gt;0.8532&lt;/td&gt;
+ &lt;td&gt;0.8235&lt;/td&gt;
+ &lt;td&gt;0.7786&lt;/td&gt;
+ &lt;td&gt;0.8185&lt;/td&gt;
+ &lt;td&gt;5&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;mlp-256&lt;/td&gt;
+ &lt;td&gt;0.8527&lt;/td&gt;
+ &lt;td&gt;0.8212&lt;/td&gt;
+ &lt;td&gt;0.7758&lt;/td&gt;
+ &lt;td&gt;0.8166&lt;/td&gt;
+ &lt;td&gt;6&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;pool-center&lt;/td&gt;
+ &lt;td&gt;0.8498&lt;/td&gt;
+ &lt;td&gt;0.8211&lt;/td&gt;
+ &lt;td&gt;0.7778&lt;/td&gt;
+ &lt;td&gt;0.8162&lt;/td&gt;
+ &lt;td&gt;7&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;do-0.1&lt;/td&gt;
+ &lt;td&gt;0.8521&lt;/td&gt;
+ &lt;td&gt;0.8193&lt;/td&gt;
+ &lt;td&gt;0.7755&lt;/td&gt;
+ &lt;td&gt;0.8156&lt;/td&gt;
+ &lt;td&gt;8&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;do-0.2&lt;/td&gt;
+ &lt;td&gt;0.8522&lt;/td&gt;
+ &lt;td&gt;0.8188&lt;/td&gt;
+ &lt;td&gt;0.7755&lt;/td&gt;
+ &lt;td&gt;0.8155&lt;/td&gt;
+ &lt;td&gt;9&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;mlp-512&lt;/td&gt;
+ &lt;td&gt;0.8514&lt;/td&gt;
+ &lt;td&gt;0.8199&lt;/td&gt;
+ &lt;td&gt;0.7752&lt;/td&gt;
+ &lt;td&gt;0.8155&lt;/td&gt;
+ &lt;td&gt;10&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;do-0.5&lt;/td&gt;
+ &lt;td&gt;0.8521&lt;/td&gt;
+ &lt;td&gt;0.8188&lt;/td&gt;
+ &lt;td&gt;0.7755&lt;/td&gt;
+ &lt;td&gt;0.8155&lt;/td&gt;
+ &lt;td&gt;11&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;do-0.4&lt;/td&gt;
+ &lt;td&gt;0.8521&lt;/td&gt;
+ &lt;td&gt;0.8188&lt;/td&gt;
+ &lt;td&gt;0.7755&lt;/td&gt;
+ &lt;td&gt;0.8155&lt;/td&gt;
+ &lt;td&gt;12&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;do-0.3&lt;/td&gt;
+ &lt;td&gt;0.8521&lt;/td&gt;
+ &lt;td&gt;0.8188&lt;/td&gt;
+ &lt;td&gt;0.7752&lt;/td&gt;
+ &lt;td&gt;0.8154&lt;/td&gt;
+ &lt;td&gt;13&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;wd-1e6&lt;/td&gt;
+ &lt;td&gt;0.8529&lt;/td&gt;
+ &lt;td&gt;0.8171&lt;/td&gt;
+ &lt;td&gt;0.7738&lt;/td&gt;
+ &lt;td&gt;0.8146&lt;/td&gt;
+ &lt;td&gt;14&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;wd-1e5&lt;/td&gt;
+ &lt;td&gt;0.8530&lt;/td&gt;
+ &lt;td&gt;0.8166&lt;/td&gt;
+ &lt;td&gt;0.7742&lt;/td&gt;
+ &lt;td&gt;0.8146&lt;/td&gt;
+ &lt;td&gt;15&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;lr-plateau&lt;/td&gt;
+ &lt;td&gt;0.8526&lt;/td&gt;
+ &lt;td&gt;0.8170&lt;/td&gt;
+ &lt;td&gt;0.7733&lt;/td&gt;
+ &lt;td&gt;0.8143&lt;/td&gt;
+ &lt;td&gt;16&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;ndash;&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&amp;mdash;-&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&amp;mdash;-&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&amp;mdash;-&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;-&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;baseline&lt;/td&gt;
+ &lt;td&gt;0.8526&lt;/td&gt;
+ &lt;td&gt;0.8170&lt;/td&gt;
+ &lt;td&gt;0.7733&lt;/td&gt;
+ &lt;td&gt;0.8143&lt;/td&gt;
+ &lt;td&gt;16&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;ndash;&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&amp;mdash;-&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&amp;mdash;-&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&amp;mdash;-&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;-&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;opt-adamw&lt;/td&gt;
+ &lt;td&gt;0.8526&lt;/td&gt;
+ &lt;td&gt;0.8161&lt;/td&gt;
+ &lt;td&gt;0.7738&lt;/td&gt;
+ &lt;td&gt;0.8142&lt;/td&gt;
+ &lt;td&gt;18&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;wd-1e4&lt;/td&gt;
+ &lt;td&gt;0.8522&lt;/td&gt;
+ &lt;td&gt;0.8167&lt;/td&gt;
+ &lt;td&gt;0.7732&lt;/td&gt;
+ &lt;td&gt;0.8141&lt;/td&gt;
+ &lt;td&gt;19&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;act-gelu&lt;/td&gt;
+ &lt;td&gt;0.8513&lt;/td&gt;
+ &lt;td&gt;0.8167&lt;/td&gt;
+ &lt;td&gt;0.7724&lt;/td&gt;
+ &lt;td&gt;0.8134&lt;/td&gt;
+ &lt;td&gt;20&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;lr-cosine&lt;/td&gt;
+ &lt;td&gt;0.8399&lt;/td&gt;
+ &lt;td&gt;0.8007&lt;/td&gt;
+ &lt;td&gt;0.7605&lt;/td&gt;
+ &lt;td&gt;0.8004&lt;/td&gt;
+ &lt;td&gt;21&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h3 id="stage-2-hyperparameter-sweep-for-lentimpra-with-encoder-unfreezing-fine-tuning-regime"&gt;Stage 2 hyperparameter sweep for lentiMPRA with encoder unfreezing (fine-tuning regime).
+&lt;/h3&gt;&lt;p&gt;Starting from the best Stage 1 configuration, we varied the unfreezing schedule. s2-s1epN denotes unfreezing the encoder after N epochs of head-only training; s2-baseline denotes the default unfreezing schedule used in the main experiments (unfreezing triggered by validation loss plateau). Baseline used a single multilayer perceptron head of size 1024 with sum pooling, Adam optimiser and RELU activation, and no dropout, weight decay or learning rate plateau. All models used reverse complement and random shift augmentations. Performance is reported as Pearson correlation on the held-out test fold for HepG2, K562, and WTC11, with average performance and rank across cell types.&lt;/p&gt;
+&lt;table&gt;
+ &lt;thead&gt;
+ &lt;tr&gt;
+ &lt;th&gt;Hyperparameter&lt;/th&gt;
+ &lt;th&gt;HepG2&lt;/th&gt;
+ &lt;th&gt;K562&lt;/th&gt;
+ &lt;th&gt;WTC11&lt;/th&gt;
+ &lt;th&gt;Average&lt;/th&gt;
+ &lt;th&gt;Rank&lt;/th&gt;
+ &lt;/tr&gt;
+ &lt;/thead&gt;
+ &lt;tbody&gt;
+ &lt;tr&gt;
+ &lt;td&gt;s2-s1ep3&lt;/td&gt;
+ &lt;td&gt;0.8663&lt;/td&gt;
+ &lt;td&gt;0.8439&lt;/td&gt;
+ &lt;td&gt;&lt;strong&gt;0.7730&lt;/strong&gt;&lt;/td&gt;
+ &lt;td&gt;&lt;strong&gt;0.8277&lt;/strong&gt;&lt;/td&gt;
+ &lt;td&gt;1&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&amp;mdash;-&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&amp;mdash;-&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&amp;mdash;-&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&amp;mdash;-&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;-&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;s2-baseline&lt;/td&gt;
+ &lt;td&gt;0.8701&lt;/td&gt;
+ &lt;td&gt;&lt;strong&gt;0.8439&lt;/strong&gt;&lt;/td&gt;
+ &lt;td&gt;0.7686&lt;/td&gt;
+ &lt;td&gt;0.8276&lt;/td&gt;
+ &lt;td&gt;2&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&amp;mdash;-&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&amp;mdash;-&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&amp;mdash;-&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;&amp;mdash;&amp;mdash;-&lt;/td&gt;
+ &lt;td&gt;&amp;mdash;-&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;s2-s1ep2&lt;/td&gt;
+ &lt;td&gt;0.8655&lt;/td&gt;
+ &lt;td&gt;0.8441&lt;/td&gt;
+ &lt;td&gt;0.7723&lt;/td&gt;
+ &lt;td&gt;0.8273&lt;/td&gt;
+ &lt;td&gt;3&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;s2-s1ep4&lt;/td&gt;
+ &lt;td&gt;0.8689&lt;/td&gt;
+ &lt;td&gt;0.8449&lt;/td&gt;
+ &lt;td&gt;0.7668&lt;/td&gt;
+ &lt;td&gt;0.8269&lt;/td&gt;
+ &lt;td&gt;4&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;s2-s1ep5&lt;/td&gt;
+ &lt;td&gt;&lt;strong&gt;0.8706&lt;/strong&gt;&lt;/td&gt;
+ &lt;td&gt;0.8435&lt;/td&gt;
+ &lt;td&gt;0.7654&lt;/td&gt;
+ &lt;td&gt;0.8265&lt;/td&gt;
+ &lt;td&gt;5&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;tr&gt;
+ &lt;td&gt;s2-s1ep1&lt;/td&gt;
+ &lt;td&gt;0.8507&lt;/td&gt;
+ &lt;td&gt;0.8382&lt;/td&gt;
+ &lt;td&gt;0.7651&lt;/td&gt;
+ &lt;td&gt;0.8180&lt;/td&gt;
+ &lt;td&gt;6&lt;/td&gt;
+ &lt;/tr&gt;
+ &lt;/tbody&gt;
+&lt;/table&gt;</description></item><item><title>Welcome to the Genomics × AI Blog</title><link>https://genomicsxai.github.io/blogs/2026-001/</link><pubDate>Thu, 19 Feb 2026 00:00:00 +0000</pubDate><guid>https://genomicsxai.github.io/blogs/2026-001/</guid><description>&lt;img src="https://genomicsxai.github.io/" alt="Featured image of post Welcome to the Genomics × AI Blog" /&gt;&lt;figure&gt;&lt;a href="https://genomicsxai.github.io/blogs/2026-001/genomics_x_ai_title.png" class="image-link" data-pswp-width="1536" data-pswp-height="1024"&gt;
+		&lt;img src="https://genomicsxai.github.io/blogs/2026-001/genomics_x_ai_title.png" width="400px" height="1024"loading="lazy"
+			alt="Genomics × AI"
+			&gt;
+		&lt;/a&gt;&lt;/figure&gt;&lt;h2 id="welcome-to-the-genomics--ai-blog"&gt;Welcome to the &lt;strong&gt;Genomics × AI&lt;/strong&gt; blog.
+&lt;/h2&gt;&lt;p&gt;We created this space for the community to use to share short, opinionated blog posts about how genomics and machine learning actually get done in real labs: what works, what doesn’t, and the ideas we’re still testing. Posts will be written in Git, reviewed internally within your lab, editorially reviewed in public, and published only when an editor is happy with them—so every article has a clear history and a clear home.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Note:&lt;/strong&gt; This is to disseminate ideas, incremental results, negative results and tutorials quickly using blog posts as a more personalised, free-form format.&lt;/p&gt;
+&lt;p&gt;If you’d like to contribute, start by reading the &lt;a class="link" href="https://genomicsxai.github.io/submission-guidelines/" &gt;Submission Guidelines&lt;/a&gt; and opening a discussion with us on &lt;a class="link" href="https://github.com/genomicsxai/genomicsxai.github.io/discussions" target="_blank" rel="noopener"
+ &gt;GitHub Discussions&lt;/a&gt;.&lt;/p&gt;</description></item></channel></rss>
