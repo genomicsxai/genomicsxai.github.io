@@ -274,6 +274,7 @@ static/
 data/
   authors.yaml
   blog.yaml
+  editors.json   # optional; populated by deploy workflow from @genomicsxai/editors (set GH_EDITORS_TOKEN with read:org)
 ```
 
 ---

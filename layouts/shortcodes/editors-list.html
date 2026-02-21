@@ -1,0 +1,13 @@
+{{- $editors := site.Data.editors -}}
+{{- if $editors -}}
+<ul class="editors-list">
+  {{- range $editors -}}
+  <li>
+    <a href="{{ .url | default (printf "https://github.com/%s" .login) }}" target="_blank" rel="noopener" class="link">{{ .login }}</a>
+  </li>
+  {{- end -}}
+</ul>
+<p class="editors-source">List synced from the <a href="https://github.com/orgs/genomicsxai/teams/editors" target="_blank" rel="noopener" class="link">@genomicsxai/editors</a> GitHub team.</p>
+{{- else -}}
+<p>Editor list is populated automatically when the site is built with access to the GitHub team. See the <a href="https://github.com/orgs/genomicsxai/teams/editors" target="_blank" rel="noopener" class="link">@genomicsxai/editors</a> team on GitHub.</p>
+{{- end -}}

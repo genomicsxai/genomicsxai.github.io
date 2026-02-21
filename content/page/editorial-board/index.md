@@ -17,10 +17,10 @@ Editors review submissions via GitHub Pull Requests and provide feedback to auth
 - Submission guidelines are followed  
 - Community standards are upheld  
 
+### Current Editors
+
+{{< editors-list >}}
+
 ### Becoming an Editor
 
 If you're interested in joining the editorial board, please contact us through [GitHub Discussions](https://github.com/genomicsxai/genomicsxai.github.io/discussions).
-
----
-
-**Current Editors**: See [@genomicsxai/editors](https://github.com/orgs/genomicsxai/teams/editors) team on GitHub.

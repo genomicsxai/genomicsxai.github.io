@@ -27,6 +27,40 @@ jobs:
         with:
           extended: true
 
+      # 2.5. Fetch editorial board from GitHub team (optional: set GH_EDITORS_TOKEN with read:org)
+      - name: Fetch editors from GitHub team
+        env:
+          GH_TOKEN: ${{ secrets.GH_EDITORS_TOKEN }}
+          ORG: genomicsxai
+          TEAM: editors
+        run: |
+          mkdir -p data
+          if [ -z "$GH_TOKEN" ]; then
+            echo '[]' > data/editors.json
+            echo "No GH_EDITORS_TOKEN set; editorial board will be empty. Add a PAT with read:org to populate."
+            exit 0
+          fi
+          PAGE=1
+          ALL=""
+          while true; do
+            RES=$(curl -s -w "\n%{http_code}" -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/orgs/${ORG}/teams/${TEAM}/members?per_page=100&page=${PAGE}")
+            CODE=$(echo "$RES" | tail -n1)
+            BODY=$(echo "$RES" | sed '$d')
+            if [ "$CODE" != "200" ]; then
+              echo "GitHub API returned $CODE; writing empty editors list."
+              echo '[]' > data/editors.json
+              exit 0
+            fi
+            COUNT=$(echo "$BODY" | jq -r 'length')
+            [ "$COUNT" -eq 0 ] && break
+            if [ -z "$ALL" ]; then ALL="$BODY"; else ALL=$(printf '%s\n%s' "$ALL" "$BODY" | jq -s 'add'); fi
+            [ "$COUNT" -lt 100 ] && break
+            PAGE=$((PAGE+1))
+          done
+          echo "$ALL" | jq -c '[.[] | {login: .login, url: (.html_url // ("https://github.com/" + .login))}]' > data/editors.json
+          echo "Fetched $(jq length data/editors.json) editor(s)."
+
       # 3. Build the Hugo site
       - name: Build
         run: hugo --minify
