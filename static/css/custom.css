@@ -71,6 +71,19 @@ article img {
   margin-top: 0;
 }
 
+/* Smaller code snippets; scroll inside block only, not the page */
+.article-content .highlight,
+.article-content pre {
+  font-size: 0.8rem;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.article-content .highlight pre,
+.article-content pre code {
+  font-size: inherit;
+}
+
 /* Align discuss + citation with article content (same padding and max-width) */
 .article-extra {
   padding: 0 var(--card-padding);
