@@ -58,7 +58,17 @@ jobs:
             [ "$COUNT" -lt 100 ] && break
             PAGE=$((PAGE+1))
           done
-          echo "$ALL" | jq -c '[.[] | {login: .login, url: (.html_url // ("https://github.com/" + .login))}]' > data/editors.json
+          # Fetch each member's profile for display name (GET /users/{login} returns .name)
+          OUT="[]"
+          for login in $(echo "$ALL" | jq -r '.[].login'); do
+            USER=$(curl -s -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/users/${login}")
+            NAME=$(echo "$USER" | jq -r '.name // empty')
+            URL=$(echo "$USER" | jq -r '.html_url // empty')
+            [ -z "$URL" ] && URL="https://github.com/${login}"
+            ENTRY=$(jq -nc --arg login "$login" --arg url "$URL" --arg name "$NAME" '{login: $login, url: $url, name: (if $name == "" then null else $name end)}')
+            OUT=$(echo "$OUT" "$ENTRY" | jq -s '.[0] + [.[1]]')
+          done
+          echo "$OUT" > data/editors.json
           echo "Fetched $(jq length data/editors.json) editor(s)."
 
       # 3. Build the Hugo site

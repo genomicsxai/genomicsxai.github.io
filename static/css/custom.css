@@ -148,3 +148,10 @@ article img {
   font-size: 0.9rem;
   color: var(--accent-color, #34495e);
 }
+
+/* Editorial board: mute GitHub username next to display name */
+.editors-list .editors-username {
+  font-size: 0.9em;
+  color: var(--card-text-color-secondary, #666);
+  font-weight: normal;
+}

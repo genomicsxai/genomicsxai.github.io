@@ -2,8 +2,11 @@
 {{- if $editors -}}
 <ul class="editors-list">
   {{- range $editors -}}
+  {{- $e := . -}}
   <li>
-    <a href="{{ .url | default (printf "https://github.com/%s" .login) }}" target="_blank" rel="noopener" class="link">{{ .login }}</a>
+    <a href="{{ $e.url | default (printf "https://github.com/%s" $e.login) }}" target="_blank" rel="noopener" class="link">
+      {{- if $e.name }}{{ $e.name }} <span class="editors-username">(@{{ $e.login }})</span>{{ else }}{{ $e.login }}{{ end -}}
+    </a>
   </li>
   {{- end -}}
 </ul>
