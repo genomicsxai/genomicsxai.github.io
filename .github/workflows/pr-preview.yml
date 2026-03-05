@@ -35,7 +35,7 @@ jobs:
             echo "safe=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Comment: preview skipped (unsafe PR)
+      - name: "Comment: preview skipped (unsafe PR)"
         if: steps.safety.outputs.safe == 'false'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
