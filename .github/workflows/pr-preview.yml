@@ -7,7 +7,7 @@ on:
   pull_request_target:
     types: [opened, synchronize, reopened]
     paths:
-      - 'content/blogs/**'
+      - 'content/**'
       - 'layouts/**'
       - 'static/**'
       - 'data/**'
@@ -23,7 +23,7 @@ jobs:
 
     steps:
       # Safety check: only proceed if the PR exclusively touches known-safe paths.
-      # Allowed: content/blogs/, layouts/, static/, data/, docs/, .gitignore
+      # Allowed: content/, layouts/, static/, data/, docs/, .gitignore
       # Blocked: .github/workflows/, .github/scripts/, config.toml, and anything else.
       # Note: pull_request_target always runs the base repo's workflow, so workflow
       # files in the PR cannot hijack this job. We still block them as a belt-and-
@@ -39,7 +39,7 @@ jobs:
 
           # Known-safe path prefixes / exact files
           UNSAFE=$(echo "$FILES" | grep -v '^[[:space:]]*$' \
-            | grep -v '^content/blogs/' \
+            | grep -v '^content/' \
             | grep -v '^layouts/' \
             | grep -v '^static/' \
             | grep -v '^data/' \
@@ -67,7 +67,7 @@ jobs:
 
             This PR modifies files outside the allowed safe paths. Preview deployment is only available for PRs that exclusively touch:
 
-            - `content/blogs/` — blog post content
+            - `content/` — blog posts and static pages
             - `layouts/` — Hugo templates
             - `static/` — static assets
             - `data/` — Hugo data files (YAML/JSON used by templates)
