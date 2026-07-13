@@ -51,7 +51,7 @@ status: "submitted"
 revision: 1
 
 date_submitted: 2026-07-13
-date_accepted: 
+date_accepted: 2026-07-13
 date: 2026-07-13
 
 doi: ""
