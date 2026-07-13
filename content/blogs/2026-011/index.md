@@ -1,5 +1,5 @@
 ---
-post_id: "2026-009"
+post_id: "2026-011"
 title: "Cherimoya: a lightweight genomic sequence-to-function model built for large-scale design and understanding"
 
 # Optional: image filename "your-image.png" in the same folder
@@ -52,13 +52,13 @@ revision: 1
 
 date_submitted: 2026-07-13
 date_accepted: 
-date: 2026-02-19
+date: 2026-07-13
 
 doi: ""
 zenodo_url: ""
 revision_history:
   - version: 1
-    date: 2026-02-19
+    date: 2026-07-13
     notes: "Initial submission"
     # Optional: version-specific DOI / Zenodo record link
     doi: ""
