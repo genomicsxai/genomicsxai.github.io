@@ -1,7 +1,10 @@
-{{- $editors := site.Data.editors -}}
-{{- if $editors -}}
+{{- $active := slice -}}
+{{- range site.Data.editors -}}
+  {{- if ne .active false -}}{{- $active = $active | append . -}}{{- end -}}
+{{- end -}}
+{{- if $active -}}
 <ul class="editors-list">
-  {{- range $editors -}}
+  {{- range $active -}}
   {{- $e := . -}}
   <li>
     <a href="{{ $e.url | default (printf "https://github.com/%s" $e.login) }}" target="_blank" rel="noopener" class="link">

@@ -1,0 +1,26 @@
+{{- /* Renders former editorial board members (active: false) with the year(s) they served. */ -}}
+{{- $past := slice -}}
+{{- range site.Data.editors -}}
+  {{- if eq .active false -}}{{- $past = $past | append . -}}{{- end -}}
+{{- end -}}
+{{- if $past -}}
+<ul class="editors-list editors-list--past">
+  {{- range $past -}}
+  {{- $e := . -}}
+  {{- $s := "" -}}{{- $en := "" -}}
+  {{- with $e.start }}{{ $s = int . }}{{ end -}}
+  {{- with $e.end }}{{ $en = int . }}{{ end -}}
+  {{- $years := "" -}}
+  {{- if and (ne $s "") (ne $en "") -}}
+    {{- if eq $s $en -}}{{ $years = printf "%d" $s }}{{- else -}}{{ $years = printf "%d–%d" $s $en }}{{- end -}}
+  {{- else if ne $s "" -}}{{ $years = printf "%d" $s }}{{- end -}}
+  <li>
+    <a href="{{ $e.url | default (printf "https://github.com/%s" $e.login) }}" target="_blank" rel="noopener" class="link">
+      {{- if $e.name }}{{ $e.name }} <span class="editors-username">(@{{ $e.login }})</span>{{ else }}{{ $e.login }}{{ end -}}
+    </a>{{ with $years }} <span class="editors-years">— {{ . }}</span>{{ end }}
+  </li>
+  {{- end -}}
+</ul>
+{{- else -}}
+<p class="editors-source">No past editorial board members yet.</p>
+{{- end -}}

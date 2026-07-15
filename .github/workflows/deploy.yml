@@ -6,6 +6,7 @@ on:
       - main
     paths-ignore:
       - 'data/zenodo.json'
+      - 'data/editors.json'
 
 concurrency:
   group: deploy-main
@@ -57,6 +58,22 @@ jobs:
         run: |
           chmod +x .github/scripts/fetch-editors.sh
           ./.github/scripts/fetch-editors.sh
+
+      # 2.5b. Commit the editors ledger back so past editors persist across deploys
+      - name: Commit editors ledger
+        env:
+          GH_TOKEN: ${{ secrets.GH_CONTENTS_WRITE_TOKEN || github.token }}
+        run: |
+          if [ -z "$(git status --porcelain -- data/editors.json)" ]; then
+            echo "No editor ledger changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          git add data/editors.json
+          git commit -m "chore: sync editors ledger"
+          git push
 
       # 2.6. Sync Zenodo DOI metadata for accepted blog posts changed in this push
       - name: Detect changed blog posts

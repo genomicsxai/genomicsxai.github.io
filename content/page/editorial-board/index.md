@@ -45,6 +45,12 @@ Review follows the [Minimal Editorial Review (MVR) framework](/editorial-review/
 
 {{< editors-list >}}
 
+### Past Editorial Board
+
+With gratitude to former members of the Editorial Board for their service.
+
+{{< past-editors >}}
+
 ### Becoming Involved
 
 If you are interested in:

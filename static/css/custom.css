@@ -853,6 +853,12 @@ article img {
   font-weight: normal;
 }
 
+/* Past editorial board: mute the year(s) served */
+.editors-list .editors-years {
+  font-size: 0.9em;
+  color: var(--card-text-color-secondary, #666);
+}
+
 /* PhotoSwipe lightbox: zoom in/out buttons in toolbar */
 .pswp__button--zoom-in,
 .pswp__button--zoom-out {
