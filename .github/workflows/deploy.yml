@@ -151,21 +151,33 @@ jobs:
           chmod +x .github/scripts/sync-zenodo-dois.rb
           ruby .github/scripts/sync-zenodo-dois.rb $(tr '\n' ' ' < /tmp/changed-blog-posts.txt)
 
+      # Push over SSH with the repo deploy key, which bypasses the protected-
+      # branch PR ruleset. Non-fatal: a persistence failure must never break the
+      # deploy (the build already has the fresh data; the next deploy re-syncs).
       - name: Commit Zenodo metadata
         if: steps.changed_blogs.outputs.count != '0'
+        continue-on-error: true
         env:
-          GH_TOKEN: ${{ secrets.GH_CONTENTS_WRITE_TOKEN || github.token }}
+          DEPLOY_KEY: ${{ secrets.CI_DEPLOY_KEY }}
         run: |
           if [ -z "$(git status --porcelain -- data/zenodo.json)" ]; then
             echo "No Zenodo metadata changes to commit."
             exit 0
           fi
+          if [ -z "$DEPLOY_KEY" ]; then
+            echo "CI_DEPLOY_KEY not set; skipping Zenodo commit."
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/ci_deploy_key
+          chmod 600 ~/.ssh/ci_deploy_key
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/ci_deploy_key -o IdentitiesOnly=yes"
           git add data/zenodo.json
           git commit -m "chore: sync Zenodo DOI metadata"
-          git push
+          git push "git@github.com:${{ github.repository }}.git" HEAD:main
 
       # 3. Build the Hugo site
       - name: Build

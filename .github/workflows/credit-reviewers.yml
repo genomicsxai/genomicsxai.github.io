@@ -39,6 +39,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
+          # Deploy key so the credit commit can push to the protected main branch
+          # (the ruleset bypasses deploy keys; github.token cannot push to main).
+          ssh-key: ${{ secrets.CI_DEPLOY_KEY }}
 
       - name: Credit reviewers on changed blog posts
         env:
@@ -139,8 +142,6 @@ jobs:
           PYEOF
 
       - name: Commit and push
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           if [ -z "$(git status --porcelain -- content/blogs)" ]; then
             echo "No frontmatter changes to commit."
@@ -149,7 +150,7 @@ jobs:
           PR="${{ github.event.pull_request.number || github.event.inputs.pr }}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          # origin is an SSH remote (deploy key from checkout above); pushes to main.
           git add content/blogs/*/index.md
           git commit -m "chore: credit reviewers on merged PR #${PR}"
-          git push
+          git push origin HEAD:main
