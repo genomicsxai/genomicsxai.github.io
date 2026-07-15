@@ -6,7 +6,6 @@ on:
       - main
     paths-ignore:
       - 'data/zenodo.json'
-      - 'data/editors.json'
 
 concurrency:
   group: deploy-main
@@ -49,6 +48,21 @@ jobs:
           chmod +x .github/scripts/export-blog-discussion-urls.sh
           ./.github/scripts/export-blog-discussion-urls.sh
 
+      # 2.45. Restore the persisted editors ledger from its dedicated branch so
+      # past editors survive across deploys. The default branch is protected by a
+      # ruleset, so the ledger lives on the unprotected `editors-ledger` branch.
+      - name: Restore editors ledger
+        continue-on-error: true
+        run: |
+          git fetch origin editors-ledger --depth=1 2>/dev/null || true
+          if git show origin/editors-ledger:editors.json > data/editors.json.tmp 2>/dev/null; then
+            mv data/editors.json.tmp data/editors.json
+            echo "Restored editors ledger from editors-ledger branch."
+          else
+            rm -f data/editors.json.tmp
+            echo "No editors-ledger branch yet; starting from the in-repo data/editors.json."
+          fi
+
       # 2.5. Fetch editorial board from GitHub team (optional: set GH_EDITORS_TOKEN with read:org)
       - name: Fetch editors from GitHub team
         env:
@@ -59,21 +73,36 @@ jobs:
           chmod +x .github/scripts/fetch-editors.sh
           ./.github/scripts/fetch-editors.sh
 
-      # 2.5b. Commit the editors ledger back so past editors persist across deploys
-      - name: Commit editors ledger
+      # 2.5b. Persist the updated ledger to its dedicated branch. Uses only the
+      # built-in token (no PAT/deploy key needed — the ruleset only guards the
+      # default branch) and is non-fatal so it can never break a deploy.
+      - name: Persist editors ledger
+        continue-on-error: true
         env:
-          GH_TOKEN: ${{ secrets.GH_CONTENTS_WRITE_TOKEN || github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if [ -z "$(git status --porcelain -- data/editors.json)" ]; then
-            echo "No editor ledger changes to commit."
-            exit 0
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
-          git add data/editors.json
-          git commit -m "chore: sync editors ledger"
-          git push
+          WORK="$(mktemp -d)"
+          git fetch origin editors-ledger 2>/dev/null || true
+          if git show-ref --verify --quiet refs/remotes/origin/editors-ledger; then
+            git worktree add "$WORK" origin/editors-ledger
+            git -C "$WORK" checkout -B editors-ledger
+          else
+            git worktree add --detach "$WORK"
+            git -C "$WORK" checkout --orphan editors-ledger
+            git -C "$WORK" rm -rf . >/dev/null 2>&1 || true
+          fi
+          cp "$GITHUB_WORKSPACE/data/editors.json" "$WORK/editors.json"
+          git -C "$WORK" add editors.json
+          if git -C "$WORK" diff --cached --quiet; then
+            echo "Editors ledger unchanged; nothing to persist."
+          else
+            git -C "$WORK" commit -m "chore: sync editors ledger"
+            git -C "$WORK" push origin editors-ledger
+            echo "Persisted editors ledger to editors-ledger branch."
+          fi
+          git worktree remove --force "$WORK" 2>/dev/null || true
 
       # 2.6. Sync Zenodo DOI metadata for accepted blog posts changed in this push
       - name: Detect changed blog posts

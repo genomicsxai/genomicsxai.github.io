@@ -4,7 +4,8 @@
 # The GitHub Teams API only returns CURRENT members, so this script maintains a
 # persistent ledger. Current members are marked active; anyone previously in the
 # ledger but no longer on the team is marked as a past editor with an "end" year.
-# The deploy workflow commits the updated ledger back to the repo.
+# The deploy workflow restores this ledger from (and persists it back to) the
+# dedicated `editors-ledger` branch, since the default branch is protected.
 #
 # Each ledger entry: { login, name, url, active, start, end }
 #   - start: first year the person was seen on the team
