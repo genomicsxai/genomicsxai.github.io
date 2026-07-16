@@ -6,6 +6,9 @@ on:
       - main
     paths-ignore:
       - 'data/zenodo.json'
+  # Allow manual redeploys (e.g. to refresh the editorial board after a GitHub
+  # team change, which does not itself push to main).
+  workflow_dispatch:
 
 concurrency:
   group: deploy-main
