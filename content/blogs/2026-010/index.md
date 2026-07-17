@@ -24,7 +24,7 @@ editor: ""
 tags: ["genomics", "seq2func", "variant-interpretation", "foundation-models", "AlphaGenome", "MCP", "agentic-AI"]
 categories: ["Blog Post"]
 scope: ["insights", "tutorials"]
-audience: ["intro-to-field"]
+audience: ["intro-to-field", "general"]
 disciplines: ["Sequence-to-Function Modeling"]
 labs: ["Pinello Lab"]
 status: "submitted"
@@ -63,18 +63,12 @@ We are also honest about where the predictions fall short: effect sizes come out
 
 ## Motivation
 
-
-One important link between theoretical biology and personalized medicine is predicting the effects of regulatory variants. Unfortunately, this task cannot be addressed directly because only a small number of regulatory variant effects have been measured in a consistent and reliable way.
-Therefore, the field has largely adopted a zero-shot approach. A sequence-to-function (seq2func) model is trained to predict molecular readouts directly from DNA sequence, such as chromatin accessibility, transcription factor binding, gene expression, or splicing. After that, to estimate the effect of a genetic variant, the model is run twice: once on the reference sequence and once on the sequence containing the variant. The difference between the two predictions is used as the predicted variant effect. In other words, it estimates how much the mutation changes regulatory activity of the region.
-
-
-
 Interpreting noncoding variants is one of the central problems in human genetics: most GWAS associations and a large share of disease-relevant variants lie outside coding regions, making it difficult to understand how they influence biology. 
 
 One important link between theoretical biology and personalized medicine is predicting the effects of regulatory variants. Unfortunately, this task cannot be addressed directly because only a small number of regulatory variant effects have been measured in a consistent and reliable way.
 Therefore, the field has largely adopted a zero-shot approach. A sequence-to-function (seq2func) model is trained to predict molecular readouts directly from DNA sequence, such as chromatin accessibility, transcription factor binding, gene expression, or splicing. After that, to estimate the effect of a genetic variant, the model is run twice: once on the reference sequence and once on the sequence containing the variant. The difference between the two predictions is used as the predicted variant effect. In other words, it estimates how much the mutation changes regulatory activity of the region.
 
-Models like [Enformer](https://www.nature.com/articles/s41592-021-01252-x), [Borzoi](https://github.com/calico/borzoi), [ChromBPNet/BPNet](https://github.com/kundajelab/chrombpnet), [Sei](https://github.com/FunctionLab/sei-framework), [LegNet](https://github.com/autosome-ru/LegNet), [EPInformer-seq](https://github.com/pinellolab/EPInformer/blob/main/EPInformer/epinformer_seq_v2.py) and [AlphaGenome](https://www.nature.com/articles/s41586-025-10014-0) can now predict chromatin accessibility, transcription factor binding, gene expression, histone modifications, and splicing directly from DNA sequence across hundreds of cell types. Using them together, however, has remained surprisingly difficult.
+Models like [Enformer](https://www.nature.com/articles/s41592-021-01252-x), [Borzoi](https://github.com/calico/borzoi), [ChromBPNet/BPNet](https://github.com/kundajelab/chrombpnet), [Sei](https://github.com/FunctionLab/sei-framework), [LegNet](https://github.com/autosome-ru/LegNet), [EPInformer](https://www.nature.com/articles/s41467-026-70535-8) and [AlphaGenome](https://www.nature.com/articles/s41586-025-10014-0) can now predict chromatin accessibility, transcription factor binding, gene expression, histone modifications, and splicing directly from DNA sequence across hundreds of cell types. Using them together, however, has remained surprisingly difficult.
 
 
 <!-- > *Side note:* a seq2func model learns a direct mapping from DNA sequence to one or more measured molecular readouts (accessibility, binding, expression, and so on). Train it on the genome and you can then ask it about sequences the genome never contained, which is exactly what variant interpretation needs. -->
@@ -106,11 +100,13 @@ These seven oracles span a wide range of context windows and resolutions, which 
 |---|---|---|---|
 | **ChromBPNet / BPNet** | 2,114 bp | 1 bp | Chromatin accessibility (ChromBPNet) and TF binding (BPNet) at base-pair resolution |
 | **LegNet** | 200 bp | element-level | MPRA / reporter activity of short regulatory elements |
-| **EPInformer-seq** | 2,114 bp | 1 bp (DNase/H3K27ac); element-level (DNase–H3K27ac composite) | Compact per-cell enhancer activity (DNase cut-sites + H3K27ac) across 11 Roadmap cell types |
+| **EPInformer (EPInformer-seq implementation)** | 2,114 bp* | 1 bp (DNase/H3K27ac); element-level (DNase–H3K27ac composite) | Compact per-cell enhancer activity (DNase cut-sites + H3K27ac) across 11 Roadmap cell types |
 | **Sei** | 4,096 bp | region-level | Regulatory effect across 21,907 chromatin profiles |
 | **Enformer** | 196,608 bp | 128 bp | Expression (CAGE), accessibility, histone marks across long context |
 | **Borzoi** | 524,288 bp | 32 bp | Enformer-style outputs plus RNA-seq coverage |
 | **AlphaGenome** | 1,048,576 bp | 1 bp | Generalist: ATAC, DNase, CAGE, RNA-seq, splicing, PRO-CAP, and ChIP for histones and TFs (5,731 tracks) |
+
+*Chorus uses the [EPInformer-seq implementation](https://github.com/pinellolab/EPInformer/blob/main/EPInformer/epinformer_seq_v2.py), which accepts a single 2,114-bp sequence as input and predicts DNase and H3K27ac profiles over the central 1,024 bp. This differs from the original EPInformer architecture, which predicts gene-expression taking a promoter together with candidate enhancers spanning a broader (~100 kb) regulatory context.
 
 There is one more piece that makes cross-model work honest. Raw model outputs are not comparable: a "+1.3" from one track means something different from a "+1.3" from another. Chorus scores every prediction against a per-track genome-wide background (built from thousands of random variants and genomic sites), turning a raw log2 fold-change into two interpretable numbers: an **effect percentile** (how unusual this variant's effect is relative to random SNPs, an approac inspired by the one used in AlphaGenome paper)  and an **activity percentile** (how active the site is to begin with). For the genome-browser view, the same backgrounds rescale every track onto one shared display axis, where 1.0 marks roughly the top one percent of bins genome-wide and 0 sits at a per-layer activity floor. After this normalisation, effects and signals become comparable across cell types, variants, tracks, and oracles, and the browser can show every oracle's reference and alternate signal on a single axis.
 
