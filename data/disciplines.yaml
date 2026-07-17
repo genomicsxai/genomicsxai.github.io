@@ -3,29 +3,43 @@
 # the existing `tags:` field in frontmatter; this list defines which tags are
 # elevated to first-class "discipline" status in the UI.
 #
-# The label is what the reader sees. The slug must match the urlized form of
-# the tag in post frontmatter (e.g. `tags: ["seq2func"]`).
+# The label is what the reader sees. The slug is the canonical/preferred tag
+# (urlized form, e.g. `tags: ["seq2func"]`).
+#
+# Optional `aliases:` lists extra tag slugs that should ALSO count toward the
+# same discipline — a catch-all so posts tagged with any common variant surface
+# under one discipline without every author having to use the exact slug. The
+# homepage discipline filter matches a post if it carries the slug OR any alias.
+# Slugs/aliases are compared in urlized form (lowercase, spaces→dashes).
 
 - label: "Sequence-to-Function Modeling"
   slug: "seq2func"
+  aliases: ["sequence-to-function", "seq-to-function", "seq2function", "sequence-to-function-modeling", "s2f", "sequence-to-activity", "seq-to-activity", "seq2activity", "seq2act"]
 
 - label: "Context-aware Seq-to-Function"
   slug: "context-seq2func"
+  aliases: ["context-aware-seq2func", "contextual-seq2func", "context-seq-to-function", "context-aware-sequence-to-function"]
 
 - label: "Single-cell Modeling"
   slug: "single-cell"
+  aliases: ["single-cell-modeling", "single-cell-genomics", "singlecell", "sc-modeling", "scrna-seq", "scrna", "single-cell-rna-seq"]
 
 - label: "Synthetic Biology"
   slug: "synthetic-biology"
+  aliases: ["synbio", "synthetic-bio", "syn-bio"]
 
 - label: "Interpretability / Mech AI"
   slug: "interpretability"
+  aliases: ["mechanistic-interpretability", "mech-interp", "interpretable-ai", "explainability", "explainable-ai", "mechanistic-ai"]
 
 - label: "Multi-omics"
   slug: "multi-omics"
+  aliases: ["multiomics", "multi-omic", "multiomic", "multi-modal-omics"]
 
 - label: "Experimental Design Loop"
   slug: "experimental-design"
+  aliases: ["experimental-design-loop", "active-learning", "design-loop", "ai-driven-experimental-design", "closed-loop-design"]
 
 - label: "AI Agents"
   slug: "ai-agents"
+  aliases: ["agentic-ai", "ai-agent", "agents", "llm-agents", "agentic", "agent"]

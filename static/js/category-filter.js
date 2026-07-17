@@ -22,6 +22,14 @@
     });
   });
 
+  // A pill can stand for several tag slugs (a discipline "catch-all"): the
+  // canonical slug plus any aliases, carried in data-filter-aliases. Fall back
+  // to the single data-filter value for pills without aliases (e.g. categories).
+  function aliasesOf(el) {
+    var raw = el.getAttribute('data-filter-aliases') || el.getAttribute('data-filter') || '';
+    return raw.split(' ').filter(Boolean);
+  }
+
   // Pass 2: replace each <a>/<span> pill with a <button>; mark empty pills as
   // disabled.
   groups.forEach(function (group) {
@@ -35,6 +43,8 @@
       var btn = document.createElement('button');
       btn.className = pill.className;
       btn.setAttribute('data-filter', pill.getAttribute('data-filter'));
+      var aliasAttr = pill.getAttribute('data-filter-aliases');
+      if (aliasAttr) btn.setAttribute('data-filter-aliases', aliasAttr);
       btn.textContent = pill.textContent;
       btn.type = 'button';
 
@@ -44,7 +54,10 @@
       }
 
       var filter = btn.getAttribute('data-filter');
-      var isEmpty = filter !== 'all' && !presentSet.has(filter);
+      // Empty when the pill matches no visible post via ANY of its alias slugs.
+      var isEmpty = filter !== 'all' && !aliasesOf(btn).some(function (s) {
+        return presentSet.has(s);
+      });
       if (isEmpty) {
         btn.classList.add('category-pills__pill--empty');
         btn.disabled = true;
@@ -70,7 +83,9 @@
         var f = activeFilters[group];
         if (f === 'all') return;
         var pool = group === 'discipline' ? tags : cats;
-        if (pool.indexOf(f) === -1) visible = false;
+        // f is an array of alias slugs; a post matches if it carries ANY of them.
+        var matched = f.some(function (s) { return pool.indexOf(s) !== -1; });
+        if (!matched) visible = false;
       });
       article.hidden = !visible;
       if (visible) visibleCount++;
@@ -88,7 +103,7 @@
       var btn = event.target.closest('.category-pills__pill');
       if (!btn || btn.disabled) return;
 
-      activeFilters[groupName] = btn.getAttribute('data-filter');
+      activeFilters[groupName] = btn.getAttribute('data-filter') === 'all' ? 'all' : aliasesOf(btn);
 
       var groupButtons = group.querySelectorAll('.category-pills__pill');
       groupButtons.forEach(function (b) {

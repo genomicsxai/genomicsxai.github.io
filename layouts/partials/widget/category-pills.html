@@ -57,14 +57,21 @@
        class="category-pills__pill{{ if eq $currentDisc "all" }} category-pills__pill--active{{ end }}"
        data-filter="all">All</a>
     {{- range site.Data.disciplines }}
-      {{- $isActive := eq $currentDisc .slug -}}
-      {{- $termPage := site.GetPage (printf "/tags/%s" .slug) -}}
+      {{- /* canonical slug + any aliases all count toward this discipline */ -}}
+      {{- $slugs := slice .slug -}}
+      {{- with .aliases }}{{ $slugs = $slugs | append . }}{{ end -}}
+      {{- $isActive := in $slugs $currentDisc -}}
+      {{- /* link to the first alias that has a real tag-archive page (prefer canonical) */ -}}
+      {{- $termPage := false -}}
+      {{- range $slugs -}}
+        {{- if not $termPage -}}{{- with site.GetPage (printf "/tags/%s" .) }}{{ $termPage = . }}{{ end -}}{{- end -}}
+      {{- end -}}
       {{- if $termPage }}
     <a href="{{ $termPage.Permalink }}"
        class="category-pills__pill{{ if $isActive }} category-pills__pill--active{{ end }}"
-       data-filter="{{ .slug }}">{{ .label }}</a>
+       data-filter="{{ .slug }}" data-filter-aliases="{{ delimit $slugs " " }}">{{ .label }}</a>
       {{- else }}
-    <span class="category-pills__pill category-pills__pill--empty" data-filter="{{ .slug }}" aria-disabled="true">{{ .label }}</span>
+    <span class="category-pills__pill category-pills__pill--empty" data-filter="{{ .slug }}" data-filter-aliases="{{ delimit $slugs " " }}" aria-disabled="true">{{ .label }}</span>
       {{- end -}}
     {{- end }}
   </div>

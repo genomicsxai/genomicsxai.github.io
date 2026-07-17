@@ -10,6 +10,10 @@ name: Credit PR reviewers
 # `editor:` is a metadata-only field (not rendered on the site), stored as a
 # YAML flow list, e.g. `editor: ["dwgoblue", "Al-Murphy"]`. A legacy single
 # string value is migrated to a one-item list the first time it is touched.
+#
+# This workflow also stamps `date:` (the homepage sort key) with the publish
+# date = the PR merge date, but only for posts newly ADDED by the PR, so
+# "first published" ordering stays correct without manual date-keeping.
 
 on:
   pull_request_target:
@@ -141,6 +145,63 @@ jobs:
               print(f"{path}: credited {to_add}")
           PYEOF
 
+      # Stamp `date:` (the field the homepage orders by) with the actual publish
+      # date = the PR merge date, but ONLY for posts newly ADDED by this PR. This
+      # keeps "first published" ordering correct without relying on authors
+      # setting date by hand. Edits/re-merges never touch an existing post's date.
+      - name: Set publish date on newly added posts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number || github.event.inputs.pr }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, re, subprocess
+
+          repo = os.environ["REPO"]
+          pr = os.environ["PR"]
+
+          def gh(path, jq):
+              return subprocess.run(
+                  ["gh", "api", "--paginate", path, "-q", jq],
+                  capture_output=True, text=True, check=True,
+              ).stdout
+
+          merged_at = gh(f"/repos/{repo}/pulls/{pr}", ".merged_at").strip()
+          if not merged_at or merged_at == "null":
+              print("PR is not merged — skipping publish-date step.")
+              raise SystemExit(0)
+          pub_date = merged_at[:10]  # YYYY-MM-DD
+
+          added = [f.strip() for f in
+                   gh(f"/repos/{repo}/pulls/{pr}/files",
+                      '.[] | select(.status=="added") | .filename').splitlines()
+                   if re.match(r"^content/blogs/[^/]+/index\.md$", f.strip())]
+          if not added:
+              print("No newly added blog posts in this PR — nothing to date.")
+              raise SystemExit(0)
+
+          for path in added:
+              if not os.path.exists(path):
+                  continue
+              with open(path, encoding="utf-8") as f:
+                  text = f.read()
+              # Match only the top-level `date:` line (revision_history dates are
+              # indented; date_submitted/date_accepted have a different key).
+              m = re.search(r"^(date:[ \t]*)(.*)$", text, re.MULTILINE)
+              if not m:
+                  print(f"WARNING: no date: field in {path}, skipping.")
+                  continue
+              current = m.group(2).strip()
+              if current == pub_date:
+                  print(f"{path}: date already {pub_date}.")
+                  continue
+              text = text[:m.start()] + m.group(1) + pub_date + text[m.end():]
+              with open(path, "w", encoding="utf-8") as f:
+                  f.write(text)
+              print(f"{path}: set date -> {pub_date} (was {current or 'empty'})")
+          PYEOF
+
       - name: Commit and push
         run: |
           if [ -z "$(git status --porcelain -- content/blogs)" ]; then
@@ -152,5 +213,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # origin is an SSH remote (deploy key from checkout above); pushes to main.
           git add content/blogs/*/index.md
-          git commit -m "chore: credit reviewers on merged PR #${PR}"
+          git commit -m "chore: post-merge frontmatter for PR #${PR} (reviewers, publish date)"
           git push origin HEAD:main

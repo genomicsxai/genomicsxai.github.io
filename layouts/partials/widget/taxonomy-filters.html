@@ -18,10 +18,17 @@
 <nav class="filter-bar">
   <h3 class="filter-bar__heading">Filter posts by&hellip;</h3>
 
-  {{- /* Discipline dropdown — only show disciplines whose tag-archive page exists */ -}}
+  {{- /* Discipline dropdown — show a discipline if its canonical slug OR any
+         alias has a tag-archive page; link to the first such archive (prefer
+         canonical). The homepage pill filter aggregates all aliases client-side. */ -}}
   {{- $availableDisciplines := slice -}}
   {{- range $disciplines -}}
-    {{- $termPage := site.GetPage (printf "/tags/%s" .slug) -}}
+    {{- $slugs := slice .slug -}}
+    {{- with .aliases }}{{ $slugs = $slugs | append . }}{{ end -}}
+    {{- $termPage := false -}}
+    {{- range $slugs -}}
+      {{- if not $termPage -}}{{- with site.GetPage (printf "/tags/%s" .) }}{{ $termPage = . }}{{ end -}}{{- end -}}
+    {{- end -}}
     {{- if $termPage -}}
       {{- $availableDisciplines = $availableDisciplines | append (dict "label" .label "page" $termPage) -}}
     {{- end -}}
