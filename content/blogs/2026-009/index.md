@@ -1,6 +1,6 @@
 ---
 post_id: "2026-009"
-title: "Beyond coverage tracks: fine-tuning AlphaGenome's splicing heads, from debugging to held-out evaluation"
+title: "Beyond coverage tracks: fine-tuning AlphaGenome's splicing heads, from debugging to full fine-tuning"
 image: "alphagenome_rna_heads.png"
 math: false
 
@@ -47,7 +47,7 @@ revision_history:
 {{< summary >}}
 DeepMind has released [AlphaGenome](https://deepmind.google/discover/blog/alphagenome-a-foundation-model-for-genome-biology/)’s code and model weights, and the community has since developed [alphagenome_ft](https://github.com/genomicsxai/alphagenome_ft) and [alphagenome-pytorch](https://github.com/genomicsxai/alphagenome-pytorch) to enable seamless fine-tuning in both JAX and PyTorch. These implementations support bigwig-based modalities such as RNA sequencing (RNA-seq) coverage tracks, but other RNA-seq-derived outputs, including splice site probabilities, splice site usage, and splice junctions, require additional work, from data preprocessing and loading to validating fine-tuning on unseen samples. What initially seemed like a straightforward extension became a useful exercise in understanding how large genomic models learn and how to debug new output heads.
 
-In this post, we share that development process: preprocessing the data, building loaders, running sanity checks, and overfitting a single interval, including the bugs we found along the way and how we fixed them. We then scale up to full fine-tuning on held-out genomic intervals and report the resulting performance for two fine-tuning strategies.
+In this post, we share that development process: preprocessing the data, building loaders, running sanity checks, and overfitting a single interval, including the bugs we found along the way and how we fixed them. We then scale up to full fine-tuning and evaluation on held-out genomic intervals and report the resulting performance for two fine-tuning strategies.
 
 All code, model adaptations, and pipelines used for this blog post are [available](https://github.com/MiqG/alphagenome_finetuning_rna/tree/v1.0.1).
 
@@ -78,7 +78,7 @@ Since much of this work sits between "using AlphaGenome as published," "reproduc
 
 For this fine-tuning example, we chose two RNA-seq samples from [López-Oreja (2023)](https://pubmed.ncbi.nlm.nih.gov/37562845/): one carrying the SF3B1 K700E cancer driver mutation and one without it. This mutation is known to promote the recognition of cryptic splice sites, so we expected it to affect the RNA-seq modalities considered here. In this blogpost we only use these data for code development purposes of multimodal learning, but we will delve into the sequence determinants of this misregulated modulation in the next blogpost on this topic.
 
-AlphaGenome's data preprocessing code is not publicly available, though the key steps are described in the paper's methods. To reproduce the pipeline as closely as possible, we wrote [standardized Snakemake rules](https://github.com/MiqG/alphagenome_finetuning_rna/blob/v1.0.1/workflows/01-obtain_data/rules/sf3b1mut.smk) that derive all four training tracks from a single STAR RNA-seq alignment BAM file. Reads are aligned with STAR following the AlphaGenome paper's alignment settings, retaining only uniquely mapped reads on canonical chromosomes.
+AlphaGenome's data preprocessing code is not publicly available, though the key steps are described in the paper's methods. To reproduce the pipeline as closely as possible, we wrote [standardized Snakemake workflows](https://github.com/MiqG/alphagenome_finetuning_rna/blob/v1.0.1/workflows/01-obtain_data/rules/sf3b1mut.smk) that derive all four training tracks from a single STAR RNA-seq alignment BAM file. Reads are aligned with STAR following the AlphaGenome paper's alignment settings, retaining only uniquely mapped reads on canonical chromosomes.
 
 - **Per-base RNA-seq coverage** (stranded or unstranded) is computed using `deepTools`' [`bamCoverage`](https://deeptools.readthedocs.io/en/develop/content/tools/bamCoverage.html). Output: bigwig files.
 - **Splice site classes** are derived on the fly during data loading from the union of splice sites present in the splice site usage files, so no separate file is needed.
@@ -147,19 +147,52 @@ We opened another [GitHub issue](https://github.com/google-deepmind/alphagenome_
 
 ![Figure 8. Debugging the splice junction head: loss formulation.](splice_junctions_debug-loss.png "width=400 Debugging the splice junction head: loss formulation.")
 
+## What actually worked: practical recipe for full fine-tuning AlphaGenome on new samples across RNA-seq modalities
+
+With the failure points above identified and fixed, we ran a first full fine-tuning pass across the whole genome, using linear probing (frozen trunk, only the new heads trained) with the settings that worked best during single-interval debugging:
+
+- pretrained initialization for the splice site head,
+- 8-way loss segmentation (matching AlphaGenome's pretraining sequence parallelism),
+- annotated junction positions, given their robustness over predicted positions,
+- truncated-normal initialization for the junction head's RoPE parameters,
+- the normalized (ratio-based) junction loss,
+- a constant learning rate (LR = 1e-4).
+
+Held-out performance improved over training, alongside a modest but consistent generalization gap: at every epoch, we compared test-set performance against a same-sized random subsample of training intervals (`train_sample`). At epoch 10, held-out test performance trailed the training subsample by roughly 0.06–0.10 Pearson r across all three modalities (gene expression, splice site usage, splice junctions), for both linear-probe and LoRA. Reassuringly, that gap stayed roughly constant across epochs rather than widening — i.e. the models aren't progressively overfitting the training intervals with more training, though they also aren't closing the gap to training performance either.
+
+![Figure 9. Held-out (solid) vs. training-subsample (dashed) performance across full fine-tuning epochs, linear-probe vs. LoRA, for gene expression, splice site usage, and splice junctions.](full_runs.png "width=700 Held-out (solid) vs. training-subsample (dashed) performance across full fine-tuning epochs, linear-probe vs. LoRA, for gene expression, splice site usage, and splice junctions.")
+
+Gene expression performance saturated early, so we asked whether LoRA fine-tuning - updating the trunk's internal DNA representation via low-rank adapters, rather than only the new output heads — could do better, particularly on the splicing-specific modalities. Comparing linear-probing against LoRA at epoch 10 on the held-out test set:
+
+| Metric | Linear-probe | LoRA | Δ (LoRA − probe) |
+|---|---|---|---|
+| Gene expression (Pearson r) | **0.899** | 0.893 | −0.006 |
+| Splice site usage (Pearson r) | 0.646 | **0.659** | +0.013 |
+| Splice junctions (Pearson r) | 0.788 | **0.811** | +0.023 |
+
+As expected, LoRA, by updating the trunk's internal DNA representation instead of leaving it frozen, improved performance over linear probing on the splicing-specific metrics (splice site usage, splice junctions), while gene expression stayed essentially unchanged between the two (linear-probe even edges it out slightly there).
+
+The two strategies also differ substantially in compute footprint. Full genome fine-tuning with LoRA needed a full NVIDIA H100 (80 GB) and took about a week, since backpropagating through the frozen trunk to reach the low-rank adapters still requires storing its activations end to end, even though the trunk's own weights aren't updated. Linear probing, by contrast, only needs gradients for the new heads, so it ran comfortably on NVIDIA Hopper-class GPUs with as little as 64 GB of memory.
+
+The workflows for full fine-tuning and evaluation are available in the repository: [`workflows/05-full_finetuning`](https://github.com/MiqG/alphagenome_finetuning_rna/tree/v1.0.1/workflows/05-full_finetuning) and [`workflows/06-evaluation`](https://github.com/MiqG/alphagenome_finetuning_rna/tree/v1.0.1/workflows/06-evaluation).
+
+<!-- TODO: update these two links (and the v1.0.1 tags elsewhere in this post) once blog-dev is tagged with the release that includes workflows 05/06 -->
+
 ## Limitations
 
-All debugging was performed on a single genomic interval with just two RNA-seq samples, so the behavior we observed may not generalize to larger or more diverse training sets. The preprocessing pipeline reproduces the main steps described in the AlphaGenome paper, but since the original code is not public, we cannot guarantee exact parity.
+The initial debugging (up to and including the loss-formulation fix) was performed on a single genomic interval with just two RNA-seq samples, so those specific observations may not generalize to larger or more diverse training sets — this is why we followed up with the full genome-wide fine-tuning run above. The preprocessing pipeline reproduces the main steps described in the AlphaGenome paper, but since the original code is not public, we cannot guarantee exact parity.
 
 The splicing fine-tuning code currently lives in a dedicated fork of [alphagenome-pytorch](https://github.com/MiqG/alphagenome-pytorch/tree/splice-finetuning) and is pending merge into the main branch. Support in the JAX-based [alphagenome_ft](https://github.com/genomicsxai/alphagenome_ft) will follow once that merge is complete.
 
-This post focuses entirely on getting the implementation correct, not on biological results. We do not report held-out performance or compare model predictions to independent data. Whether the fine-tuned heads generalize to unseen genomic intervals or samples, and whether they capture SF3B1-specific splicing changes, is left for the follow-up post.
+This post focuses on getting the implementation correct and measuring held-out performance, not on biological interpretation. We do not yet relate these predictions to independent data or ask whether the fine-tuned heads capture SF3B1-specific splicing changes — that comparison, and the accompanying biological interpretation, is left for the follow-up post. We also only evaluate two RNA-seq samples (one WT, one K700E) and a single AlphaGenome fold; generalization to more samples, mutations, or cell types remains to be tested.
 
 ## Conclusion
 
 This process gave us a much better understanding of what it actually takes to fine-tune new transcriptomic heads on AlphaGenome. Extending the model to splicing modalities was not simply a matter of adding data loaders and output layers (as we hoped): higher label sparsity, head initialization, loss formulation, and the interaction between position sources and weight initialization all turned out to matter.
 
 The most useful strategy was to build confidence at each step before scaling up, from preprocessing validation and target inspection to single-interval overfitting. Each stage exposed a different class of problem. The single-interval test in particular was worth its weight as the two loss bugs and a zero-initialization bug in the junction head would have been much harder to diagnose in a full training run. We hope that sharing these intermediate failures, alongside the fixes and the flags that control them, makes it easier for others to extend AlphaGenome to new RNA-seq modalities and biological questions. 
+
+The full fine-tuning results also suggest that gene expression and splicing tasks don't need the same amount of compute: gene expression performance saturated early and didn't benefit from LoRA, so linear probing on modest hardware is likely enough there, whereas the splicing modalities kept improving and gained the most from LoRA's larger compute and memory footprint. If gene expression is your main target, linear probing is probably all you need; splicing tasks are where the extra compute pays off.
 
 In the end, this project became more than a simple port. It resulted in reusable preprocessing scripts, training pipelines, and a set of practical checks and warnings that we hope make fine-tuning RNA-seq–derived splicing modalities on AlphaGenome more transparent and reproducible. We are especially grateful to the DeepMind developers for openly sharing their code and model weights, and for the responsiveness of Tom Ward ([`@tomwardio`](https://github.com/tomwardio)) and Vincent Dutordoir ([`@vdutor`](https://github.com/vdutor)) when we reported bugs and implementation issues; their feedback was instrumental in reaching the conclusions presented here. We hope these efforts help make fine-tuning splicing heads as seamless and accessible as possible for the broader community.
 
