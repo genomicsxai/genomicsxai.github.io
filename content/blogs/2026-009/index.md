@@ -1,7 +1,6 @@
 ---
 post_id: "2026-009"
 title: "Beyond coverage tracks: fine-tuning AlphaGenome's splicing heads from scratch"
-image: "alphagenome_rna_heads.png"
 math: false
 
 authors: ["Miquel Anglada-Girotto", "Jonathan Frazer", "Mafalda Dias"]
@@ -55,7 +54,7 @@ DeepMind has released [AlphaGenome](https://deepmind.google/discover/blog/alphag
 
 In this post, we share that development process: preprocessing the data, building loaders, running sanity checks, and overfitting a single interval, including the bugs we found along the way and how we fixed them. We then scale up to full fine-tuning and evaluation on held-out genomic intervals and report the resulting performance for two fine-tuning strategies.
 
-All code, model adaptations, and pipelines used for this blog post are [available](https://github.com/MiqG/alphagenome_finetuning_rna/tree/v1.0.1).
+All code, model adaptations, and pipelines used for this blog post are [available](https://github.com/MiqG/alphagenome_finetuning_rna/tree/v1.0.2).
 
 {{< /summary >}}
 
@@ -84,7 +83,7 @@ Since much of this work sits between "using AlphaGenome as published," "reproduc
 
 For this fine-tuning example, we chose two RNA-seq samples from [López-Oreja (2023)](https://pubmed.ncbi.nlm.nih.gov/37562845/): one carrying the SF3B1 K700E cancer driver mutation and one without it. This mutation is known to promote the recognition of cryptic splice sites, so we expected it to affect the RNA-seq modalities considered here. In this blogpost we only use these data for code development purposes of multimodal learning, but we will delve into the sequence determinants of this misregulated modulation in the next blogpost on this topic.
 
-AlphaGenome's data preprocessing code is not publicly available, though the key steps are described in the paper's methods. To reproduce the pipeline as closely as possible, we wrote [standardized Snakemake workflows](https://github.com/MiqG/alphagenome_finetuning_rna/blob/v1.0.1/workflows/01-obtain_data/rules/sf3b1mut.smk) that derive all four training tracks from a single STAR RNA-seq alignment BAM file. Reads are aligned with STAR following the AlphaGenome paper's alignment settings, retaining only uniquely mapped reads on canonical chromosomes.
+AlphaGenome's data preprocessing code is not publicly available, though the key steps are described in the paper's methods. To reproduce the pipeline as closely as possible, we wrote [standardized Snakemake workflows](https://github.com/MiqG/alphagenome_finetuning_rna/blob/v1.0.2/workflows/01-obtain_data/rules/sf3b1mut.smk) that derive all four training tracks from a single STAR RNA-seq alignment BAM file. Reads are aligned with STAR following the AlphaGenome paper's alignment settings, retaining only uniquely mapped reads on canonical chromosomes.
 
 - **Per-base RNA-seq coverage** (stranded or unstranded) is computed using `deepTools`' [`bamCoverage`](https://deeptools.readthedocs.io/en/develop/content/tools/bamCoverage.html). Output: bigwig files.
 - **Splice site classes** are derived on the fly during data loading from the union of splice sites present in the splice site usage files, so no separate file is needed.
@@ -117,7 +116,7 @@ All four tracks are loaded jointly for each genomic interval and normalized on t
 
 ## First time never works
 
-As a first sanity check, we verified that the model could overfit a single genomic interval using linear probing (freezing the backbone and training only the new heads). A model with enough capacity should memorize a single batch; failure to do so points to a bug rather than a generalization problem. To make the test representative, we selected an interval with median splice junction density among all training intervals (see [this](https://github.com/MiqG/alphagenome_finetuning_rna/blob/v1.0.1/figures/overfitting_interval_selection.ipynb) notebook for the selection details).
+As a first sanity check, we verified that the model could overfit a single genomic interval using linear probing (freezing the backbone and training only the new heads). A model with enough capacity should memorize a single batch; failure to do so points to a bug rather than a generalization problem. To make the test representative, we selected an interval with median splice junction density among all training intervals (see [this](https://github.com/MiqG/alphagenome_finetuning_rna/blob/v1.0.2/figures/overfitting_interval_selection.ipynb) notebook for the selection details).
 
 The test was useful precisely because it failed. The splice site probability heads did not overfit, and the splice junction heads did not learn at all. The next two sections trace what was wrong with each and how we fixed it.
 
@@ -127,7 +126,7 @@ The test was useful precisely because it failed. The splice site probability hea
 
 The splice site classification head struggled to overfit when initialized randomly. This is not surprising: the purpose of fine-tuning AlphaGenome is not to re-learn the general splicing code from scratch. The splice site classification head captures a property shared across all samples, where donor and acceptor sites sit on each strand, while the splice site usage and junction heads carry the sample-specific signal. It therefore makes sense to start from the pretrained weights for this head and let the sample-specific heads adapt.
 
-We explored three factors that could affect overfitting on the single interval: (1) initializing the splice site classification head from pretrained rather than random weights (see [this](https://github.com/MiqG/alphagenome_finetuning_rna/blob/v1.0.1/figures/track_indices.ipynb) notebook for how we select which pretrained tracks to use for initialization), (2) augmenting the interval's splice sites with all annotated sites from the GTF (to reduce label sparsity, since AlphaGenome was pretrained on many more samples and thus more splice sites), and (3) segmenting the loss computation to match the 8-segment sequence parallelism used during AlphaGenome pretraining. We implemented support for all three options via `finetune.py` flags: `--pretrained-head-samples` to initialize specific head weights from a pretrained track (e.g. `splice_site:0`), `--gtf` to supply a GTF or parquet file of canonical splice sites, and `--num-segments` to control how many segments the sequence is split into for loss computation (applies to all modalities, not just splicing).
+We explored three factors that could affect overfitting on the single interval: (1) initializing the splice site classification head from pretrained rather than random weights (see [this](https://github.com/MiqG/alphagenome_finetuning_rna/blob/v1.0.2/figures/track_indices.ipynb) notebook for how we select which pretrained tracks to use for initialization), (2) augmenting the interval's splice sites with all annotated sites from the GTF (to reduce label sparsity, since AlphaGenome was pretrained on many more samples and thus more splice sites), and (3) segmenting the loss computation to match the 8-segment sequence parallelism used during AlphaGenome pretraining. We implemented support for all three options via `finetune.py` flags: `--pretrained-head-samples` to initialize specific head weights from a pretrained track (e.g. `splice_site:0`), `--gtf` to supply a GTF or parquet file of canonical splice sites, and `--num-segments` to control how many segments the sequence is split into for loss computation (applies to all modalities, not just splicing).
 
 Initializing from pretrained weights enabled clean overfitting regardless of whether GTF sites or loss segmentation were used. When starting from random weights, loss segmentation had a secondary effect: higher overall loss but faster overfitting, with or without the GTF augmentation.
 
@@ -180,7 +179,7 @@ As expected, LoRA, by updating the trunk's internal DNA representation instead o
 
 The two strategies also differ substantially in compute footprint. Full genome fine-tuning with LoRA needed a full NVIDIA H100 (80 GB) and took about a week, since backpropagating through the frozen trunk to reach the low-rank adapters still requires storing its activations end to end, even though the trunk's own weights aren't updated. Linear probing, by contrast, only needs gradients for the new heads, so it ran comfortably on NVIDIA Hopper-class GPUs with as little as 64 GB of memory.
 
-The workflows for full fine-tuning and evaluation are available in the repository: [`workflows/05-full_finetuning`](https://github.com/MiqG/alphagenome_finetuning_rna/tree/v1.0.1/workflows/05-full_finetuning) and [`workflows/06-evaluation`](https://github.com/MiqG/alphagenome_finetuning_rna/tree/v1.0.1/workflows/06-evaluation).
+The workflows for full fine-tuning and evaluation are available in the repository: [`workflows/05-full_finetuning`](https://github.com/MiqG/alphagenome_finetuning_rna/tree/v1.0.2/workflows/05-full_finetuning) and [`workflows/06-evaluation`](https://github.com/MiqG/alphagenome_finetuning_rna/tree/v1.0.2/workflows/06-evaluation).
 
 ## Limitations
 
@@ -202,7 +201,7 @@ In the end, this project became more than a simple port. It resulted in reusable
 
 ## Reproducibility
 
-The repository [alphagenome_finetuning_rna](https://github.com/MiqG/alphagenome_finetuning_rna/tree/v1.0.1) contains all the necessary code, from data downloading to analysis and figures, to reproduce these results.
+The repository [alphagenome_finetuning_rna](https://github.com/MiqG/alphagenome_finetuning_rna/tree/v1.0.2) contains all the necessary code, from data downloading to analysis and figures, to reproduce these results.
 
 ## References
 
