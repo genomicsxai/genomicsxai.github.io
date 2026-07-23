@@ -1,7 +1,7 @@
 ---
 post_id: "2026-009"
-title: "Beyond coverage tracks: fine-tuning AlphaGenome's splicing heads from scratch"
-image: "cross_gpu_scaling.png"
+title: "Beyond coverage tracks: fine-tuning AlphaGenome's splicing heads, from debugging to held-out evaluation"
+image: "alphagenome_rna_heads.png"
 math: false
 
 authors: ["Miquel Anglada-Girotto", "Jonathan Frazer", "Mafalda Dias"]
@@ -23,8 +23,8 @@ tags: ["genomics", "AlphaGenome", "PyTorch", "development", "GPUs", "seq2func", 
 categories: ["Blog Post"]
 
 scope: ["insights"]
-audience: ["general"]
-labs: ["Dias & Frazer lab"]
+audience: ["within-field"]
+labs: ["Dias lab", "Frazer lab"]
 
 status: "submitted"
 revision: 1
@@ -47,9 +47,7 @@ revision_history:
 {{< summary >}}
 DeepMind has released [AlphaGenome](https://deepmind.google/discover/blog/alphagenome-a-foundation-model-for-genome-biology/)’s code and model weights, and the community has since developed [alphagenome_ft](https://github.com/genomicsxai/alphagenome_ft) and [alphagenome-pytorch](https://github.com/genomicsxai/alphagenome-pytorch) to enable seamless fine-tuning in both JAX and PyTorch. These implementations support bigwig-based modalities such as RNA sequencing (RNA-seq) coverage tracks, but other RNA-seq-derived outputs, including splice site probabilities, splice site usage, and splice junctions, require additional work, from data preprocessing and loading to validating fine-tuning on unseen samples. What initially seemed like a straightforward extension became a useful exercise in understanding how large genomic models learn and how to debug new output heads.
 
-{{< figure src="alphagenome_rna_heads.png" width="500" caption="Overview of AlphaGenome's splicing heads." >}}
-
-In this post, we share that development process: preprocessing the data, building loaders, running sanity checks, and overfitting a single interval, including the bugs we found along the way and how we fixed them.
+In this post, we share that development process: preprocessing the data, building loaders, running sanity checks, and overfitting a single interval, including the bugs we found along the way and how we fixed them. We then scale up to full fine-tuning on held-out genomic intervals and report the resulting performance for two fine-tuning strategies.
 
 All code, model adaptations, and pipelines used for this blog post are [available](https://github.com/MiqG/alphagenome_finetuning_rna/tree/v1.0.1).
 
@@ -57,18 +55,37 @@ All code, model adaptations, and pipelines used for this blog post are [availabl
 
 ---
 
+## Motivation
+
+This post is an implementation report: we walk through preprocessing, data loading, debugging, and held-out evaluation for AlphaGenome's splicing heads. We do not yet interpret these results biologically — relating the model's predictions back to the SF3B1 K700E mutation itself is the subject of a follow-up post.
+
+The goal we are working towards is a fine-tuning workflow that can take a new RNA-seq dataset and produce a model that predicts sample-specific splicing outcomes directly from sequence. Concretely, for the SF3B1 K700E case study used throughout this post: a model that, given a genomic sequence and a target sample, predicts splice site usage and junction counts well enough to flag where and how splicing differs between a mutant and wild-type sample, without needing RNA-seq data for that sample. Getting there means the model has to generalize to unseen genomic intervals, and ideally to unseen samples. This post covers the first part of that path — getting the implementation right and measuring held-out performance for two fine-tuning strategies — while the biological question of what these predictions say about SF3B1-driven cryptic splicing is left for later.
+
+![Figure 1. Overview of AlphaGenome's splicing heads.](alphagenome_rna_heads.png "width=500 Overview of AlphaGenome's splicing heads.")
+
+### What comes from where
+
+Since much of this work sits between "using AlphaGenome as published," "reproducing details the paper doesn't fully specify," and "our own implementation choices," here's a breakdown of which parts of the pipeline fall into each category:
+
+| Component | Category |
+|---|---|
+| Junction-head architecture and candidate splice-site conditioning | Inherited from AlphaGenome, unmodified |
+| STAR/deepTools-based alignment and coverage processing | Reproduced from the AlphaGenome paper's methods, best-effort (original preprocessing code is not public) |
+| Splice site usage / junction count extraction scripts, on-the-fly per-modality normalization | New implementation choices, specific to this project |
+| `rope_params` truncated-normal initialization, ratio-normalized junction loss | Debugging fixes for a mismatch between the paper's pseudocode and the JAX/PyTorch implementations — not new methodological contributions |
+
 ## From raw data to preprocessed training tracks
 
 For this fine-tuning example, we chose two RNA-seq samples from [López-Oreja (2023)](https://pubmed.ncbi.nlm.nih.gov/37562845/): one carrying the SF3B1 K700E cancer driver mutation and one without it. This mutation is known to promote the recognition of cryptic splice sites, so we expected it to affect the RNA-seq modalities considered here. In this blogpost we only use these data for code development purposes of multimodal learning, but we will delve into the sequence determinants of this misregulated modulation in the next blogpost on this topic.
 
-AlphaGenome's data preprocessing code is not publicly available, though the key steps are described in the paper's methods. To reproduce the pipeline as closely as possible, we wrote standardized scripts that derive all four training tracks from a single STAR RNA-seq alignment BAM file. Reads are aligned with STAR following the AlphaGenome paper's alignment settings, retaining only uniquely mapped reads on canonical chromosomes.
+AlphaGenome's data preprocessing code is not publicly available, though the key steps are described in the paper's methods. To reproduce the pipeline as closely as possible, we wrote [standardized Snakemake rules](https://github.com/MiqG/alphagenome_finetuning_rna/blob/v1.0.1/workflows/01-obtain_data/rules/sf3b1mut.smk) that derive all four training tracks from a single STAR RNA-seq alignment BAM file. Reads are aligned with STAR following the AlphaGenome paper's alignment settings, retaining only uniquely mapped reads on canonical chromosomes.
 
 - **Per-base RNA-seq coverage** (stranded or unstranded) is computed using `deepTools`' [`bamCoverage`](https://deeptools.readthedocs.io/en/develop/content/tools/bamCoverage.html). Output: bigwig files.
 - **Splice site classes** are derived on the fly during data loading from the union of splice sites present in the splice site usage files, so no separate file is needed.
 - **Splice site usage** is computed from the BAM using our custom script [`compute_ssu.py`](https://github.com/MiqG/alphagenome-pytorch/blob/splice-finetuning/scripts/compute_ssu.py), equivalent to [`SpliSER`](https://github.com/CraigIDent/SpliSER/tree/speedups). For each splice site supported by at least one junction, usage is estimated as the fraction of reads supporting that site relative to reads that skip it. Output: zstd-compressed parquet files.
 - **Splice junction counts** are available directly from STAR at alignment time, or can be extracted post-hoc from the BAM using our custom script [`get_star_junctions.py`](https://github.com/MiqG/alphagenome-pytorch/blob/splice-finetuning/scripts/get_star_junctions.py). Output: tab-separated files.
 
-{{< figure src="data_prep_workflow.png" width="500" caption="Data preprocessing workflow." >}}
+![Figure 2. Data preprocessing workflow.](data_prep_workflow.png "width=500 Data preprocessing workflow.")
 
 To make sure our custom implementations to compute splice junction counts and splice site usage matched how STAR and SpliSER calculate them respectively, we ran a comparison on chromosome 1 on our samples.
 
@@ -76,7 +93,7 @@ In both cases we observe a Pearson correlation of 1 (for splice junction counts 
 
 Both implementations were also highly efficient in runtime, with [`get_star_junctions.py`](https://github.com/MiqG/alphagenome-pytorch/blob/splice-finetuning/scripts/get_star_junctions.py) requiring ~10s and ~150 MB per sample, and [`compute_ssu.py`](https://github.com/MiqG/alphagenome-pytorch/blob/splice-finetuning/scripts/compute_ssu.py) requiring ~20s and ~200 MB per sample compared to SpliSER's ~600s and ~100 MB.
 
-{{< figure src="benchmark_juncs_and_ssu.png" width="350" caption="Benchmark of splice junction counting and splice site usage computation." >}}
+![Figure 3. Benchmark of splice junction counting and splice site usage computation.](benchmark_juncs_and_ssu.png "width=350 Benchmark of splice junction counting and splice site usage computation.")
 
 ## Data loading and on-the-fly normalization
 
@@ -90,7 +107,7 @@ All four tracks are loaded jointly for each genomic interval and normalized on t
 
 **Splice junction counts** from STAR are CPM-normalized using the total mapped reads per sample, clipped at the 99.99th percentile, and then mean-scaled so that the typical non-zero value is close to 1. Junctions are assembled into a donor × acceptor count matrix, with forward and reverse strand channels interleaved across samples.
 
-{{< figure src="data_loading_normalization.png" width="600" caption="Normalizing training data on the fly." >}}
+![Figure 4. Normalizing training data on the fly.](data_loading_normalization.png "width=600 Normalizing training data on the fly.")
 
 ## First time never works
 
@@ -98,7 +115,7 @@ As a first sanity check, we verified that the model could overfit a single genom
 
 The test was useful precisely because it failed. The splice site probability heads did not overfit, and the splice junction heads did not learn at all. The next two sections trace what was wrong with each and how we fixed it.
 
-{{< figure src="first_attempt.png" width="900" caption="First attempt to overfit a single interval." >}}
+![Figure 5. First attempt to overfit a single interval.](first_attempt.png "width=900 First attempt to overfit a single interval.")
 
 ## Initializing splice site heads with pretrained weights facilitates single-batch overfitting
 
@@ -108,7 +125,7 @@ We explored three factors that could affect overfitting on the single interval: 
 
 Initializing from pretrained weights enabled clean overfitting regardless of whether GTF sites or loss segmentation were used. When starting from random weights, loss segmentation had a secondary effect: higher overall loss but faster overfitting, with or without the GTF augmentation.
 
-{{< figure src="debug_splice_head.png" width="600" caption="Debugging the splice site head." >}}
+![Figure 6. Debugging the splice site head.](debug_splice_head.png "width=600 Debugging the splice site head.")
 
 ## Why the junction head could not learn
 
@@ -120,7 +137,7 @@ Cross-referencing with the original JAX implementation and reaching out to the a
 
 With the fix in place, the randomly initialized junction head overfits successfully when splice site positions are taken from the target junctions, set via `--junction-position-source annotated` (the default). 
 
-{{< figure src="splice_junctions_debug-init.png" width="800" caption="Debugging the splice junction head: random initialization." >}}
+![Figure 7. Debugging the splice junction head: random initialization.](splice_junctions_debug-init.png "width=800 Debugging the splice junction head: random initialization.")
 
 Using predicted positions (`--junction-position-source predicted`) exposed a further issue: pretrained-weight initialization collapsed while random initialization still learned. The pretrained head was optimized alongside a dense, tissue-diverse set of splice site positions from pretraining; positions predicted by a freshly fine-tuned splice site head on just two samples are sparser and differently distributed, likely placing it outside its operating range. Looking at the loss values pointed to a related problem: the junction cross-entropy was going negative during training, which would destabilize any head but hit the pretrained one harder.
 
@@ -128,15 +145,7 @@ The root cause seemed to be a mismatch between the paper's pseudocode and both t
 
 We opened another [GitHub issue](https://github.com/google-deepmind/alphagenome_research/issues/24) with the authors, who confirmed the discrepancy and introduced a ratio-normalized formulation: both targets and predictions are divided by their within-mask sums before computing `-p_true * log(p_pred)`. We ported this as `--junction-loss normalized`. Since `p_pred <= 1`, its log is always non-positive and the loss is always non-negative. With this correction, training is stable, the loss no longer dips below zero on our  window, and both random and pretrained-weight initialization can overfit the single interval regardless of whether annotated or predicted splice site positions are used.
 
-{{< figure src="splice_junctions_debug-loss.png" width="400" caption="Debugging the splice junction head: loss formulation." >}}
-
-## TL;DR
-
-- Extending AlphaGenome to splicing modalities requires custom preprocessing scripts for splice site usage and splice junction counts, all derivable from a single STAR BAM file.
-- The splice site classification head must be initialized from pretrained weights; random initialization is insufficient to overfit even a single interval.
-- The junction head's `rope_params` were initialized to zeros in both the JAX and PyTorch implementations, preventing any learning; initializing with a truncated normal distribution fixes this.
-- The junction cross-entropy loss can go negative on sparse windows due to a mismatch between the paper's pseudocode and the JAX/PyTorch implementations; a ratio-normalized formulation resolves this and stabilizes training.
-- Single-interval overfitting is an effective development checkpoint: it exposed all three bugs before any full training run.
+![Figure 8. Debugging the splice junction head: loss formulation.](splice_junctions_debug-loss.png "width=400 Debugging the splice junction head: loss formulation.")
 
 ## Limitations
 
