@@ -27,7 +27,7 @@ audience: ["within-field"]
 labs: ["Dias and Frazer lab"]
 
 status: "submitted"
-revision: 1
+revision: 2
 
 date_submitted: 2026-05-24
 date_accepted: 
@@ -39,6 +39,12 @@ revision_history:
   - version: 1
     date: 2026-05-24
     notes: "Initial submission"
+    # Optional: version-specific DOI / Zenodo record link
+    doi: ""
+    zenodo_url: ""
+  - version: 2
+    date: 2026-07-23
+    notes: "Addressed reviewer/editor feedback: fixed thumbnail, moved summary figure into main text, switched to clickable figure notation, added a Motivation section and 'what comes from where' breakdown, cited the preprocessing workflow, dropped the TL;DR, and added a full genome-wide fine-tuning and held-out evaluation section (linear-probe vs. LoRA, with compute footprint)."
     # Optional: version-specific DOI / Zenodo record link
     doi: ""
     zenodo_url: ""
@@ -175,8 +181,6 @@ As expected, LoRA, by updating the trunk's internal DNA representation instead o
 The two strategies also differ substantially in compute footprint. Full genome fine-tuning with LoRA needed a full NVIDIA H100 (80 GB) and took about a week, since backpropagating through the frozen trunk to reach the low-rank adapters still requires storing its activations end to end, even though the trunk's own weights aren't updated. Linear probing, by contrast, only needs gradients for the new heads, so it ran comfortably on NVIDIA Hopper-class GPUs with as little as 64 GB of memory.
 
 The workflows for full fine-tuning and evaluation are available in the repository: [`workflows/05-full_finetuning`](https://github.com/MiqG/alphagenome_finetuning_rna/tree/v1.0.1/workflows/05-full_finetuning) and [`workflows/06-evaluation`](https://github.com/MiqG/alphagenome_finetuning_rna/tree/v1.0.1/workflows/06-evaluation).
-
-<!-- TODO: update these two links (and the v1.0.1 tags elsewhere in this post) once blog-dev is tagged with the release that includes workflows 05/06 -->
 
 ## Limitations
 
