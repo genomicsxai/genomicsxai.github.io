@@ -1,6 +1,6 @@
 ---
 post_id: "2026-009"
-title: "Beyond coverage tracks: fine-tuning AlphaGenome's splicing heads, from debugging to full fine-tuning"
+title: "Beyond coverage tracks: fine-tuning AlphaGenome's splicing heads from scratch"
 image: "alphagenome_rna_heads.png"
 math: false
 
@@ -24,7 +24,7 @@ categories: ["Blog Post"]
 
 scope: ["insights"]
 audience: ["within-field"]
-labs: ["Dias lab", "Frazer lab"]
+labs: ["Dias and Frazer lab"]
 
 status: "submitted"
 revision: 1
@@ -192,7 +192,7 @@ This process gave us a much better understanding of what it actually takes to fi
 
 The most useful strategy was to build confidence at each step before scaling up, from preprocessing validation and target inspection to single-interval overfitting. Each stage exposed a different class of problem. The single-interval test in particular was worth its weight as the two loss bugs and a zero-initialization bug in the junction head would have been much harder to diagnose in a full training run. We hope that sharing these intermediate failures, alongside the fixes and the flags that control them, makes it easier for others to extend AlphaGenome to new RNA-seq modalities and biological questions. 
 
-The full fine-tuning results also suggest that gene expression and splicing tasks don't need the same amount of compute: gene expression performance saturated early and didn't benefit from LoRA, so linear probing on modest hardware is likely enough there, whereas the splicing modalities kept improving and gained the most from LoRA's larger compute and memory footprint. If gene expression is your main target, linear probing is probably all you need; splicing tasks are where the extra compute pays off.
+The full fine-tuning results also suggest that gene expression and splicing tasks don't need the same amount of compute: gene expression performance saturated early and didn't benefit from LoRA, so linear probing on modest hardware is likely enough there, whereas the splicing modalities kept improving and gained the most from LoRA's larger compute and memory footprint. If gene expression is your main target, linear probing is probably all you need; splicing tasks are where the extra compute marginally pays off.
 
 In the end, this project became more than a simple port. It resulted in reusable preprocessing scripts, training pipelines, and a set of practical checks and warnings that we hope make fine-tuning RNA-seq–derived splicing modalities on AlphaGenome more transparent and reproducible. We are especially grateful to the DeepMind developers for openly sharing their code and model weights, and for the responsiveness of Tom Ward ([`@tomwardio`](https://github.com/tomwardio)) and Vincent Dutordoir ([`@vdutor`](https://github.com/vdutor)) when we reported bugs and implementation issues; their feedback was instrumental in reaching the conclusions presented here. We hope these efforts help make fine-tuning splicing heads as seamless and accessible as possible for the broader community.
 
