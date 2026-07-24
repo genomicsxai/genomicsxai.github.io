@@ -12,6 +12,30 @@ Ensure posts are **accurate, readable, appropriately tagged, and safe to publish
 
 ---
 
+## What happens automatically (so you don't have to)
+
+Almost all of the mechanical work around a post is handled by CI. Your job is the **quality review** in the sections below — you do **not** need to edit frontmatter, set dates, change a post's status, mint DOIs, or set up its comment thread by hand. If you notice one of these fields is wrong on an incoming PR, fix it or ask the author, but you never have to touch them just to get a post published.
+
+**While a PR is open** (re-runs on every push to the PR):
+
+* **Build check** — the site is rebuilt to confirm the post compiles.
+* **Frontmatter validation** — required fields and formatting are checked.
+* **Link check** — broken links are flagged.
+* **Preview deployment** — an unlisted preview of the post (`noindex`, not linked from the blog) is built and its URL posted as a PR comment. It updates on each new commit and is deleted when the PR closes.
+
+**When the PR is merged:**
+
+* **Reviewer credit** — every editor who engaged with the PR (a formal review, a review comment, or a conversation comment) is added to the post's `editor:` list. Only `@genomicsxai/editors` members are credited, so authors and other commenters never are. See [§3](#3-review-outcomes).
+* **Publish date** — `date:` (the field the homepage orders by) is stamped with the merge date, for newly added posts, so "first published" ordering stays correct.
+* **Acceptance** — `status:` is flipped from `submitted` to `accepted`. A post already marked `withdrawn` or `accepted` is left untouched.
+* **Zenodo DOI** — each accepted post is issued a Zenodo DOI (or a new version, for an update), recorded in `data/zenodo.json` and shown in its citation box. This only happens once the post is `accepted` — which is why the automatic flip above matters. See [§1H](#h-references-and-google-scholar-indexing).
+* **GitHub Discussion** — a discussion thread is created to back the post's comments and likes.
+* **Google Scholar metadata + publish** — Scholar/Highwire metadata is emitted and the site is rebuilt and deployed.
+
+**What this leaves for you:** the review itself — scope, correctness, clarity, tagging, and safety ([§1](#1-core-review-dimensions)); the executive summary ([§2](#2-executive-summary-requirement)); and a recommendation ([§3](#3-review-outcomes)). That's it.
+
+---
+
 ## 1. Core review dimensions
 
 ### A. Scope and relevance (fast gate)
