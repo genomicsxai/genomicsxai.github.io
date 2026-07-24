@@ -156,12 +156,20 @@ jobs:
 
       # Push over SSH with the repo deploy key, which bypasses the protected-
       # branch PR ruleset. Non-fatal: a persistence failure must never break the
-      # deploy (the build already has the fresh data; the next deploy re-syncs).
+      # deploy. But it must not be SILENT either — a dropped commit here means
+      # freshly-minted Zenodo DOIs never get recorded, and the next sync, seeing
+      # an empty store, would mint DUPLICATE depositions. So on rejection we
+      # rebase our single data-file commit onto the latest main and retry (the
+      # push races against PR merges, which can advance main during the ~minute
+      # the Zenodo API calls take), and if it still can't land we upload the
+      # metadata as an artifact and fail loudly via an error annotation.
       - name: Commit Zenodo metadata
+        id: commit_zenodo
         if: steps.changed_blogs.outputs.count != '0'
         continue-on-error: true
         env:
           DEPLOY_KEY: ${{ secrets.CI_DEPLOY_KEY }}
+          REPO: ${{ github.repository }}
         run: |
           if [ -z "$(git status --porcelain -- data/zenodo.json)" ]; then
             echo "No Zenodo metadata changes to commit."
@@ -178,9 +186,42 @@ jobs:
           chmod 600 ~/.ssh/ci_deploy_key
           ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
           export GIT_SSH_COMMAND="ssh -i ~/.ssh/ci_deploy_key -o IdentitiesOnly=yes"
+          REMOTE="git@github.com:${REPO}.git"
+
           git add data/zenodo.json
           git commit -m "chore: sync Zenodo DOI metadata"
-          git push "git@github.com:${{ github.repository }}.git" HEAD:main
+
+          # Retry with rebase: if main advanced (e.g. a PR merged) while Zenodo
+          # was minting, a plain push is rejected non-fast-forward. Replay our
+          # single zenodo.json commit onto the new tip and push again. zenodo.json
+          # is the only file we touch, so this is conflict-free in practice; a
+          # genuine conflict aborts the rebase and ends the loop.
+          pushed=""
+          for attempt in 1 2 3 4 5; do
+            if git push "$REMOTE" HEAD:main; then
+              echo "Pushed Zenodo metadata (attempt ${attempt})."
+              pushed=1
+              break
+            fi
+            echo "Push rejected on attempt ${attempt}; rebasing onto latest main…"
+            git fetch "$REMOTE" main || break
+            git rebase FETCH_HEAD || { git rebase --abort 2>/dev/null || true; break; }
+          done
+
+          if [ -z "$pushed" ]; then
+            echo "::error::Failed to persist data/zenodo.json after minting Zenodo DOIs. The metadata is attached as the 'zenodo-metadata-unpushed' artifact — commit it to main by hand. Do NOT re-run the sync against the current main, as it would mint duplicate depositions."
+            exit 1
+          fi
+
+      # Safety net: if the commit above couldn't land, keep the minted-but-
+      # unpushed metadata so it can be recovered without re-minting duplicates.
+      - name: Upload unpushed Zenodo metadata
+        if: steps.commit_zenodo.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: zenodo-metadata-unpushed
+          path: data/zenodo.json
+          retention-days: 7
 
       # 3. Build the Hugo site
       - name: Build
