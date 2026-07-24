@@ -50,7 +50,7 @@ scope: ["insights", "tutorials"]
 audience: ["within-field"]
 labs: ["Programmable Genomics Laboratory"]
 
-status: "submitted"
+status: "accepted"
 revision: 2
 
 date_submitted: 2026-07-13

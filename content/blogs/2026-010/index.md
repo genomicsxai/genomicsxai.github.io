@@ -27,7 +27,7 @@ scope: ["insights", "tutorials"]
 audience: ["intro-to-field", "general"]
 disciplines: ["Sequence-to-Function Modeling"]
 labs: ["Pinello Lab"]
-status: "submitted"
+status: "accepted"
 revision: 1
 date_submitted: 2026-06-23
 date_accepted:

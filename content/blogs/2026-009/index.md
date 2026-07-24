@@ -25,7 +25,7 @@ scope: ["insights"]
 audience: ["within-field"]
 labs: ["Dias and Frazer lab"]
 
-status: "submitted"
+status: "accepted"
 revision: 3
 
 date_submitted: 2026-05-24
