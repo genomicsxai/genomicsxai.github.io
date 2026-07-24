@@ -177,5 +177,62 @@
         "notes": "Initial Zenodo community token validation post"
       }
     }
+  },
+  "2026-009": {
+    "conceptrecid": "21535144",
+    "current_revision": 3,
+    "current_doi": "10.5281/zenodo.21535145",
+    "current_doi_url": "https://doi.org/10.5281/zenodo.21535145",
+    "current_zenodo_url": "https://zenodo.org/records/21535145",
+    "current_deposition_id": 21535145,
+    "revisions": {
+      "3": {
+        "doi": "10.5281/zenodo.21535145",
+        "doi_url": "https://doi.org/10.5281/zenodo.21535145",
+        "zenodo_url": "https://zenodo.org/records/21535145",
+        "deposition_id": 21535145,
+        "record_id": 21535145,
+        "date": "2026-07-24",
+        "notes": "Addressed reviewer/editor feedback: clarified trans-acting SF3B1/identical WT-mutant sequence input, coverage binning no-op, annotated vs. predicted junction positions, and compute footprint; reworked debugging section structure and the fine-tuning recipe; expanded figure legends."
+      }
+    }
+  },
+  "2026-010": {
+    "conceptrecid": "21535148",
+    "current_revision": 1,
+    "current_doi": "10.5281/zenodo.21535149",
+    "current_doi_url": "https://doi.org/10.5281/zenodo.21535149",
+    "current_zenodo_url": "https://zenodo.org/records/21535149",
+    "current_deposition_id": 21535149,
+    "revisions": {
+      "1": {
+        "doi": "10.5281/zenodo.21535149",
+        "doi_url": "https://doi.org/10.5281/zenodo.21535149",
+        "zenodo_url": "https://zenodo.org/records/21535149",
+        "deposition_id": 21535149,
+        "record_id": 21535149,
+        "date": "2026-06-23",
+        "notes": "Initial submission"
+      }
+    }
+  },
+  "2026-011": {
+    "conceptrecid": "21535160",
+    "current_revision": 2,
+    "current_doi": "10.5281/zenodo.21535161",
+    "current_doi_url": "https://doi.org/10.5281/zenodo.21535161",
+    "current_zenodo_url": "https://zenodo.org/records/21535161",
+    "current_deposition_id": 21535161,
+    "revisions": {
+      "2": {
+        "doi": "10.5281/zenodo.21535161",
+        "doi_url": "https://doi.org/10.5281/zenodo.21535161",
+        "zenodo_url": "https://zenodo.org/records/21535161",
+        "deposition_id": 21535161,
+        "record_id": 21535161,
+        "date": "2026-07-13",
+        "notes": "Minor revisions"
+      }
+    }
   }
 }
