@@ -22,7 +22,7 @@ authors_display:
     affiliation: "Cold Spring Harbor Labs (CSHL)"
     orcid: "0000-0001-8722-0038"
 
-editor: ["Al-Murphy"]
+editor: ["Al-Murphy", "abuendia"]
 
 tags: ["genomics", "fine-tuning","MPRA","seq2func"]
 categories: ["Blog Post"]
