@@ -1,4 +1,0 @@
-User-agent: *
-Disallow: /previews/
-
-Sitemap: https://genomicsxai.github.io/previews/pr-121/sitemap.xml
