@@ -19,7 +19,9 @@
     {{ if $image }}
     <div class="article-image">
       <figure><a href="{{ $image.Permalink }}" class="image-link" data-pswp-width="{{ $image.Width }}" data-pswp-height="{{ $image.Height }}">
-        <img src="{{ $image.Permalink }}" width="{{ $image.Width }}" height="{{ $image.Height }}" loading="eager" alt="Featured image: {{ .Title }}" title="{{ .Title }}" data-title-escaped="{{ .Title | htmlEscape }}" />
+        {{/* No `title` attribute: the hover tooltip only repeated the <h1> below.
+             data-title-escaped stays so the PhotoSwipe caption is unchanged. */}}
+        <img src="{{ $image.Permalink }}" width="{{ $image.Width }}" height="{{ $image.Height }}" loading="eager" alt="Featured image: {{ .Title }}" data-title-escaped="{{ .Title | htmlEscape }}" />
       </a></figure>
     </div>
     {{ end }}
