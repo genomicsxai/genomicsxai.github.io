@@ -376,9 +376,10 @@ article img {
   max-width: 42em;
   letter-spacing: 0.01em;
 }
-/* Override theme's negative-margin breakout: keep all blocks aligned with body text */
+/* Override theme's negative-margin breakout: keep all blocks aligned with body
+   text. Figures are handled separately, below, so their legend can wrap to the
+   image's width rather than the full column. */
 .article-page .article-content > blockquote,
-.article-page .article-content > figure,
 .article-page .article-content .highlight,
 .article-page .article-content pre,
 .article-page .article-content .table-wrapper {
@@ -455,6 +456,39 @@ article img {
 /* Figures / images */
 .article-content figure {
   margin: var(--block-spacing) 0;
+}
+
+/* Figure legends are rendered below the image (never as a hover tooltip).
+   Shrink the figure to its image so the legend wraps at the image's width
+   rather than running the full text column under a narrow figure. max-width
+   caps it, so images wider than the column still fill it, and auto margins
+   replace the theme's negative-margin breakout. */
+.article-page .article-content > figure {
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+/* Left aligned, journal style — legends here run to several hundred characters,
+   which centring makes hard to read. The theme already sets a secondary colour
+   on figcaption; this overrides size, alignment and spacing. */
+.article-content figure figcaption {
+  margin-top: 0.6em;
+  font-size: 0.9em;
+  line-height: 1.6;
+  text-align: left;
+  color: var(--card-text-color-secondary, #666);
+}
+.article-content figure figcaption > *:first-child {
+  margin-top: 0;
+}
+.article-content figure figcaption > *:last-child {
+  margin-bottom: 0;
+}
+/* Links inside a legend stay visible against the dimmed caption colour. */
+.article-content figure figcaption a {
+  color: inherit;
+  text-decoration: underline;
 }
 
 /* Lists: tight spacing, consistent with block rhythm */
