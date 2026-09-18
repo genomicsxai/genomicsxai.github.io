@@ -18,7 +18,10 @@
     {{- $image := partial "helper/image" (dict "Image" .Params.image "Resources" .Resources) -}}
     {{ if $image }}
     <div class="article-image">
-      <figure><a href="{{ $image.Permalink }}" class="image-link" data-pswp-width="{{ $image.Width }}" data-pswp-height="{{ $image.Height }}">
+      {{/* The inline <img> serves the lighter derivative; the link target stays
+           the uploaded file, so click-to-zoom and save-image hand readers the
+           original figure in its original format and under its own filename. */}}
+      <figure><a href="{{ $image.Original }}" class="image-link" data-pswp-width="{{ $image.Width }}" data-pswp-height="{{ $image.Height }}">
         {{/* No `title` attribute: the hover tooltip only repeated the <h1> below.
              data-title-escaped stays so the PhotoSwipe caption is unchanged. */}}
         <img src="{{ $image.Permalink }}" width="{{ $image.Width }}" height="{{ $image.Height }}" loading="eager" alt="Featured image: {{ .Title }}" data-title-escaped="{{ .Title | htmlEscape }}" />

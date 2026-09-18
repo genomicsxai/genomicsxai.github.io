@@ -4,6 +4,8 @@ on:
   pull_request:
 
 jobs:
+  # The build as contributors see it locally: no generated derivatives, so the
+  # image helper must fall back to the uploaded originals.
   build:
     runs-on: ubuntu-latest
 
@@ -22,3 +24,33 @@ jobs:
       - name: Validate Google Scholar metadata
         run: |
           ruby .github/scripts/validate-scholar-metadata.rb
+
+  # The build as deploy.yml produces it, with WebP derivatives and card
+  # thumbnails in place. Without this job the optimizer's first real run would
+  # be on main, in production.
+  build-optimized:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: python -m pip install -r .github/scripts/image-requirements.txt
+
+      - name: Image optimizer regression tests
+        run: python .github/scripts/test-optimize-images.py
+
+      - name: Generate lossless images and card thumbnails
+        run: python .github/scripts/optimize-images.py
+
+      - uses: peaceiris/actions-hugo@v3
+        with:
+          extended: true
+
+      - run: hugo --minify

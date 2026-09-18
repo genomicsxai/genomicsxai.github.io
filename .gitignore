@@ -27,3 +27,8 @@ docs/superpowers/
 node_modules/
 package.json
 package-lock.json
+
+# Lossless image derivatives generated before Hugo builds
+*.optimized*.webp
+data/image_derivatives.json
+__pycache__/
