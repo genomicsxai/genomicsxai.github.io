@@ -1,5 +1,5 @@
 name: Optimize images
-description: Generate pixel-verified lossless WebP images and responsive hero thumbnails
+description: Generate lossless WebP images and responsive hero thumbnails
 runs:
   using: composite
   steps:

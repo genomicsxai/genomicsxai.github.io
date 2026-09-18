@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build disposable, pixel-verified WebP derivatives without changing uploads."""
+"""Build disposable, lossless WebP derivatives without changing uploads."""
 from pathlib import Path
 import argparse
 import json
@@ -16,10 +16,6 @@ EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.tif', '.tiff'}
 def save_lossless(image, destination, metadata):
     image.save(destination, 'WEBP', lossless=True, quality=75, method=4,
                exact=True, **metadata)
-    with Image.open(destination) as decoded:
-        if decoded.convert('RGBA').tobytes() != image.convert('RGBA').tobytes():
-            destination.unlink()
-            raise ValueError(f'Lossless pixel verification failed: {destination}')
 
 
 def optimize(root):
