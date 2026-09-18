@@ -43,7 +43,10 @@
 				{{- $imgDisplayH = div (mul $parsedW .Height) .Width -}}
 			{{- end -}}
 		{{- end -}}
-		<figure><a href="{{ .Permalink }}" class="image-link" data-pswp-width="{{ .Width }}" data-pswp-height="{{ .Height }}">
+		{{/* The inline <img> serves the lighter derivative; the link target stays
+		     the uploaded file, so click-to-zoom and save-image hand readers the
+		     original figure in its original format and under its own filename. */}}
+		<figure><a href="{{ .Original }}" class="image-link" data-pswp-width="{{ .Width }}" data-pswp-height="{{ .Height }}">
 		<img src="{{ .Permalink }}"
 			{{- if $attrWidth }} width="{{ $attrWidth }}"{{ else }}{{ with .Width }} width="{{ . }}"{{ end }}{{ end -}}
 			{{- if $attrHeight }} height="{{ $attrHeight }}"{{ else }}{{ with $imgDisplayH }} height="{{ . }}"{{ end }}{{ end -}}

@@ -1,23 +1,51 @@
-{{/* Prefer CI-generated lossless derivatives. Original URLs remain valid. */}}
+{{/* Resolve an image to the CI-generated derivative when one exists, falling
+     back to the theme's resolver (helper/source-image) otherwise — so local
+     `hugo server` and PR builds, which never run the optimizer, render exactly
+     as they did before.
+
+     Returns the theme's contract (Local / Resource / Permalink / Width /
+     Height) plus:
+       Original — URL of the uploaded file, in its original format and under
+                  its original filename. Templates use Permalink for the
+                  inline <img> and Original for anything a reader clicks or
+                  saves, so downloading a figure still yields `MYC_fig3.png`
+                  rather than `MYC_fig3.png.optimized.webp`.
+
+     Params: Image, Resources, and optionally Card (480 or 960) to ask for a
+     resized card thumbnail instead of the full-resolution derivative. */}}
 {{- $result := "" -}}
 {{- if .Image -}}
+    {{- $source := partial "helper/source-image" . -}}
     {{- $suffix := ".optimized.webp" -}}
     {{- with .Card -}}{{- $suffix = printf ".optimized-card-%d.webp" . -}}{{- end -}}
     {{- $url := urls.Parse .Image -}}
+    {{- $originalURL := "" -}}
     {{- if and (not $url.IsAbs) (not $url.Host) -}}
         {{- with .Resources.Get (printf "%s%s" $url.Path $suffix) -}}
             {{- $result = dict "Local" true "Resource" . "Permalink" .RelPermalink "Width" .Width "Height" .Height -}}
         {{- end -}}
         {{- if not $result -}}
-            {{- with index site.Data.image_derivatives (printf "/%s" (strings.TrimPrefix "/" $url.Path)) -}}
+            {{- $key := printf "/%s" (strings.TrimPrefix "/" $url.Path) -}}
+            {{- with index site.Data.image_derivatives $key -}}
+                {{/* A variant is absent whenever WebP could not beat the
+                     upload, so fall through to the original rather than
+                     dereferencing a missing entry. */}}
                 {{- $variant := index . "full" -}}
                 {{- if $.Card -}}{{- $variant = default $variant (index . (printf "%d" $.Card)) -}}{{- end -}}
-                {{- $result = dict "Local" false "Permalink" ($variant.url | relURL) "Width" $variant.width "Height" $variant.height -}}
+                {{- with $variant -}}
+                    {{- $originalURL = $key | relURL -}}
+                    {{- $result = dict "Local" false "Permalink" (.url | relURL) "Width" .width "Height" .height -}}
+                {{- end -}}
             {{- end -}}
         {{- end -}}
     {{- end -}}
     {{- if not $result -}}
-        {{- $result = partial "helper/source-image" . -}}
+        {{- $result = $source -}}
+    {{- else -}}
+        {{- with $source -}}{{- $originalURL = .Permalink -}}{{- end -}}
+    {{- end -}}
+    {{- with $result -}}
+        {{- $result = merge . (dict "Original" (default .Permalink $originalURL)) -}}
     {{- end -}}
 {{- end -}}
 {{- return $result -}}

@@ -3,6 +3,7 @@
 import importlib.util
 import json
 from pathlib import Path
+import random
 import tempfile
 import unittest
 from PIL import Image
@@ -77,6 +78,70 @@ class ImageTests(unittest.TestCase):
                 self.assertNotEqual(rotated.getexif().get(274), 6)
             self.assertFalse((bundle / 'animated.gif.optimized.webp').exists())
             self.assertFalse((bundle / 'depth.png.optimized.webp').exists())
+
+    def test_frontmatter_containing_a_horizontal_rule(self):
+        """A `---` inside a title must not truncate the frontmatter.
+
+        Parsing it with a naive split raises, and an unhandled raise here takes
+        down the whole deploy, so the hero must still resolve.
+        """
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            bundle = root / 'content/blogs/example'
+            bundle.mkdir(parents=True)
+            (bundle / 'index.md').write_text(
+                '---\ntitle: "AlphaGenome --- a review"\nimage: hero.png\n---\n\nBody.\n')
+            Image.new('RGB', (1200, 675), 'red').save(bundle / 'hero.png')
+            optimizer.optimize(root)
+            self.assertTrue((bundle / 'hero.png.optimized-card-480.webp').exists())
+
+    def test_derivative_dropped_when_it_beats_nothing(self):
+        """Lossless WebP inflates already-lossy JPEGs; keep the upload instead.
+
+        Every derivative is judged against the file it would replace, so
+        nothing the templates can reach is ever larger than the upload.
+        """
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            bundle = root / 'content/blogs/example'
+            bundle.mkdir(parents=True)
+            (bundle / 'index.md').write_text('---\nimage: noise.jpg\n---\n')
+            # Seeded noise: high entropy, so lossless WebP cannot beat JPEG
+            # even after downscaling to card size.
+            noise = random.Random(0).randbytes(600 * 600 * 3)
+            Image.frombytes('RGB', (600, 600), noise).save(bundle / 'noise.jpg', quality=85)
+            optimizer.optimize(root)
+            self.assertFalse(list(bundle.glob('*.webp')))
+
+    def test_large_jpeg_hero_keeps_cards_but_not_the_full_derivative(self):
+        """The common JPEG case: downscaling wins even where re-encoding loses."""
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            bundle = root / 'content/blogs/example'
+            bundle.mkdir(parents=True)
+            (bundle / 'index.md').write_text('---\nimage: hero.jpg\n---\n')
+            noise = random.Random(1).randbytes(2400 * 1350 * 3)
+            source = bundle / 'hero.jpg'
+            Image.frombytes('RGB', (2400, 1350), noise).save(source, quality=85)
+            optimizer.optimize(root)
+            self.assertFalse((bundle / 'hero.jpg.optimized.webp').exists())
+            for width in (480, 960):
+                card = bundle / f'hero.jpg.optimized-card-{width}.webp'
+                self.assertTrue(card.exists(), f'{width}w card should be kept')
+                self.assertLess(card.stat().st_size, source.stat().st_size)
+
+    def test_manifest_omits_variants_that_were_not_kept(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            images = root / 'static/images'
+            images.mkdir(parents=True)
+            noise = random.Random(0).randbytes(600 * 600 * 3)
+            Image.frombytes('RGB', (600, 600), noise).save(images / 'plain.jpg', quality=85)
+            optimizer.optimize(root)
+            manifest = json.loads((root / 'data/image_derivatives.json').read_text())
+            # No derivative was worth keeping and the image is not a hero, so it
+            # must not appear at all — templates then serve the original.
+            self.assertNotIn('/images/plain.jpg', manifest)
 
 
 if __name__ == '__main__':

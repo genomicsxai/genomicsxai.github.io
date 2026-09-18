@@ -3,6 +3,7 @@
 from pathlib import Path
 import argparse
 import json
+import re
 import warnings
 from urllib.parse import unquote, urlsplit
 
@@ -11,11 +12,39 @@ import yaml
 
 SUFFIX = '.optimized.webp'
 EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.tif', '.tiff'}
+# Frontmatter runs to the first line that is exactly `---`, so a `---` inside a
+# title or abstract does not truncate it. Mirrors the parser in deploy.yml.
+FRONTMATTER = re.compile(r'\A---[ \t]*\n(.*?)\n---[ \t]*\n', re.DOTALL)
 
 
 def save_lossless(image, destination, metadata):
     image.save(destination, 'WEBP', lossless=True, quality=75, method=4,
                exact=True, **metadata)
+
+
+def save_if_smaller(image, destination, metadata, limit):
+    """Write the derivative, keeping it only if it undercuts `limit` bytes."""
+    save_lossless(image, destination, metadata)
+    if destination.stat().st_size < limit:
+        return True
+    destination.unlink()
+    return False
+
+
+def hero_reference(post):
+    """The post's hero image path, or '' when there isn't a usable one.
+
+    Never raises: a malformed post must not take down a deploy, it just misses
+    out on card thumbnails and falls back to its original image.
+    """
+    try:
+        match = FRONTMATTER.match(post.read_text())
+        if not match:
+            return ''
+        return str((yaml.safe_load(match.group(1)) or {}).get('image', ''))
+    except (OSError, UnicodeDecodeError, yaml.YAMLError, AttributeError) as error:
+        print(f'Skipping hero lookup for {post}: {error.__class__.__name__}: {error}')
+        return ''
 
 
 def optimize(root):
@@ -26,16 +55,13 @@ def optimize(root):
             generated.unlink()
     heroes = set()
     for post in (root / 'content').rglob('index.md'):
-        text = post.read_text()
-        if text.startswith('---\n'):
-            metadata = yaml.safe_load(text.split('---', 2)[1]) or {}
-            reference = str(metadata.get('image', ''))
-            url = urlsplit(reference)
-            if reference and not url.scheme and not url.netloc:
-                path = unquote(url.path)
-                candidates = [post.parent / path, root / 'assets' / path.lstrip('/'),
-                              root / 'static' / path.lstrip('/')]
-                heroes.update(p.resolve() for p in candidates if p.is_file())
+        reference = hero_reference(post)
+        url = urlsplit(reference)
+        if reference and not url.scheme and not url.netloc:
+            path = unquote(url.path)
+            candidates = [post.parent / path, root / 'assets' / path.lstrip('/'),
+                          root / 'static' / path.lstrip('/')]
+            heroes.update(p.resolve() for p in candidates if p.is_file())
     static_manifest = {}
     count = before = after = 0
     for directory in roots:
@@ -56,30 +82,39 @@ def optimize(root):
                         or max(original.size) > 16383):
                     print(f'Preserving unsupported image: {source}')
                     continue
-                image = ImageOps.exif_transpose(original).convert('RGBA')
+                upright = ImageOps.exif_transpose(original)
+                image = upright.convert('RGBA')
                 metadata = {key: original.info[key] for key in ('icc_profile', 'xmp')
                             if key in original.info}
-                exif = ImageOps.exif_transpose(original).getexif()
+                exif = upright.getexif()
                 if exif:
                     metadata['exif'] = exif.tobytes()
+                original_bytes = source.stat().st_size
+                variants = {}
                 target = source.with_name(source.name + SUFFIX)
-                save_lossless(image, target, metadata)
-                count += 1
-                before += source.stat().st_size
-                after += target.stat().st_size
-                variants = {'full': {'url': '', 'width': image.width, 'height': image.height}}
-                if directory.name == 'static':
-                    variants['full']['url'] = '/' + target.relative_to(directory).as_posix()
+                # Lossless WebP beats PNG but loses badly to JPEG, which is
+                # already lossy. Keep a derivative only when it is genuinely
+                # smaller; otherwise the templates serve the original.
+                if save_if_smaller(image, target, metadata, original_bytes):
+                    count += 1
+                    before += original_bytes
+                    after += target.stat().st_size
+                    variants['full'] = {'url': '', 'width': image.width, 'height': image.height}
+                    if directory.name == 'static':
+                        variants['full']['url'] = '/' + target.relative_to(directory).as_posix()
+                else:
+                    print(f'Preserving image that WebP cannot shrink: {source}')
                 if source.resolve() in heroes:
                     for width in (480, 960):
                         card = image.copy()
                         card.thumbnail((width, max(1, round(width * image.height / image.width))),
                                        Image.Resampling.LANCZOS)
                         card_path = source.with_name(source.name + f'.optimized-card-{width}.webp')
-                        save_lossless(card, card_path, metadata)
+                        if not save_if_smaller(card, card_path, metadata, original_bytes):
+                            continue
                         variants[str(width)] = {'url': '/' + card_path.relative_to(directory).as_posix(),
                                                 'width': card.width, 'height': card.height}
-                if directory.name == 'static':
+                if directory.name == 'static' and variants:
                     static_manifest['/' + source.relative_to(directory).as_posix()] = variants
     (root / 'data').mkdir(exist_ok=True)
     (root / 'data/image_derivatives.json').write_text(json.dumps(static_manifest, indent=2) + '\n')
