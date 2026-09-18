@@ -30,6 +30,9 @@ jobs:
           submodules: true
           fetch-depth: 0
 
+      - name: Generate lossless images and card thumbnails
+        uses: ./.github/actions/optimize-images
+
       # 2. Setup Hugo
       - uses: peaceiris/actions-hugo@v3
         with:

@@ -32,3 +32,48 @@ Recommended first run:
 6. Run the workflow and check the preview under `https://genomicsxai.github.io/previews/manual/<preview_slug>/`.
 
 For an end-to-end Zenodo test, set `zenodo_dry_run=false`, point `zenodo_api_base` at `https://sandbox.zenodo.org/api`, and make sure the selected post has frontmatter `status: "accepted"`.
+
+## Lossless images and blog cards
+
+Every pull request and push to a source branch runs `Build Check`, which generates
+images before building Hugo. Production, PR previews, and manual test publishes
+use the same `.github/actions/optimize-images` action. Generated output branches
+(`gh-pages` and `editors-ledger`) are excluded to avoid deployment loops.
+
+Uploads in `content/`, `assets/`, and `static/` keep their original filenames and
+bytes. The build creates `filename.ext.optimized.webp` companions, encoded with
+Pillow/libwebp `lossless=True`, `exact=True`, and compression effort 75/method 4. In lossless mode, these settings control
+encoding effort, not pixel fidelity.
+Every output is decoded and compared pixel-for-pixel before the build proceeds.
+JPEG conversion preserves the decoded pixels; it cannot undo prior JPEG loss.
+ICC profiles and EXIF are retained, with EXIF orientation applied to the pixels.
+Lossless WebP can be larger than an already compressed JPEG.
+
+The `image:` field in YAML page-bundle frontmatter selects the hero. It also gets
+480px and 960px wide WebP copies (never upscaled), preserving its aspect ratio.
+The blog grid uses these copies with responsive `srcset`, lazy loading, and async
+decoding; full articles and Markdown figures use the full-resolution WebP.
+The existing 16:9 card container controls cropping. Resizing changes pixels;
+encoding the resized result is still lossless.
+
+Animated images, SVGs, high-bit-depth/CMYK images, and images exceeding WebP's
+16,383px dimension limit (or Pillow's safe decode limit) retain their originals. Remote images are not converted.
+Raw HTML image tags and CSS URLs remain as authored; automatic substitution uses
+Hugo's image helper (including Markdown figures and featured images).
+Original URLs remain available for downloads and the submission editor.
+
+Generated companions and `data/image_derivatives.json` are ignored by Git and
+rebuilt on every run, including after source edits/deletions. The
+`*.optimized*.webp` naming pattern is reserved for generated output. There are no
+bot commits, write tokens, or secrets needed to optimize a fork PR.
+
+To build locally with optimized images:
+
+```sh
+python -m pip install -r .github/scripts/image-requirements.txt
+python .github/scripts/test-optimize-images.py
+python .github/scripts/optimize-images.py
+hugo --minify
+```
+
+Without the preprocessing step, Hugo falls back to uploaded originals.

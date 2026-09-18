@@ -1,0 +1,23 @@
+{{/* Prefer CI-generated lossless derivatives. Original URLs remain valid. */}}
+{{- $result := "" -}}
+{{- if .Image -}}
+    {{- $suffix := ".optimized.webp" -}}
+    {{- with .Card -}}{{- $suffix = printf ".optimized-card-%d.webp" . -}}{{- end -}}
+    {{- $url := urls.Parse .Image -}}
+    {{- if and (not $url.IsAbs) (not $url.Host) -}}
+        {{- with .Resources.Get (printf "%s%s" $url.Path $suffix) -}}
+            {{- $result = dict "Local" true "Resource" . "Permalink" .RelPermalink "Width" .Width "Height" .Height -}}
+        {{- end -}}
+        {{- if not $result -}}
+            {{- with index site.Data.image_derivatives (printf "/%s" (strings.TrimPrefix "/" $url.Path)) -}}
+                {{- $variant := index . "full" -}}
+                {{- if $.Card -}}{{- $variant = default $variant (index . (printf "%d" $.Card)) -}}{{- end -}}
+                {{- $result = dict "Local" false "Permalink" ($variant.url | relURL) "Width" $variant.width "Height" $variant.height -}}
+            {{- end -}}
+        {{- end -}}
+    {{- end -}}
+    {{- if not $result -}}
+        {{- $result = partial "helper/source-image" . -}}
+    {{- end -}}
+{{- end -}}
+{{- return $result -}}

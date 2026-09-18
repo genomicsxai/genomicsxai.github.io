@@ -2,6 +2,12 @@ name: Build Check
 
 on:
   pull_request:
+  push:
+    branches-ignore: [gh-pages, editors-ledger]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -12,6 +18,9 @@ jobs:
         with:
           submodules: true
           fetch-depth: 0
+
+      - name: Generate lossless images and card thumbnails
+        uses: ./.github/actions/optimize-images
 
       - uses: peaceiris/actions-hugo@v3
         with:
