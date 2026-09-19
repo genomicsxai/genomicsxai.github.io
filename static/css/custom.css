@@ -870,6 +870,24 @@ article img {
   line-height: inherit;
 }
 
+.citation-box__altmetric {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 64px;
+}
+
+.citation-box__altmetric-label {
+  color: var(--card-text-color-secondary, #666);
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
+.citation-box__altmetric .altmetric-embed {
+  flex: 0 0 auto;
+}
+
 .citation-box__versions {
   margin-top: 1rem;
 }

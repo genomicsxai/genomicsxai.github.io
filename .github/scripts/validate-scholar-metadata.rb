@@ -31,6 +31,20 @@ def meta_values(html, name)
   end
 end
 
+def altmetric_dois(html)
+  html.scan(/<div\b[^>]*>/i).filter_map do |tag|
+    classes = tag[/\bclass\s*=\s*"([^"]*)"/i, 1] ||
+              tag[/\bclass\s*=\s*'([^']*)'/i, 1] ||
+              tag[/\bclass\s*=\s*([^\s>]+)/i, 1]
+    next unless classes.to_s.split.include?("altmetric-embed")
+
+    doi = tag[/\bdata-doi\s*=\s*"([^"]*)"/i, 1] ||
+          tag[/\bdata-doi\s*=\s*'([^']*)'/i, 1] ||
+          tag[/\bdata-doi\s*=\s*([^\s>]+)/i, 1]
+    CGI.unescapeHTML(doi.to_s)
+  end
+end
+
 def expected_authors(fm)
   authors = fm["authors_display"] || fm["authors"] || []
   authors.map { |author| author.is_a?(Hash) ? author["name"] : author }.compact
@@ -77,6 +91,7 @@ Dir.glob(File.join(ROOT, "content", "blogs", "*", "index.md")).sort.each do |pat
   html = File.read(html_path)
   expected_url = "#{BASE_URL}/blogs/#{post_id}/"
   expected_doi = zenodo.dig(post_id, "current_doi").to_s
+  expected_doi = fm["doi"].to_s if expected_doi.empty?
 
   title_values = meta_values(html, "citation_title")
   errors << "#{path}: missing citation_title" if title_values.empty?
@@ -102,8 +117,19 @@ Dir.glob(File.join(ROOT, "content", "blogs", "*", "index.md")).sort.each do |pat
 
   if expected_doi.empty?
     errors << "#{path}: accepted post is missing Zenodo DOI metadata" if REQUIRE_ACCEPTED_DOI
+    errors << "#{path}: Altmetric badge must not render without a DOI" unless altmetric_dois(html).empty?
+    if html.include?("https://embed.altmetric.com/assets/embed.js")
+      errors << "#{path}: Altmetric embed script must not load without a DOI"
+    end
   elsif !meta_values(html, "citation_doi").include?(expected_doi)
     errors << "#{path}: citation_doi must be #{expected_doi}"
+  else
+    unless altmetric_dois(html).include?(expected_doi)
+      errors << "#{path}: Altmetric badge data-doi must be #{expected_doi}"
+    end
+
+    embed_script_count = html.scan(%r{https://embed\.altmetric\.com/assets/embed\.js}).length
+    errors << "#{path}: expected one Altmetric embed script, found #{embed_script_count}" unless embed_script_count == 1
   end
 
   if fm["pdf_url"] || fm["pdf"]
@@ -115,9 +141,9 @@ Dir.glob(File.join(ROOT, "content", "blogs", "*", "index.md")).sort.each do |pat
 end
 
 if errors.any?
-  warn "Google Scholar metadata validation failed:"
+  warn "Scholar and Altmetric metadata validation failed:"
   errors.each { |error| warn "  - #{error}" }
   exit 1
 end
 
-puts "Google Scholar metadata validation passed."
+puts "Scholar and Altmetric metadata validation passed."
