@@ -1,6 +1,16 @@
-/* Always show the main navigation menu in the left sidebar (Stack theme) */
-#main-menu {
-  display: flex !important;
+/* Always show the main navigation menu in the left sidebar (Stack theme).
+
+   Must stay inside this media query. Below 768px the theme collapses the menu
+   behind the hamburger: #main-menu is display:none, and .show (added by
+   themes/Stack/assets/ts/menu.ts) flips it to display:flex. That script picks
+   slideDown vs slideUp by reading getComputedStyle(menu).display === 'none',
+   so an unscoped `display: flex !important` here pins the menu open, makes
+   every tap take the slideUp branch, and the menu springs back open when the
+   collapse animation ends. See issue #128. */
+@media (min-width: 768px) {
+  #main-menu {
+    display: flex !important;
+  }
 }
 
 /* GoatCounter view counter: non-interactive static button in the sidebar action bar */
