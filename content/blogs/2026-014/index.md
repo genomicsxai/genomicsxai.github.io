@@ -44,7 +44,7 @@ revision_history:
 
 {{< summary >}}
 
-PromoterAI (Jaganathan, Ersaro, Novakovsky et al., *Science* 2025) predicts how promoter variants alter gene expression, but the official release ships as a TensorFlow/Keras SavedModel. [`promoterai-torch`](https://github.com/genomicsxai/promoterai-torch) is an independent, numerically-equivalent PyTorch port that converts Illumina's checkpoints and makes variant scoring, track prediction, embedding extraction, and DeepLIFT/SHAP attribution available through the PyTorch ecosystem, with training and fine-tuning scripts included for anyone who wants to reproduce or extend the model from scratch.
+PromoterAI [1] predicts how promoter variants alter gene expression, but the official release ships as a TensorFlow/Keras SavedModel [2]. [`promoterai-torch`](https://github.com/genomicsxai/promoterai-torch) is an independent, numerically-equivalent PyTorch port that converts Illumina's checkpoints and makes variant scoring, track prediction, embedding extraction, and DeepLIFT/SHAP attribution available through the PyTorch ecosystem, with training and fine-tuning scripts included for anyone who wants to reproduce or extend the model from scratch.
 
 {{< /summary >}}
 
@@ -128,13 +128,13 @@ Porting a model is only useful if it actually reproduces the original, so most o
 
 (Torch AUROCs shown; the matching TF/Keras run agrees on every value to at least five decimal places.) The per-dataset and aggregate ensemble variant scores underlying these AUROCs also match nearly exactly between the two implementations (Pearson *r* = 1.0000 for each of the seven datasets and for all 16,004 variants combined):
 
-![Grid of eight scatter plots, one per benchmark dataset plus an aggregate panel, each showing PyTorch ensemble variant scores plotted against TF/Keras ensemble scores falling tightly on the identity line.](paper_benchmark_concordance.png "width=700 PyTorch versus TF/Keras ensemble variant scores on each of the paper's released benchmark datasets (Pearson r = 1.0000 in every panel) and combined across all 16,004 variants (bottom right).")
+![Grid of eight scatter plots, one per benchmark dataset plus an aggregate panel, each showing PyTorch ensemble variant scores plotted against TF/Keras ensemble scores falling tightly on the identity line.](paper_benchmark_concordance.png "width=700 PyTorch versus TF/Keras ensemble variant scores on each of the paper's released benchmark datasets (Pearson r = 1.0000 in every panel) and combined across all 16,004 variants (bottom centre).")
 
 **Training equivalence.** Inference equivalence doesn't guarantee the training loop itself matches — a converter can produce an identical model while the from-scratch training and fine-tuning code silently diverges from Illumina's Keras implementation. `train.py` and `finetune.py` clip gradients per parameter (matching Keras' `clipnorm` semantics, as opposed to a single norm across all parameters jointly), set `BatchNorm`'s momentum to the value equivalent to Keras' `momentum=0.99`, and count `steps_per_epoch` the same way Keras does. Multi-species training also matches Keras' handling of a batch's inactive species: its loss term stays in the graph as a zero-weighted zero rather than being dropped, so weight decay still applies to every head on every step as it does in Keras, and each batch is drawn from a single species rather than mixed across species. A cross-framework test suite runs one training step through numerically identical converted weights in both frameworks — at toy scale, and, for all four released checkpoints, at the real published scale (`num_blocks=24`, `model_dim=1024`) on GPU against Illumina's own SavedModels — and checks agreement on the loss, gradients, AdamW parameter deltas, and BatchNorm running-stat updates via a per-tensor cosine-similarity/relative-L2 pass rate rather than strict elementwise tolerances. All four real-checkpoint configurations pass; for the base (`hg38`, `hg38_mm10`) checkpoints, forward-pass prediction agreement is cosine = 1.0000 with relative L2 under 0.5%. The one remaining, characterized divergence is framework-inherent rather than a porting gap: Keras' `AdamW` places its `epsilon` term differently than PyTorch's, transiently damping its first ~1,000 optimizer steps more strongly even with a matching `epsilon`. See `notes/implementation.md` and `docs/training.md` in the repo for the full derivation.
 
 ## What Can You Do With This?
 
-Beyond variant scoring, `load_pretrained()` exposes the full model for anything you'd normally do with a PyTorch sequence model — track prediction, embeddings, and  DeepLIFT/SHAP attribution:
+Beyond variant scoring, `load_pretrained()` exposes the full model for anything you'd normally do with a PyTorch sequence model — track prediction, embeddings, and  DeepLIFT/SHAP attribution [3]:
 
 ```python
 import torch
