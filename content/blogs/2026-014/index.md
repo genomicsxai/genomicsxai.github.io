@@ -134,7 +134,7 @@ Porting a model is only useful if it actually reproduces the original, so most o
 
 ## What Can You Do With This?
 
-Beyond variant scoring, `load_pretrained()` exposes the full model for anything you'd normally do with a PyTorch sequence model — track prediction, embeddings, and  DeepLIFT/SHAP attribution [3]:
+Beyond variant scoring, `load_pretrained()` exposes the full model for anything you'd normally do with a PyTorch sequence model — track prediction, embeddings, and DeepLIFT/SHAP attribution [3]:
 
 ```python
 import torch
