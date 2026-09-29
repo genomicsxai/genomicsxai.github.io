@@ -16,7 +16,7 @@ authors_display:
     orcid: "0000-0003-3084-2287"
     contact: "akundaje@stanford.edu"
 
-editor: "Editor Name"
+editor: ["Editor Name", "Al-Murphy"]
 
 tags: ["genomics", "promoterai", "pytorch", "variant-interpretation", "seq2func", "fine-tuning", "benchmarking"]
 categories: ["Blog Post", "Tutorial"]
@@ -25,12 +25,12 @@ scope: ["tutorials", "protocols"]
 audience: ["general", "technical"]
 labs: ["Kundaje lab"]
 
-status: "submitted"
+status: "accepted"
 revision: 1
 
 date_submitted: 2026-08-18
 date_accepted:
-date: 2026-08-18
+date: 2026-09-29
 
 doi: ""
 zenodo_url: ""
