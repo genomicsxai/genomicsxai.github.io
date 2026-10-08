@@ -17,5 +17,17 @@
       <a href="{{ $doiURL }}" target="_blank" rel="noopener">{{ $doiURL }}</a>.
     {{- end }}
   </p>
+  {{ with $citationData.doi }}
+  <div class="citation-box__altmetric">
+    <span class="citation-box__altmetric-label">Online attention:</span>
+    <div class="altmetric-embed"
+         data-badge-type="medium-donut"
+         data-badge-details="right"
+         data-badge-popover="top"
+         data-link-target="_blank"
+         data-doi="{{ . }}"></div>
+  </div>
+  <script src="https://embed.altmetric.com/assets/embed.js" defer></script>
+  {{ end }}
 </div>
 <script src="{{ "js/citation.js" | relURL }}" defer></script>

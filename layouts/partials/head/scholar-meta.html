@@ -1,13 +1,5 @@
 {{- if and .IsPage (eq .Section "blogs") (eq .Params.status "accepted") -}}
 {{- $citation := partial "helper/citation-data.html" . -}}
-{{- $zenodoStore := hugo.Data.zenodo | default dict -}}
-{{- $zenodoEntry := dict -}}
-{{- with .Params.post_id -}}
-  {{- with index $zenodoStore . -}}
-    {{- $zenodoEntry = . -}}
-  {{- end -}}
-{{- end -}}
-{{- $zenodoDoi := $zenodoEntry.current_doi | default "" -}}
 {{- $publicationDate := .Params.date_accepted | default .Date -}}
 <meta name="citation_title" {{ printf "content=%q" $citation.title | safeHTMLAttr }}>
 {{- range $citation.authors }}
@@ -22,7 +14,7 @@
 <meta name="citation_online_date" content="{{ .Date | dateFormat "2006/01/02" }}">
 <meta name="citation_journal_title" {{ printf "content=%q" $citation.blogName | safeHTMLAttr }}>
 <meta name="citation_fulltext_html_url" content="{{ .Permalink }}">
-{{- with $zenodoDoi }}
+{{- with $citation.doi }}
 <meta name="citation_doi" {{ printf "content=%q" . | safeHTMLAttr }}>
 {{- end }}
 {{- with .Params.pdf_url | default .Params.pdf }}
