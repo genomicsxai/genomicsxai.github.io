@@ -1,0 +1,76 @@
+{{- /*
+  Override of themes/Stack/layouts/_partials/comments/provider/giscus.html.
+
+  The only change is the mapping. With mapping="pathname", giscus finds a
+  post's thread through GitHub's discussion search, and when that index goes
+  stale every thread silently disappears and new likes and comments land on
+  empty duplicates (issue #134). Where the deploy step has recorded the post's
+  discussion number in data/discussions.json (export-blog-discussion-urls.sh),
+  load that thread directly with mapping="number". Otherwise, for example on PR
+  previews, which stub discussions.json to {}, fall back to the configured
+  mapping so previews keep their own threads.
+*/ -}}
+{{- $number := 0 -}}
+{{- with .Site.Data.discussions -}}
+  {{- $d := index . $.RelPermalink -}}
+  {{- if reflect.IsMap $d -}}
+    {{- $number = int ($d.number | default 0) -}}
+  {{- end -}}
+{{- end -}}
+{{- with .Site.Params.comments.giscus -}}
+<script
+    src="https://giscus.app/client.js"
+    data-repo="{{- .repo -}}"
+    data-repo-id="{{- .repoID -}}"
+    data-category="{{- .category -}}"
+    data-category-id="{{- .categoryID -}}"
+    {{- if gt $number 0 }}
+    data-mapping="number"
+    data-term="{{- $number -}}"
+    {{- else }}
+    data-mapping="{{- .mapping -}}"
+    {{- end }}
+    data-strict="{{- .strict -}}"
+    data-reactions-enabled="{{- .reactionsEnabled -}}"
+    data-emit-metadata="{{- .emitMetadata -}}"
+    data-input-position="{{- .inputPosition -}}"
+    data-theme="{{- .lightTheme -}}"
+    data-lang="{{- .lang -}}"
+    data-loading="{{- .loading -}}"
+    crossorigin="anonymous"
+    async
+></script>
+<script>
+    function setGiscusTheme(theme) {
+        let giscus = document.querySelector("iframe.giscus-frame");
+        if (giscus) {
+            giscus.contentWindow.postMessage(
+                {
+                    giscus: {
+                        setConfig: {
+                            theme: theme,
+                        },
+                    },
+                },
+                "https://giscus.app"
+            );
+        }
+    }
+
+    (function () {
+        addEventListener("message", (e) => {
+            if (event.origin !== "https://giscus.app") return;
+            handler();
+        });
+        window.addEventListener("onColorSchemeChange", handler);
+
+        function handler() {
+            if (document.documentElement.dataset.scheme === "light") {
+                setGiscusTheme('{{- .lightTheme -}}');
+            } else {
+                setGiscusTheme('{{- .darkTheme -}}');
+            }
+        }
+    })();
+</script>
+{{- end -}}

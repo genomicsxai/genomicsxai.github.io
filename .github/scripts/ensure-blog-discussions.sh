@@ -67,7 +67,10 @@ EXISTING=$(echo "$RES2" | jq -r '.data.repository.discussions.nodes[].title' | t
 BASE_URL="https://genomicsxai.github.io"
 CREATED=0
 for blogpath in "${PATHS[@]}"; do
-  if echo "$EXISTING" | grep -qF "$blogpath"; then
+  # Exact whole-title match (-x). A substring match let preview threads such as
+  # "previews/pr-20/blogs/2026-004/" count as the live post's thread, so those
+  # posts never got a canonical "/blogs/<slug>/" discussion (issue #134).
+  if echo "$EXISTING" | grep -qxF "$blogpath"; then
     continue
   fi
   BODY="Discussion for this blog post. Comments and reactions appear on the site when Giscus is enabled."
