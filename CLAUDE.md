@@ -43,7 +43,7 @@ Custom Hugo templates in `layouts/` override the Stack theme (`themes/Stack/`). 
 
 ### CI/CD (GitHub Actions)
 
-- **deploy.yml** (push to main): Creates GitHub Discussions per post, fetches discussion metrics (likes/comments), fetches editors from GitHub API, builds with Hugo, deploys to `gh-pages` branch
+- **deploy.yml** (push to main): Creates GitHub Discussions per post, fetches discussion metrics (likes/comments), fetches editors from GitHub API, mints Zenodo DOIs, prints each accepted post to PDF for Google Scholar (`.github/scripts/render-post-pdfs.sh`, which builds `hugo --environment pdf` from `config/pdf/` and `layouts/blogs/single.print.html`), builds with Hugo, deploys to `gh-pages` branch
 - **pr-build.yml**: Runs `hugo --minify` to verify build
 - **frontmatter.yml**: Validates YAML frontmatter on PRs touching `content/blogs/`
 - **links.yml**: Checks for broken links with lychee

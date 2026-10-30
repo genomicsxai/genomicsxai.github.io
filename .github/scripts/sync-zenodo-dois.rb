@@ -7,6 +7,7 @@ require "uri"
 require "yaml"
 require "fileutils"
 require "pathname"
+require "tmpdir"
 
 ROOT = File.expand_path("../..", __dir__)
 DATA_PATH = File.join(ROOT, "data", "zenodo.json")
@@ -15,6 +16,8 @@ API_BASE = ENV.fetch("ZENODO_API_BASE", "https://zenodo.org/api")
 TOKEN = ENV["ZENODO_API_TOKEN"].to_s.strip
 COMMUNITY = ENV["ZENODO_COMMUNITY"].to_s.strip
 DRY_RUN = ENV["DRY_RUN"] == "1"
+# render-post-pdfs.sh, when the workflow can print PDFs (Hugo + Chrome).
+PDF_RENDERER = ENV["PDF_RENDERER"].to_s.strip
 
 def load_post(path)
   raw = File.read(path)
@@ -136,13 +139,21 @@ def api_upload_file(bucket_url, source_path, filename)
   parsed
 end
 
-def upload_post_files(draft, post_path, post_id, revision_number)
+# Build output that sits beside a post's sources but is not part of them:
+# CI's WebP derivatives (optimize-images.py) and the site's copy of the PDF.
+def generated_file?(file, post_id)
+  name = File.basename(file)
+  File.fnmatch("*.optimized*.webp", name) || name == "#{post_id}.pdf"
+end
+
+def upload_post_files(draft, post_path, post_id, revision_number, pdf: nil)
   bucket_url = draft.dig("links", "bucket")
   raise "Zenodo draft response missing bucket link for #{post_id}" unless bucket_url
 
   post_dir = File.dirname(post_path)
   base = Pathname.new(post_dir)
-  files = Dir.glob(File.join(post_dir, "*")).select { |file| File.file?(file) }.sort
+  files = Dir.glob(File.join(post_dir, "*"))
+             .select { |file| File.file?(file) && !generated_file?(file, post_id) }.sort
   raise "No files found to upload for #{post_id}" if files.empty?
 
   files.each do |file|
@@ -150,6 +161,22 @@ def upload_post_files(draft, post_path, post_id, revision_number)
     filename = "#{post_id}-v#{revision_number}-#{relative}"
     api_upload_file(bucket_url, file, filename)
   end
+  api_upload_file(bucket_url, pdf, "#{post_id}-v#{revision_number}.pdf") if pdf
+end
+
+# Print the post to PDF for its deposit, showing the DOI Zenodo has just
+# reserved for this draft, so Zenodo can offer Google Scholar a full text.
+# Returns the PDF's path, or nil. A failed print must not stop the DOI being
+# minted: the deposit then goes out without a PDF, as every one did before.
+def render_pdf(post_id, draft)
+  return nil if PDF_RENDERER.empty?
+
+  doi = draft.dig("metadata", "prereserve_doi", "doi").to_s
+  pdf = File.join(Dir.mktmpdir("zenodo-pdf"), "#{post_id}.pdf")
+  return pdf if system("bash", PDF_RENDERER, "--post", post_id, "--doi", doi, "--output", pdf) && File.size?(pdf)
+
+  puts "::warning::Could not print #{post_id} to PDF; its Zenodo deposit will not include one."
+  nil
 end
 
 def create_initial_draft(metadata)
@@ -238,11 +265,11 @@ changed.each do |path|
       raise "Zenodo newversion response missing latest_draft for #{post_id}" unless latest_draft
       draft = api_request(:get, latest_draft)
       draft = update_draft_metadata(draft.fetch("id"), metadata)
-      upload_post_files(draft, path, post_id, revision_number)
+      upload_post_files(draft, path, post_id, revision_number, pdf: render_pdf(post_id, draft))
       publish_draft(draft.fetch("id"))
     else
       draft = create_initial_draft(metadata)
-      upload_post_files(draft, path, post_id, revision_number)
+      upload_post_files(draft, path, post_id, revision_number, pdf: render_pdf(post_id, draft))
       publish_draft(draft.fetch("id"))
     end
 

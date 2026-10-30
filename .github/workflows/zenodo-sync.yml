@@ -61,12 +61,20 @@ jobs:
             exit 1
           fi
 
+      # Only needed to print the PDF that goes into each deposit.
+      - uses: peaceiris/actions-hugo@v3
+        with:
+          extended: true
+
       - name: Sync Zenodo DOI metadata
         env:
           ZENODO_API_TOKEN: ${{ secrets.ZENODO_API_TOKEN }}
           ZENODO_COMMUNITY: ${{ secrets.ZENODO_COMMUNITY }}
           SITE_URL: https://genomicsxai.github.io
           DRY_RUN: ${{ github.event.inputs.zenodo_dry_run == 'true' && '1' || '0' }}
+          # Adds the post's PDF to each new deposit; if printing fails the
+          # deposit goes out without one, as before.
+          PDF_RENDERER: .github/scripts/render-post-pdfs.sh
         run: |
           if [ -z "$ZENODO_API_TOKEN" ]; then
             echo "ZENODO_API_TOKEN is not configured."

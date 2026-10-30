@@ -32,3 +32,6 @@ package-lock.json
 *.optimized*.webp
 data/image_derivatives.json
 __pycache__/
+
+# Google Scholar PDFs printed into post bundles on deploy (render-post-pdfs.sh)
+content/blogs/*/[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9].pdf

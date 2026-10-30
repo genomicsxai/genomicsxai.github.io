@@ -74,7 +74,7 @@ Here we focus on general workflows applicable to genome-scale assays and custom 
 
 ## Motivation
 
-[AlphaGenome](https://www.nature.com/articles/s41586-025-10014-0) is a foundation sequence-to-function model trained on genome-scale data. Its native JAX/Haiku implementation is powerful but can be cumbersome to modify for custom tasks (we learned this the hard way!). Researchers often want to:
+[AlphaGenome](https://www.nature.com/articles/s41586-025-10014-0) [1] is a foundation sequence-to-function model trained on genome-scale data. Its native JAX/Haiku implementation is powerful but can be cumbersome to modify for custom tasks (we learned this the hard way!). Researchers often want to:
 
 * Train a new head on a novel assay
 
@@ -90,7 +90,7 @@ To help with this, we developed [alphagenome-ft](https://github.com/genomicsxai/
 
 > _Side note:_ AlphaGenome is a deep learning model that predicts functional genomic signals (e.g., accessibility, transcription, binding) directly from DNA sequence. We call such models sequence-to-function (seq2func) models.
 
-> _Side note 2:_ JAX/Haiku are DeepMind's frameworks which are similar to using PyTorch but optimized for large-scale accelerator workloads.
+> _Side note 2:_ JAX/Haiku [2, 3] are DeepMind's frameworks which are similar to using PyTorch but optimized for large-scale accelerator workloads.
 
 ## But wait, why fine-tune AlphaGenome?
 
@@ -129,7 +129,7 @@ This is particularly useful when:
 
 * You want faster experimentation cycles
 
-Importantly, this is different from encoder-only fine-tuning used for very short sequences (e.g., ~200–300 bp MPRA constructs). In that setting, only the convolutional encoder is used, bypassing the transformer and decoder entirely. This is covered in [another post](https://genomicsxai.github.io/blogs/2026-002/).
+Importantly, this is different from encoder-only fine-tuning used for very short sequences (e.g., ~200–300 bp MPRA constructs). In that setting, only the convolutional encoder is used, bypassing the transformer and decoder entirely. This is covered in [another post](https://genomicsxai.github.io/blogs/2026-002/) [4].
 
 Here, we are still using the full model stack (encoder → transformer → decoder), but operating on a reduced genomic window.
 
@@ -235,9 +235,9 @@ A full selection of four workflows are given in our [github repository](https://
 * Full-model fine-tuning
 * Encoder-only (MPRA / short sequences)
 
-See the dedicated [MPRA post](https://genomicsxai.github.io/blogs/2026-002/) for full post dedicated to Encoder-only fine-tuning (it's great, even though I may be slightly biased as the one who wrote it ...). 
+See the dedicated [MPRA post](https://genomicsxai.github.io/blogs/2026-002/) [4] for full post dedicated to Encoder-only fine-tuning (it's great, even though I may be slightly biased as the one who wrote it ...). 
 
-> _Side note:_ [Low-rank adapters (LoRA)](https://arxiv.org/abs/2106.09685) enable parameter-efficient fine-tuning by learning small update matrices instead of modifying the full backbone.
+> _Side note:_ [Low-rank adapters (LoRA)](https://arxiv.org/abs/2106.09685) [5] enable parameter-efficient fine-tuning by learning small update matrices instead of modifying the full backbone.
 
 If unsure where to start, we recommend training a task-specific head with the backbone frozen, then progressively unfreezing components if additional capacity is needed.
 
@@ -259,18 +259,18 @@ alphagenome-ft allows:
 
 After training, alphagenome-ft also supports:
 
-* DeepSHAP-like attributions - using dinucleotide shuffled reference sequences
-* Gradient × Input
-* Gradient
-* In silico mutagenesis (ISM)
+* DeepSHAP-like attributions [6, 7] - using dinucleotide shuffled reference sequences
+* Gradient × Input [8]
+* Gradient [9]
+* In silico mutagenesis (ISM) [10, 11]
 
 > _Side note:_ Attribution methods highlight which nucleotides drive predictions in these models, helping reveal regulatory motifs and sequence grammar learned by the model.
 
-You can also visualise contributions with `plot_attribution_map` or `plot_sequence_logo` functions! See below for an example attribution map when we fine-tuned AlphaGenome's encoder on [fly STARR-seq data](https://www.nature.com/articles/s41588-022-01048-5) - See our [MPRA post](https://genomicsxai.github.io/blogs/2026-002/) for more details.
+You can also visualise contributions with `plot_attribution_map` or `plot_sequence_logo` functions! See below for an example attribution map when we fine-tuned AlphaGenome's encoder on [fly STARR-seq data](https://www.nature.com/articles/s41588-022-01048-5) [12] - See our [MPRA post](https://genomicsxai.github.io/blogs/2026-002/) [4] for more details.
 
 ![attribution map](sequence_logo_gradient_x_input.png "width=900 Gradient x Input attribution map for AlphaGenome encoder only fine-tuning on [fly STARR-seq data](https://www.nature.com/articles/s41588-022-01048-5) - See our [MPRA post](https://genomicsxai.github.io/blogs/2026-002/) for more details on this fine-tuning. We can see the model highlights an AP-1 motif around position ~230, consistent with known enhancer regulatory logic.")
 
-You can see we recover the AP-1 motif (`TGAsTCA`) comes up at roughly position 230 which is a known regulator for [developmental genes in flies](https://www.nature.com/articles/s41588-022-01048-5/figures/2).
+You can see we recover the AP-1 motif (`TGAsTCA`) comes up at roughly position 230 which is a known regulator for [developmental genes in flies](https://www.nature.com/articles/s41588-022-01048-5/figures/2) [12].
 
 ---
 
@@ -291,7 +291,7 @@ AlphaGenome can now be adapted as easily as modern vision and language foundatio
 
 ## Compute requirements
 
-A full analysis of the runtime requirements for fine-tuning AlphaGenome is [highlighted in separate blog post](https://genomicsxai.github.io/blogs/2026-005/) but in short:
+A full analysis of the runtime requirements for fine-tuning AlphaGenome is [highlighted in separate blog post](https://genomicsxai.github.io/blogs/2026-005/) [13] but in short:
 
 * Fine-tuning with a frozen backbone, i.e. head-only fine-tuning will fit on a single, middle of the range GPU, maxing out at around 14-27 GB vram (batch size 1).
 * For full Fine-tuning, you will need at least 76.1 GB vram, so a H100/H200 GPU.
@@ -330,7 +330,16 @@ If you want to fine-tune AlphaGenome without modifying its core codebase, alphag
 
 ## References
 
-1. Avsec, Ž. et al. Advancing regulatory variant effect prediction with AlphaGenome., 649, Nature (2026).
-2. Alan Murphy, Peter Koo. "Adapting AlphaGenome to MPRA data." Genomics × AI Blog, 20 February 2026. https://genomicsxai.github.io/blogs/2026-002/
-3. Hu, E. J. et al. Lora: Low-rank adaptation of large language models (2021), https://arxiv.org/abs/2106.09685. 2106.09685.
-4. de Almeida, B. P., Reiter, F., Pagani, M. & Stark, A. Deepstarr predicts enhancer activity from dna sequence and enables the de novo design of synthetic enhancers., 54, Nat. genetics (2022).
+1. Avsec, Ž., Latysheva, N., Cheng, J., Novati, G. et al. Advancing regulatory variant effect prediction with AlphaGenome. *Nature* 649, 1206–1218 (2026). https://doi.org/10.1038/s41586-025-10014-0
+2. Bradbury, J. et al. JAX: composable transformations of Python+NumPy programs (2018). https://github.com/jax-ml/jax
+3. Hennigan, T., Cai, T., Norman, T., Martens, L. & Babuschkin, I. Haiku: Sonnet for JAX (2020). https://github.com/google-deepmind/dm-haiku
+4. Murphy, A., Durán, A. & Koo, P. K. Adapting AlphaGenome to MPRA data. *Genomics x AI Blog* (2026). https://doi.org/10.5281/zenodo.20272900
+5. Hu, E. J., Shen, Y., Wallis, P., Allen-Zhu, Z., Li, Y., Wang, S., Wang, L. & Chen, W. LoRA: Low-Rank Adaptation of Large Language Models. *arXiv* 2106.09685 (2021). https://arxiv.org/abs/2106.09685
+6. Lundberg, S. M. & Lee, S.-I. A unified approach to interpreting model predictions. *Advances in Neural Information Processing Systems* 30 (2017). https://arxiv.org/abs/1705.07874
+7. Shrikumar, A., Greenside, P. & Kundaje, A. Learning important features through propagating activation differences. *Proceedings of the 34th International Conference on Machine Learning*, PMLR 70, 3145–3153 (2017). https://arxiv.org/abs/1704.02685
+8. Shrikumar, A., Greenside, P., Shcherbina, A. & Kundaje, A. Not just a black box: learning important features through propagating activation differences. *arXiv* 1605.01713 (2016). https://arxiv.org/abs/1605.01713
+9. Simonyan, K., Vedaldi, A. & Zisserman, A. Deep inside convolutional networks: visualising image classification models and saliency maps. *arXiv* 1312.6034 (2013). https://arxiv.org/abs/1312.6034
+10. Alipanahi, B., Delong, A., Weirauch, M. T. & Frey, B. J. Predicting the sequence specificities of DNA- and RNA-binding proteins by deep learning. *Nat. Biotechnol.* 33, 831–838 (2015). https://doi.org/10.1038/nbt.3300
+11. Zhou, J. & Troyanskaya, O. G. Predicting effects of noncoding variants with deep learning–based sequence model. *Nat. Methods* 12, 931–934 (2015). https://doi.org/10.1038/nmeth.3547
+12. de Almeida, B. P., Reiter, F., Pagani, M. & Stark, A. DeepSTARR predicts enhancer activity from DNA sequence and enables the de novo design of synthetic enhancers. *Nat. Genet.* 54, 613–624 (2022). https://doi.org/10.1038/s41588-022-01048-5
+13. Tu, X., Buendia, A., Kundaje, A. & Mostafavi, S. Benchmarking AlphaGenome on NVIDIA GPUs: latency, memory, and feasibility across sequence lengths. *Genomics x AI Blog* (2026). https://doi.org/10.5281/zenodo.20272910
