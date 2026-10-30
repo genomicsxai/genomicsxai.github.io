@@ -1,0 +1,155 @@
+{{- /* Print source for a blog post's Google Scholar PDF.
+
+     Only `hugo --environment pdf` (config/pdf/hugo.toml) renders this, as
+     print.html beside each post in a throwaway directory, and
+     .github/scripts/render-post-pdfs.sh prints it with headless Chrome. It is
+     never deployed, so nothing here changes how the site looks.
+
+     Scholar recognises a paper from the layout of its PDF, so the first page
+     follows its inclusion guidelines: the title is the largest text at the
+     top, the authors come right after it, a citation to the published post
+     sits on a line of its own, and the bibliography keeps its "References"
+     heading. */ -}}
+{{- $citation := partial "helper/citation-data.html" . -}}
+{{- $doi := $citation.doi -}}
+{{/* sync-zenodo-dois.rb prints a post while its new DOI is still a draft
+     reservation that data/zenodo.json does not know yet, and passes it in as
+     HUGO_PARAMS_PDFPOST / HUGO_PARAMS_PDFDOI. An empty DOI there means "none
+     yet", so a revision never shows the previous version's DOI. */}}
+{{- if and site.Params.pdfpost (eq (string site.Params.pdfpost) (string .Params.post_id)) -}}
+  {{- $doi = string (site.Params.pdfdoi | default "") -}}
+{{- end -}}
+
+{{- /* Number each distinct affiliation in order of first appearance. */ -}}
+{{- $affiliations := slice -}}
+{{- $people := slice -}}
+{{- range $entry := .Params.authors_display | default .Params.authors -}}
+  {{- $name := $entry -}}
+  {{- $affiliation := "" -}}
+  {{- if reflect.IsMap $entry -}}
+    {{- $name = $entry.name -}}
+    {{- $affiliation = $entry.affiliation | default "" -}}
+  {{- end -}}
+  {{- $number := 0 -}}
+  {{- with $affiliation -}}
+    {{- if not (in $affiliations .) -}}{{- $affiliations = $affiliations | append . -}}{{- end -}}
+    {{- range $i, $known := $affiliations -}}
+      {{- if eq $known $affiliation -}}{{- $number = add $i 1 -}}{{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $people = $people | append (dict "name" $name "affiliation" $number) -}}
+{{- end -}}
+{{- $numbered := gt (len $affiliations) 1 -}}
+
+{{- $content := .Content -}}
+{{/* Chrome prints once the page has loaded, so fetch every figure up front. */}}
+{{- $content = replace $content `loading="lazy"` `loading="eager"` -}}
+{{/* Print the uploaded originals rather than CI's lossless WebP derivatives:
+     Chrome copies a JPEG into the PDF as-is but has to re-encode WebP. */}}
+{{- $content = replaceRE `\.optimized\.webp"` `"` $content -}}
+{{/* Keep the PDF under Scholar's 5 MB limit. Chrome embeds a PNG or GIF
+     close to uncompressed, so re-encode any heavy or extra-wide figure as a
+     JPEG at most 2000 px wide (about 290 dpi across the text column), which
+     it copies in as-is. Clicking a figure in the PDF still opens the
+     full-resolution original online. */}}
+{{- range findRESubmatch `<img src="([^"]+)"` $content -}}
+  {{- $src := index . 1 -}}
+  {{- with $.Resources.Get (strings.TrimPrefix $.RelPermalink $src) -}}
+    {{- if and (eq .MediaType.MainType "image") (ne .MediaType.SubType "svg") -}}
+      {{- $tooWide := gt .Width 2000 -}}
+      {{- $heavy := and (ne .MediaType.SubType "jpeg") (gt (len .Content) 300000) -}}
+      {{- if or $tooWide $heavy -}}
+        {{- $printed := .Process (cond $tooWide "resize 2000x jpg q90" "jpg q90") -}}
+        {{- $content = replace $content (printf `src="%s"` $src) (printf `src="%s"` $printed.RelPermalink) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{/* Chrome prints from a local server, so root-relative links would point at
+     it; send readers to the live site instead. Images stay relative so they
+     load from the build being printed. */}}
+{{- $content = replaceRE `(href=")/([^/"])` (printf "${1}%s${2}" site.BaseURL) $content -}}
+<!doctype html>
+<html lang="{{ site.LanguageCode | default "en" }}">
+<head>
+<meta charset="utf-8">
+<title>{{ .Title }}</title>
+<meta name="author" content="{{ delimit $citation.authors ", " }}">
+<style>
+@page {
+  size: Letter;
+  margin: 20mm 20mm 22mm;
+  @bottom-center {
+    content: counter(page) " / " counter(pages);
+    font: 8pt/1 "Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif;
+    color: #666;
+  }
+}
+:root {
+  color-scheme: light;
+  --serif: "Source Serif 4", "Source Serif Pro", Charter, "Bitstream Charter", "Liberation Serif", "Times New Roman", Times, serif;
+  --sans: "Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif;
+  --mono: Menlo, "SF Mono", "DejaVu Sans Mono", "Liberation Mono", monospace;
+}
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { margin: 0; background: #fff; color: #111; font: 10.5pt/1.45 var(--serif); }
+.paper-header { margin: 0 0 14pt; padding: 0 0 10pt; border-bottom: 0.75pt solid #999; }
+.paper-title { margin: 0 0 8pt; font-size: 22pt; line-height: 1.2; font-weight: 700; }
+.paper-authors { margin: 0 0 4pt; font-size: 12pt; }
+.paper-affiliations { margin: 0 0 8pt; font-size: 9pt; color: #333; }
+.paper-venue, .paper-online { margin: 0; font: 9pt/1.45 var(--sans); color: #333; }
+sup { font-size: 0.7em; line-height: 0; }
+h2 { margin: 16pt 0 6pt; font-size: 14pt; line-height: 1.25; break-after: avoid; }
+h3 { margin: 12pt 0 4pt; font-size: 12pt; line-height: 1.25; break-after: avoid; }
+h4, h5, h6 { margin: 10pt 0 4pt; font-size: 10.5pt; break-after: avoid; }
+p, li { orphans: 3; widows: 3; }
+p { margin: 0 0 7pt; }
+ul, ol { margin: 0 0 7pt; padding-left: 18pt; }
+li > p { margin-bottom: 3pt; }
+a { color: #1a4f8b; text-decoration: none; }
+img { max-width: 100%; height: auto; }
+figure { margin: 10pt 0; text-align: center; break-inside: avoid; }
+figcaption { margin-top: 4pt; font-size: 9pt; line-height: 1.35; text-align: left; color: #333; }
+blockquote { margin: 8pt 0; padding: 1pt 10pt; border-left: 2pt solid #bbb; color: #333; }
+hr { margin: 12pt 0; border: 0; border-top: 0.5pt solid #ccc; }
+code { font-family: var(--mono); font-size: 0.88em; }
+pre { margin: 6pt 0 9pt; padding: 6pt 8pt; border: 0.5pt solid #ddd; background: #f6f8fa; font: 8.5pt/1.35 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+pre code { font-size: inherit; }
+table { width: 100%; margin: 8pt 0; border-collapse: collapse; font-size: 9pt; break-inside: auto; }
+th, td { padding: 3pt 5pt; border: 0.5pt solid #bbb; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+.summary-box { margin: 0 0 12pt; padding: 6pt 10pt; border: 0.75pt solid #bbb; background: #f7f7f7; break-inside: avoid; }
+.summary-box__title { margin: 2pt 0 4pt; font-size: 11pt; }
+.print-note { padding: 6pt 10pt; border: 0.5pt dashed #999; font-style: italic; }
+</style>
+</head>
+<body>
+<article class="main-article">
+  <header class="paper-header">
+    <h1 class="paper-title">{{ .Title }}</h1>
+    <p class="paper-authors">
+      {{- range $i, $person := $people -}}
+        {{- if $i }}, {{ end -}}
+        {{- $person.name -}}
+        {{- if and $numbered $person.affiliation }}<sup>{{ $person.affiliation }}</sup>{{ end -}}
+      {{- end -}}
+    </p>
+    {{- with $affiliations }}
+    <p class="paper-affiliations">
+      {{- range $i, $affiliation := . -}}
+        {{- if $i }}<br>{{ end -}}
+        {{- if $numbered }}<sup>{{ add $i 1 }}</sup>{{ end -}}
+        {{- $affiliation -}}
+      {{- end -}}
+    </p>
+    {{- end }}
+    <p class="paper-venue"><em>{{ $citation.blogName }}</em>, {{ $citation.fullDate }}.
+      {{- with $doi }} <a href="https://doi.org/{{ . }}">https://doi.org/{{ . }}</a>{{ end }}</p>
+    <p class="paper-online">Online version: <a href="{{ .Permalink }}">{{ .Permalink }}</a></p>
+  </header>
+  {{ $content | safeHTML }}
+</article>
+{{ if or .Params.math site.Params.article.math }}{{ partial "article/components/math.html" . }}{{ end }}
+</body>
+</html>

@@ -103,10 +103,12 @@ Both options lead to the same review pipeline:
 
 ## Why references matter for Google Scholar
 
-Every accepted post is assigned a [Zenodo](https://zenodo.org/) DOI and
-publishes Google Scholar metadata, so your post is eligible to appear in
-Google Scholar and to be cited like any other article. Getting listed there is
-one of the main reasons to publish with us rather than on a personal blog.
+Every accepted post is assigned a [Zenodo](https://zenodo.org/) DOI,
+publishes Google Scholar metadata, and is also published as a PDF (on the
+blog and in its Zenodo record), the format Scholar's inclusion guidelines are
+written around. So your post is eligible to appear in Google Scholar and to be
+cited like any other article. Getting listed there is one of the main reasons
+to publish with us rather than on a personal blog.
 
 Scholar does not index everything it can crawl, though. It only includes
 documents its parser judges to be *scholarly articles*, and a reference list
@@ -138,8 +140,8 @@ So: a References section is not a hard requirement for acceptance, and a post
 without one can still be published. But if you would like your post to be
 discoverable and citable in Google Scholar, cite the primary literature your
 work builds on. Even if Scholar has already crawled your post, adding references
-later is worthwhile — it will be reconsidered on a future crawl, though this can
-take weeks.
+later is worthwhile — it will be reconsidered on a future crawl, though that can
+take weeks to months.
 
 ## What editors look for
 

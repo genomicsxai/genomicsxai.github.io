@@ -1,0 +1,18 @@
+# Loaded only by `hugo --environment pdf`, which .github/scripts/render-post-pdfs.sh
+# runs into a throwaway directory to print each blog post to PDF for Google
+# Scholar. The site build never reads this file, so nothing here changes the
+# published pages.
+
+# A second rendering of every post, written beside it as print.html from
+# layouts/blogs/single.print.html.
+[outputFormats.print]
+  mediaType = "text/html"
+  baseName = "print"
+  isHTML = true
+  notAlternative = true
+
+[[cascade]]
+  outputs = ["html", "print"]
+  [cascade.target]
+    path = "/blogs/**"
+    kind = "page"

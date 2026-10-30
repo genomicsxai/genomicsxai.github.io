@@ -28,9 +28,9 @@ Almost all of the mechanical work around a post is handled by CI. Your job is th
 * **Reviewer credit** — every editor who engaged with the PR (a formal review, a review comment, or a conversation comment) is added to the post's `editor:` list. Only `@genomicsxai/editors` members are credited, so authors and other commenters never are. See [§3](#3-review-outcomes).
 * **Publish date** — `date:` (the field the homepage orders by) is stamped with the merge date, for newly added posts, so "first published" ordering stays correct.
 * **Acceptance** — `status:` is flipped from `submitted` to `accepted`. A post already marked `withdrawn` or `accepted` is left untouched.
-* **Zenodo DOI** — each accepted post is issued a Zenodo DOI (or a new version, for an update), recorded in `data/zenodo.json` and shown in its citation box. This only happens once the post is `accepted` — which is why the automatic flip above matters. See [§1H](#h-references-and-google-scholar-indexing).
+* **Zenodo DOI** — each accepted post is issued a Zenodo DOI (or a new version, for an update), recorded in `data/zenodo.json` and shown in its citation box. The deposit includes a PDF of the post showing that DOI. This only happens once the post is `accepted` — which is why the automatic flip above matters. See [§1H](#h-references-and-google-scholar-indexing).
 * **GitHub Discussion** — a discussion thread is created to back the post's comments and likes.
-* **Google Scholar metadata + publish** — Scholar/Highwire metadata is emitted and the site is rebuilt and deployed.
+* **Google Scholar metadata + publish** — Scholar/Highwire metadata is emitted, every accepted post is printed to a PDF published beside it (`/blogs/<post_id>/<post_id>.pdf`, pointed to by `citation_pdf_url`), and the site is rebuilt and deployed. The PDF is not linked from the page, so readers see no change.
 
 **What this leaves for you:** the review itself — scope, correctness, clarity, tagging, and safety ([§1](#1-core-review-dimensions)); the executive summary ([§2](#2-executive-summary-requirement)); and a recommendation ([§3](#3-review-outcomes)). That's it.
 

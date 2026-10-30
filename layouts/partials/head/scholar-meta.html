@@ -25,8 +25,19 @@
 {{- with $zenodoDoi }}
 <meta name="citation_doi" {{ printf "content=%q" . | safeHTMLAttr }}>
 {{- end }}
-{{- with .Params.pdf_url | default .Params.pdf }}
-<meta name="citation_pdf_url" content="{{ . | absURL }}">
+{{- /* An author-supplied pdf_url wins; otherwise the PDF that
+       .github/scripts/render-post-pdfs.sh prints into the bundle on deploy.
+       Scholar only accepts a PDF in the same directory as the article page. */ -}}
+{{- $pdfURL := "" -}}
+{{- with .Params.pdf_url | default .Params.pdf -}}
+  {{- $pdfURL = . | absURL -}}
+{{- else -}}
+  {{- with $.Resources.Get (printf "%s.pdf" $.Params.post_id) -}}
+    {{- $pdfURL = .Permalink -}}
+  {{- end -}}
+{{- end -}}
+{{- with $pdfURL }}
+<meta name="citation_pdf_url" content="{{ . }}">
 {{- end }}
 {{- with .Params.tags }}
 <meta name="citation_keywords" {{ printf "content=%q" (delimit . "; ") | safeHTMLAttr }}>

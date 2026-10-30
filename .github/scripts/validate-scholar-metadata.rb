@@ -11,6 +11,7 @@ PUBLIC_DIR = File.join(ROOT, "public")
 DATA_PATH = File.join(ROOT, "data", "zenodo.json")
 BASE_URL = ENV.fetch("SITE_URL", "https://genomicsxai.github.io").sub(%r{/+\z}, "")
 REQUIRE_ACCEPTED_DOI = ARGV.include?("--require-accepted-doi")
+MAX_PDF_BYTES = 5_000_000 # Google Scholar's limit; render-post-pdfs.sh enforces it too
 
 def frontmatter(path)
   raw = File.read(path)
@@ -106,8 +107,27 @@ Dir.glob(File.join(ROOT, "content", "blogs", "*", "index.md")).sort.each do |pat
     errors << "#{path}: citation_doi must be #{expected_doi}"
   end
 
-  if fm["pdf_url"] || fm["pdf"]
-    errors << "#{path}: missing citation_pdf_url" if meta_values(html, "citation_pdf_url").empty?
+  # The PDF is an author-supplied pdf_url, or the one render-post-pdfs.sh
+  # printed into the bundle (deploy only; PR builds have none).
+  pdf_urls = meta_values(html, "citation_pdf_url")
+  printed_pdf = File.join(File.dirname(path), "#{post_id}.pdf")
+  if (fm["pdf_url"] || fm["pdf"] || File.exist?(printed_pdf)) && pdf_urls.empty?
+    errors << "#{path}: missing citation_pdf_url"
+  end
+  errors << "#{path}: more than one citation_pdf_url" if pdf_urls.length > 1
+  pdf_urls.select { |url| url.start_with?("#{BASE_URL}/") }.each do |url|
+    # Scholar ignores a PDF outside the article page's own directory.
+    name = url.delete_prefix(expected_url)
+    if name == url || name.include?("/")
+      errors << "#{path}: citation_pdf_url must be in #{expected_url}, not #{url}"
+      next
+    end
+    built = File.join(PUBLIC_DIR, "blogs", post_id, name)
+    if !File.file?(built)
+      errors << "#{path}: citation_pdf_url points to #{url}, which the build did not produce"
+    elsif File.size(built) > MAX_PDF_BYTES
+      errors << "#{path}: #{name} is over Google Scholar's 5 MB limit"
+    end
   end
 
   robots = meta_values(html, "robots").join(",")

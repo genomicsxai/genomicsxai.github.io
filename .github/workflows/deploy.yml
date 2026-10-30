@@ -158,6 +158,9 @@ jobs:
           ZENODO_API_TOKEN: ${{ secrets.ZENODO_API_TOKEN }}
           ZENODO_COMMUNITY: ${{ secrets.ZENODO_COMMUNITY }}
           SITE_URL: https://genomicsxai.github.io
+          # Adds the post's PDF to each new deposit; if printing fails the
+          # deposit goes out without one, as before.
+          PDF_RENDERER: .github/scripts/render-post-pdfs.sh
         run: |
           chmod +x .github/scripts/sync-zenodo-dois.rb
           ruby .github/scripts/sync-zenodo-dois.rb $(tr '\n' ' ' < /tmp/changed-blog-posts.txt)
@@ -230,6 +233,16 @@ jobs:
           name: zenodo-metadata-unpushed
           path: data/zenodo.json
           retention-days: 7
+
+      # 2.7. Print every accepted post to PDF for Google Scholar, into its
+      # bundle, so the build below publishes it beside the post and
+      # head/scholar-meta.html advertises it via citation_pdf_url. Runs after
+      # the Zenodo steps so new DOIs appear in the PDFs. Purely additive: a
+      # post that fails to print just has no PDF, and a failure here must
+      # never block the deploy.
+      - name: Render Google Scholar PDFs
+        continue-on-error: true
+        run: bash .github/scripts/render-post-pdfs.sh
 
       # 3. Build the Hugo site
       - name: Build
