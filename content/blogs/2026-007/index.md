@@ -25,7 +25,7 @@ audience: ["technical"]
 labs: ["Koo lab"]
 
 status: "accepted"
-revision: 2
+revision: 3
 
 date_submitted: 2026-05-21
 date_accepted: 2026-06-25
@@ -40,10 +40,13 @@ revision_history:
   - version: 2
     date: 2026-07-15
     notes: "Corrected Enformer CRISPRi readout: the cropped model output was indexed with an input-coordinate bin without subtracting the 320-bin (40,960 bp) crop, so the CAGE readout landed ~41 kb off the TSS on background signal. Fix reads the promoter bin. Updates Enformer's correlations and the four figures containing Enformer; Borzoi, NTv3, and AlphaGenome numbers are unchanged."
+  - version: 3
+    date: 2026-11-04
+    notes: "Updated NTv3 to InstaDeep's revised release (NTv3_tracks_1mb, released with the bioRxiv v2 preprint on 29 October 2026), replacing NTv3_650M_post. Updates NTv3's correlations, the three figures containing NTv3 (Figures 2, 3 and 5), the ensemble result, and NTv3-related text. Also corrects the Methods description of each model's output readout. Enformer, Borzoi and AlphaGenome numbers are unchanged."
 ---
 
 {{< summary >}}
-We benchmark four sequence-to-function genomic deep learning models — [Enformer](https://www.nature.com/articles/s41592-021-01252-x), [Borzoi](https://www.nature.com/articles/s41588-024-02053-6), [NTv3](https://www.biorxiv.org/content/10.64898/2025.12.22.695963v1), and [AlphaGenome](https://www.nature.com/articles/s41586-025-10014-0) — zero-shot on two K562 CRISPRi enhancer-knockdown screens ([Fulco et al., 2019](https://pubmed.ncbi.nlm.nih.gov/31784727/) and [Gasperini et al., 2019](https://pubmed.ncbi.nlm.nih.gov/30612741/)), extending the in-silico CRISPRi setup from [Karollus et al., 2023](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-023-02899-9).
+We benchmark four sequence-to-function genomic deep learning models — [Enformer](https://www.nature.com/articles/s41592-021-01252-x), [Borzoi](https://www.nature.com/articles/s41588-024-02053-6), [NTv3](https://www.biorxiv.org/content/10.64898/2025.12.22.695963v2), and [AlphaGenome](https://www.nature.com/articles/s41586-025-10014-0) — zero-shot on two K562 CRISPRi enhancer-knockdown screens ([Fulco et al., 2019](https://pubmed.ncbi.nlm.nih.gov/31784727/) and [Gasperini et al., 2019](https://pubmed.ncbi.nlm.nih.gov/30612741/)), extending the in-silico CRISPRi setup from [Karollus et al., 2023](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-023-02899-9).
 
 Three things stand out:
 
@@ -58,7 +61,7 @@ Three things stand out:
 
 ## Motivation
 
-Sequence-to-function (seq2func) models keep getting bigger, longer-context, and more capable. [AlphaGenome](https://www.nature.com/articles/s41586-025-10014-0) is the current state of the art, succeeding [Enformer](https://www.nature.com/articles/s41592-021-01252-x) (2021) and [Borzoi](https://www.nature.com/articles/s41588-024-02053-6) (2024). DNA language models like [NTv3](https://www.biorxiv.org/content/10.64898/2025.12.22.695963v1) now compete in the same space by post-training on the same functional genomic tracks.
+Sequence-to-function (seq2func) models keep getting bigger, longer-context, and more capable. [AlphaGenome](https://www.nature.com/articles/s41586-025-10014-0) is the current state of the art, succeeding [Enformer](https://www.nature.com/articles/s41592-021-01252-x) (2021) and [Borzoi](https://www.nature.com/articles/s41588-024-02053-6) (2024). DNA language models like [NTv3](https://www.biorxiv.org/content/10.64898/2025.12.22.695963v2) now compete in the same space by post-training on the same functional genomic tracks.
 
 AlphaGenome was launched as a substantial step forward, with most of its zero-shot evaluation focused on single-nucleotide variant (SNV) effects. Two related weaknesses are especially well-documented for this class of model, both originally demonstrated on Enformer: predicting expression across **personalised genomes** (e.g. [Sasse et al.](https://www.nature.com/articles/s41588-023-01524-6)), and predicting **distal CRE effect magnitudes** (how much knocking down a far-away enhancer changes its target gene's expression). Both involve sequence perturbations the model wasn't directly trained on, and both are where seq2func models historically struggle. Performance on these tasks is what tells us whether a model's apparent advance translates to the questions biologists actually care about.
 
@@ -90,14 +93,14 @@ For each pair, the procedure is:
 1. Build a sequence window of the model's native context (196 kb for Enformer, 524 kb for Borzoi, 1 Mb for NTv3 and AlphaGenome), centred on the gene's TSS.
 2. Score the wild-type window.
 3. Dinucleotide-shuffle a 2 kb slice covering the enhancer. Repeat N = 50 times, average the model's prediction.
-4. Aggregate the model output over K562 RNA-Seq tracks in a TSS-centred 640 bp window. For AlphaGenome we additionally use the mean signal across GENCODE exons of the target gene (their paper's preferred RNA-Seq score).
+4. Aggregate the model's K562 output: CAGE tracks in a TSS-centred 640 bp window for Enformer (5 × 128 bp bins); RNA-Seq tracks in the same 640 bp window for Borzoi (20 × 32 bp bins); and for NTv3 and AlphaGenome, the mean RNA-Seq signal across the target gene's GENCODE exons (AlphaGenome's preferred RNA-Seq score), averaged over all K562 RNA-Seq tracks.
 5. Score `pred_delta = (WT − mean(shuffle)) / WT` per pair and correlate with the measured fractional knockdown.
 
 > _Side note_: This is a marginalisation procedure — by averaging predictions across many randomised backgrounds in which the enhancer's motif content is destroyed, we isolate the enhancer's contribution from the surrounding sequence context (the same idea underlies Global Importance Analysis (GIA); [Koo et al., 2021](https://pmc.ncbi.nlm.nih.gov/articles/PMC8118286/)). The background choice matters: N-replacement is out-of-distribution for the model and can produce strange predictions; drawing random bases changes local G+C content, biasing on composition rather than motif loss; even a plain base shuffle destroys dinucleotide frequencies like CpG counts, themselves a learned regulatory signal. Dinucleotide shuffling (Altschul–Erickson) destroys motif content while keeping both single-base and dinucleotide composition intact — the standard background for in-silico CRISPRi.
 
-This protocol is a direct extension of [Karollus 2023](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-023-02899-9) — most of it is bit-for-bit faithful to theirs. We reuse their Fulco et al. evaluation tables (`ziga_additional_columns.tsv` + `enhancer_knockdown_effects.tsv` from their [Zenodo release](https://zenodo.org/records/7613255)) with the same merge keys and validated-pair filtering, their TSS / enhancer / strand conventions, the same Enformer DeepMind checkpoint, and their K562 CAGE readout, central-bin aggregation, and Pearson/Spearman correlation framework. For Gasperini we apply the same protocol to the Cell 2019 high-confidence pairs (after hg19 → hg38 liftover). The model-specific adjustments — per-architecture aggregation conventions like 5×128 bp bins for Enformer, 20×32 bp for Borzoi, exon-mean for AlphaGenome RNA-Seq — are architecture-driven; the evaluation harness around them is the Karollus harness. Four deliberate departures from Karollus are flagged in [Limitations](#limitations).
+This protocol is a direct extension of [Karollus 2023](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-023-02899-9) — most of it is bit-for-bit faithful to theirs. We reuse their Fulco et al. evaluation tables (`ziga_additional_columns.tsv` + `enhancer_knockdown_effects.tsv` from their [Zenodo release](https://zenodo.org/records/7613255)) with the same merge keys and validated-pair filtering, their TSS / enhancer / strand conventions, the same Enformer DeepMind checkpoint, and their K562 CAGE readout, central-bin aggregation, and Pearson/Spearman correlation framework. For Gasperini we apply the same protocol to the Cell 2019 high-confidence pairs (after hg19 → hg38 liftover). The model-specific adjustments — per-architecture aggregation conventions like 5×128 bp bins for Enformer, 20×32 bp for Borzoi, exon-mean for NTv3 and AlphaGenome RNA-Seq — are architecture-driven; the evaluation harness around them is the Karollus harness. Four deliberate departures from Karollus are flagged in [Limitations](#limitations).
 
-Each model is evaluated using its canonical published inference setup, with no test-time augmentations applied (TTA is explored separately for AlphaGenome below). Inference compute per pair therefore isn't uniform: Borzoi runs four forward passes (one per fold), while the other three run one — we compare models as their authors released them rather than artificially restrict Borzoi to a single fold. Enformer uses the [lucidrains PyTorch port](https://github.com/lucidrains/enformer-pytorch) of the DeepMind weights — same weights as Karollus used, different framework wrapper. Borzoi predictions come from the [Flashzoi](https://huggingface.co/johahi) community PyTorch port, evaluated as the original paper's 4-fold ensemble (predictions averaged across the four published fold checkpoints). AlphaGenome uses the [PyTorch port](https://github.com/genomicsxai/alphagenome-pytorch) loaded with the all-fold distilled checkpoint, a single model trained to reproduce the multi-fold ensemble's behaviour. NTv3 is the [InstaDeepAI HuggingFace release](https://huggingface.co/InstaDeepAI/NTv3_650M_post).
+Each model is evaluated using its canonical published inference setup, with no test-time augmentations applied (TTA is explored separately for AlphaGenome below). Inference compute per pair therefore isn't uniform: Borzoi runs four forward passes (one per fold), while the other three run one — we compare models as their authors released them rather than artificially restrict Borzoi to a single fold. Enformer uses the [lucidrains PyTorch port](https://github.com/lucidrains/enformer-pytorch) of the DeepMind weights — same weights as Karollus used, different framework wrapper. Borzoi predictions come from the [Flashzoi](https://huggingface.co/johahi) community PyTorch port, evaluated as the original paper's 4-fold ensemble (predictions averaged across the four published fold checkpoints). AlphaGenome uses the [PyTorch port](https://github.com/genomicsxai/alphagenome-pytorch) loaded with the all-fold distilled checkpoint, a single model trained to reproduce the multi-fold ensemble's behaviour. NTv3 is InstaDeep's revised 1 Mb-context checkpoint, [NTv3_tracks_1mb](https://huggingface.co/InstaDeepAI/NTv3_tracks_1mb), released alongside the v2 preprint (29 October 2026; HF revision a5a644f). As the model expects, its input is soft-masked (repeat bases in lowercase); shuffled enhancer bases keep the reference case at each position.
 
 ---
 
@@ -105,7 +108,7 @@ Each model is evaluated using its canonical published inference setup, with no t
 
 **AlphaGenome leads, with Borzoi close behind on Fulco et al.** Figure 2 shows predicted vs. measured fractional knockdown for all four models on each screen, with points coloured by enhancer-to-TSS distance.
 
-![Figure 2](crispri_fig1.png "width=900 Figure 2: Predicted vs. measured fractional knockdown for the four models on (a) Fulco et al., 2019 and (b) Gasperini et al., 2019. Points coloured by enhancer-to-TSS distance. AlphaGenome achieves the highest Pearson and Spearman correlations on both screens; on Gasperini, NTv3 trails the leaders by a wide margin while Enformer lands mid-pack. The dashed x = y line marks perfect prediction (predicted = observed); points falling below it indicate the model underestimates the experimental knockdown.")
+![Figure 2](crispri_fig1.png "width=900 Figure 2: Predicted vs. measured fractional knockdown for the four models on (a) Fulco et al., 2019 and (b) Gasperini et al., 2019. Points coloured by enhancer-to-TSS distance. AlphaGenome achieves the highest Pearson and Spearman correlations on both screens; on Gasperini, NTv3 and Enformer sit level, behind AlphaGenome and Borzoi. The dashed x = y line marks perfect prediction (predicted = observed); points falling below it indicate the model underestimates the experimental knockdown.")
 
 The headline numbers (left two columns: each model on every pair its own receptive field can reach; right two columns: every model restricted to Enformer's 196 kb receptive field, so all four score the same set of pairs):
 
@@ -113,17 +116,17 @@ The headline numbers (left two columns: each model on every pair its own recepti
 |-------------|----------------:|-----------------:|--------------------:|------------------------:|
 | Enformer    | 0.60 / 0.31     | 0.30 / 0.27      | 0.60 / 0.31         | 0.30 / 0.27             |
 | Borzoi      | 0.66 / 0.49     | 0.34 / 0.33      | 0.66 / 0.49         | 0.34 / 0.35             |
-| NTv3        | 0.34 / 0.09     | 0.12 / 0.14      | 0.34 / 0.09         | 0.13 / 0.17             |
+| NTv3        | 0.51 / 0.27     | 0.29 / 0.29      | 0.51 / 0.26         | 0.31 / 0.30             |
 | AlphaGenome | **0.67 / 0.54** | **0.45 / 0.45**  | **0.67 / 0.54**     | **0.46 / 0.48**         |
 
 Values are Pearson's _r_ / Spearman's ρ. N pairs in the "full" columns varies by model because larger-context models score extra distal pairs that Enformer can't see (Fulco N = 62–63, Gasperini N = 352–438); in the "Enformer RF (Receptive Field)" columns N is uniform (Fulco et al. N = 62, Gasperini et al. N = 352), restricted to the enhancers Enformer predicts.
 
-The matched-RF columns rule out the simple "they just see more sequence" explanation for AlphaGenome and Borzoi's lead: Fulco et al. barely moves (only one distal pair drops), and on Gasperini et al. the rankings are unchanged — AlphaGenome even nudges up slightly (Pearson 0.45 → 0.46, Spearman 0.45 → 0.48).
+The matched-RF columns rule out the simple "they just see more sequence" explanation for AlphaGenome and Borzoi's lead: Fulco et al. barely moves (only one distal pair drops), and on Gasperini et al. the rankings are unchanged apart from NTv3 and Enformer, which swap third and fourth on Pearson's r (0.29 vs. 0.30, then 0.31 vs. 0.30) — AlphaGenome even nudges up slightly (Pearson 0.45 → 0.46, Spearman 0.45 → 0.48).
 
 A few takeaways:
 
 * **AlphaGenome outperforms all other models** on both screens, though essentially tied with Borzoi on Fulco et al. — see the small-sample caveat in [Limitations](#limitations).
-* **NTv3 is the weakest on Gasperini et al.** NTv3 has a 1 Mb context, the same as AlphaGenome, but still trails the leaders by a wide margin (Pearson's r 0.13 on the matched-RF set) — so context length isn't the explanation. Enformer, despite its shorter 196 kb context (which excludes ~20% of Gasperini et al. pairs), lands mid-pack on the pairs it can see (Pearson's r 0.30), close to Borzoi (0.34).
+* **Context length isn't the explanation.** NTv3 has a 1 Mb context, the same as AlphaGenome, but trails it on both screens (matched-RF Pearson's r 0.51 vs. 0.67 on Fulco et al., 0.31 vs. 0.46 on Gasperini et al.). Enformer, despite its shorter 196 kb context (which excludes ~20% of Gasperini et al. pairs), is level with NTv3 on the pairs it can see (Pearson's r 0.30) and close to Borzoi (0.34).
 * **On the same set of pairs, AlphaGenome still leads.** Of Gasperini et al.'s pairs, 21 fall within AlphaGenome's 1 Mb context but outside Borzoi's 524 kb — so they contribute to AlphaGenome's correlation but not Borzoi's (Note, all of the tested Fulco et al. pairs are in Borzoi's context). To make the comparison apples-to-apples, we restrict AlphaGenome to only the pairs Borzoi can also score: Pearson's r 0.45 → 0.44, Spearman's ρ 0.45 → 0.45 — giving essentially the same result.
 * **The Gasperini et al. ceiling is low across the board.** Even AlphaGenome leaves substantial variance unexplained. Some of this is likely measurement-side: Gasperini et al.'s scaled screen uses a high-MOI single-cell pooled design (median 28 gRNAs per cell), and the statistical and trans-perturbation challenges of high-MOI screens are well-documented ([Barry et al., 2021](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-021-02545-2)). Fulco et al.'s CRISPRi-FlowFISH targets one enhancer at a time with a bulk-population readout, which we'd expect to give more precise per-pair effect sizes. We can't separate measurement noise from model error from these correlations alone, so attributing the gap is interpretive — but it's at least consistent with the per-screen difference we see. Either way, the headline framing is that AlphaGenome improves CRISPRi prediction but a large gap remains, especially for distal cis-regulatory elements (CREs).
 
@@ -133,10 +136,10 @@ Figure 3 plots observed and predicted effect against enhancer-to-TSS distance, t
 
 ![Figure 3](crispri_fig2.png "width=900 Figure 3: Observed (grey) and predicted (blue) effect (y-axis) vs. enhancer-to-TSS distance (x-axis). Predictions are systematically smaller than observed knockdowns across all four models, and the gap widens at distal distances.")
 
-Two patterns hold across all four models:
+Two patterns stand out:
 
-* **Predictions are systematically smaller in magnitude than observed knockdowns.** Even where the rank ordering is right (good Spearman), the predicted effect sizes are compressed.
-* **The gap grows with distance.** Models capture some of the distance-decay biology, but the slope is shallower than the data demands — most obviously for NTv3, less so for AlphaGenome.
+* **Predictions are systematically smaller in magnitude than observed knockdowns.** Even where the rank ordering is right (good Spearman), the predicted effect sizes are compressed, most of all for NTv3: the line fitted to its predicted vs. measured effects (Figure 2) has a slope of 0.12–0.13, against 0.30 or more for the other three.
+* **The gap grows with distance on Gasperini et al.** There the measured knockdowns barely change with distance, but Enformer's, Borzoi's and AlphaGenome's predictions fall towards zero, so their shortfall grows roughly two- to three-fold from the nearest pairs to the farthest. NTv3 falls short by a similar amount at every distance, because its predictions sit near zero throughout. On Fulco et al., where the measured effects do decay with distance, the models capture some of that decay but less steeply than the data, most obviously NTv3; AlphaGenome is the exception, decaying about as steeply as the data.
 
 A short aside: AlphaGenome's RNA-Seq head, aggregated as the mean signal across the target gene's GENCODE exons (their paper's preferred approach), beats AlphaGenome's CAGE head on Gasperini et al. (Pearson's r 0.45 vs. 0.39). On Fulco et al. the difference is small (0.67 vs. 0.66). So if you're benchmarking a new model on these screens, your output-aggregation choice should be considered carefully!
 
@@ -144,9 +147,9 @@ A short aside: AlphaGenome's RNA-Seq head, aggregated as the mean signal across 
 
 ### Scoring it two ways
 
-A second aside: we computed the predicted effect two ways. Figure 2 used the linear `pred_delta = (WT − mean(shuffle)) / WT`. We also computed log<sub>2</sub>(WT / mean(shuffle)) against −log<sub>2</sub>(1 − y_delta) — a log fold-change scaling that de-emphasises a few high-end outliers. Figure 5 shows the log<sub>2</sub> version. Spearman is identical between the two scorings (rank-invariant); Pearson can shift noticeably, especially on Gasperini, and AlphaGenome and Borzoi narrowly swap order on Fulco — though the broad picture (AlphaGenome and Borzoi well above NTv3) is robust.
+A second aside: we computed the predicted effect two ways. Figure 2 used the linear `pred_delta = (WT − mean(shuffle)) / WT`. We also computed log<sub>2</sub>(WT / mean(shuffle)) against −log<sub>2</sub>(1 − y_delta) — a log fold-change scaling that de-emphasises a few high-end outliers. Figure 5 shows the log<sub>2</sub> version. Spearman is identical between the two scorings (rank-invariant); Pearson can shift noticeably, especially on Gasperini, and AlphaGenome and Borzoi narrowly swap order on Fulco — though the broad picture (AlphaGenome and Borzoi ahead of NTv3 on both screens) is robust.
 
-![Figure 5](crispri_suppfig1.png "width=900 Figure 5: Predicted vs. measured knockdown on the log2 alignment scale (log2(WT / mean(shuffle)) vs. −log2(1 − y_delta)) for Borzoi, NTv3, and AlphaGenome on (a) Fulco et al., 2019 and (b) Gasperini et al., 2019. Enformer omitted. Points coloured by enhancer-to-TSS distance. Model ranking matches Figure 2; Pearson can shift on Gasperini, and AlphaGenome and Borzoi swap order on Fulco. Spearman's ρ is identical between the two scorings. The dashed x = y line marks perfect prediction (predicted = observed); points falling below it indicate the model underestimates the experimental knockdown.")
+![Figure 5](crispri_suppfig1.png "width=900 Figure 5: Predicted vs. measured knockdown on the log2 alignment scale (log2(WT / mean(shuffle)) vs. −log2(1 − y_delta)) for Borzoi, NTv3, and AlphaGenome on (a) Fulco et al., 2019 and (b) Gasperini et al., 2019. Enformer omitted. Points coloured by enhancer-to-TSS distance. Model ranking matches Figure 2 apart from AlphaGenome and Borzoi on Fulco; Pearson can shift on Gasperini, and AlphaGenome and Borzoi swap order on Fulco. Spearman's ρ is identical between the two scorings. The dashed x = y line marks perfect prediction (predicted = observed); points falling below it indicate the model underestimates the experimental knockdown.")
 
 ### Test-time augmentation: stabilising AlphaGenome
 
@@ -160,7 +163,7 @@ The headline benchmark (Figures 2–5) doesn't use TTA, so all four models are c
 
 ### Does ensembling help?
 
-On the matched-RF (Receptive Field) set used in the headline table, a simple equal-weight average of the four models' predictions doesn't beat the best single model on either screen: Pearson's r is 0.66 on Fulco (just below AlphaGenome's 0.67) and 0.42 on Gasperini (below AlphaGenome's 0.46). On Gasperini, where AlphaGenome dominates, averaging in the weaker models clearly dilutes the predictive signal; on Fulco, where the models are more comparable, the average still lands fractionally below the leader rather than above it. Equal-weight ensembling, in other words, doesn't buy you anything over just using AlphaGenome here.
+On the matched-RF (Receptive Field) set used in the headline table, a simple equal-weight average of the four models' predictions doesn't meaningfully beat the best single model. On Fulco it edges AlphaGenome on Pearson's r (0.68 vs. 0.67) but not on Spearman's ρ (0.52 vs. 0.54), a difference well inside the small-sample noise (see Limitations). On Gasperini, where AlphaGenome dominates, averaging in the weaker models dilutes the predictive signal (Pearson's r 0.44 vs. 0.46; Spearman's ρ tied at 0.48). Equal-weight ensembling, in other words, doesn't buy you anything over just using AlphaGenome here.
 
 ---
 
@@ -202,7 +205,7 @@ The repo is set up so adding a fifth model is one new `scripts/test_<dataset>_<n
 * [Source code & evaluation scripts](https://github.com/Al-Murphy/seq2func_crispri_eval)
 * [Karollus et al., 2023 — the benchmark this extends](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-023-02899-9)
 * [SequenceModelBenchmark Zenodo (Karollus tables)](https://zenodo.org/records/7613255)
-* Models: [Enformer (PyTorch)](https://github.com/lucidrains/enformer-pytorch) · [Borzoi](https://github.com/calico/borzoi) (original) · [Flashzoi](https://huggingface.co/johahi) (Borzoi PyTorch port, 4-fold ensemble — used here) · [NTv3](https://huggingface.co/InstaDeepAI/NTv3_650M_post) · [AlphaGenome PyTorch port](https://github.com/genomicsxai/alphagenome-pytorch)
+* Models: [Enformer (PyTorch)](https://github.com/lucidrains/enformer-pytorch) · [Borzoi](https://github.com/calico/borzoi) (original) · [Flashzoi](https://huggingface.co/johahi) (Borzoi PyTorch port, 4-fold ensemble — used here) · [NTv3](https://huggingface.co/InstaDeepAI/NTv3_tracks_1mb) (gated: request access on Hugging Face) · [AlphaGenome PyTorch port](https://github.com/genomicsxai/alphagenome-pytorch)
 
 ---
 
@@ -210,7 +213,7 @@ The repo is set up so adding a fifth model is one new `scripts/test_<dataset>_<n
 
 1. Avsec, Ž. et al. Effective gene expression prediction from sequence by integrating long-range interactions. _Nature Methods_, 18, 1196–1203 (2021). https://doi.org/10.1038/s41592-021-01252-x
 2. Linder, J. et al. Predicting RNA-seq coverage from DNA sequence as a unifying model of gene regulation. _Nature Genetics_, 57, 949–961 (2025). https://doi.org/10.1038/s41588-024-02053-6
-3. Boshar, S. et al. A foundational model for joint sequence-function multi-species modeling at scale for long-range genomic prediction. _bioRxiv_ (2025). https://doi.org/10.64898/2025.12.22.695963
+3. Boshar, S. et al. A multispecies foundation model for genome function prediction, gene annotation and sequence design. _bioRxiv_ (2026). https://doi.org/10.64898/2025.12.22.695963
 4. Avsec, Ž. et al. Advancing regulatory variant effect prediction with AlphaGenome. _Nature_, 649, 1206–1218 (2026). https://doi.org/10.1038/s41586-025-10014-0
 5. Karollus, A., Mauermeier, T., Gagneur, J. Current sequence-based models capture gene expression determinants in promoters but mostly ignore distal enhancers. _Genome Biology_, 24, 56 (2023). https://doi.org/10.1186/s13059-023-02899-9
 6. Fulco, C. P. et al. Activity-by-contact model of enhancer–promoter regulation from thousands of CRISPR perturbations. _Nature Genetics_, 51, 1664–1669 (2019). https://doi.org/10.1038/s41588-019-0538-0
