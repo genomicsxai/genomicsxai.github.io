@@ -80,7 +80,7 @@ However, while highly effective, like any model, ChromBPNet had room for improve
 
 ## 1. Support all 3 major deep learning libraries, on modern hardware: PyTorch, TensorFlow, JAX
 
-> Note: We appreciate [Eugenio Mattei](https://github.com/emattei) at the Broad Institute for suggesting a JAX version.
+> Note: We are grateful for [Eugenio Mattei](https://github.com/emattei) at the Broad Institute for implementing a JAX version of the original ChromBPNet, that inspired our expansion to other libraries.
 
 __Problem__: Deep learning advances rapidly. While development of the original ChromBPNet began in 2021, and hence developed on the latest deep learning packages and hardware at the time—TensorFlow 2.8 on Python 3.8—the deep learning stack has rapidly accelerated since, making ChromBPNet incompatible with modern versions.
 
