@@ -64,7 +64,7 @@ revision_history: ""
 ---
 
 {{< summary >}}
-__ChromBPNet__ is a deep learning DNA sequence model that models chromatin accessibility, at base-resolution with DNase I/Tn5 transposase enzyme bias-factorization. Despite wide use of the model, there have been several improvements that we had been considering. Here, we apply those updates and present a [__refactored codebase of ChromBPNet__](https://github.com/kundajelab/chrombpnet-refactor/), that systematically improves the following: (1) support for all 3 major deep learning frameworks, PyTorch, TensorFlow and JAX, on current releases and GPUs; (2) a corrected, selectable cut-site convention for DNase-seq; (3) the optimizations from Anthropic’s Claude Fable/Mythos 5.1 [model release](https://www.anthropic.com/claude-fable-and-mythos-5-1) that apply to ChromBPNet’s pipeline; and (4) additional optimizations in pre- and post-processing—all with confirmed reproducibility to the original model. We share this study to highlight the benefits of early open access code to the community to help build better software and understanding together.
+__ChromBPNet__ is a deep learning DNA sequence model that models chromatin accessibility, at base-resolution with DNase I/Tn5 transposase enzyme bias-factorization. Despite wide use of the model, there have been several improvements that we had been considering. Here, we apply those updates and present a [__refactored codebase of ChromBPNet__](https://github.com/kundajelab/chrombpnet-refactor/), that systematically improves the following: (1) support for all 3 major deep learning frameworks, PyTorch, TensorFlow and JAX, on current releases and GPUs; (2) a corrected, flexible cut-site convention for DNase-seq; (3) the optimizations from Anthropic’s Claude Fable/Mythos 5.1 [model release](https://www.anthropic.com/claude-fable-and-mythos-5-1) that apply to ChromBPNet’s pipeline; and (4) additional optimizations in pre- and post-processing—all with confirmed reproducibility to the original model (as well as some supplemental improvements, that slightly deviate from the original). We share this study to highlight the benefits of early open access code to the community to help build better software and understanding together.
 {{< /summary >}}
 
 ---
@@ -80,7 +80,7 @@ However, while highly effective, like any model, ChromBPNet had room for improve
 
 ## 1. Support all 3 major deep learning libraries, on modern hardware: PyTorch, TensorFlow, JAX
 
-> Note: We are grateful for [Eugenio Mattei](https://github.com/emattei) at the Broad Institute for implementing a JAX version of the original ChromBPNet, that inspired our expansion to other libraries.
+> _Note: We are grateful for [Eugenio Mattei](https://github.com/emattei) at the Broad Institute for implementing [an initial JAX version of the original ChromBPNet](https://github.com/kundajelab/chrombpnet/pull/284), that inspired our expansion to other libraries._
 
 __Problem__: Deep learning advances rapidly. While development of the original ChromBPNet began in 2021, and hence developed on the latest deep learning packages and hardware at the time—TensorFlow 2.8 on Python 3.8—the deep learning stack has rapidly accelerated since, making ChromBPNet incompatible with modern versions.
 
@@ -98,7 +98,7 @@ Pick the engine with `--engine` (the checkpoint suffix decides when it is omitte
 
 ## 2. Adaptable cut-site convention for DNase-seq
 
-> Note: We are grateful to our colleagues at [Relation Therapeutics](https://www.relationrx.com/) for identifying this issue to us.
+> _Note: We are grateful to our colleagues at [Relation Therapeutics](https://www.relationrx.com/) for identifying this issue to us._
 
 __Problem__: When constructing the experimental “ground truth” signal from the raw sequencing data, we map and count up the exact location that the enzyme was applied on the genome. For ATAC-seq, this is straightforward: Tn5 transposase acts as a homodimer to introduce a “tagmentation”—a single-stranded DNA break, followed by an immediate 5’-to-3’ ligation that attaches adapter sequences to the break (for later sequencing)—at two nearby sites that are 9 bp apart, one on each strand. Hence, to identify the exact position that the Tn5 transposase was applied, by convention, we take the middle of the two cut sites that are 9 bp apart as its position—which conveniently, coincides on top of a base (since the 9 bp gap is odd). When both ends of a region of chromatin is “tagmented”, the region is no longer attached to the original long chromatin and free as a DNA fragment, which can then be sequenced by next generation sequencing (NGS). Hence, to identify the position of the Tn5 transposase from only one DNA fragment, we trace back the other cut site that must have occurred 9 bp away, and identify its middle position, which is equivalent to positions +4 bp or -4 bp (depending on the strand direction) from the 5’ end of the sequenced fragment (only a read’s 5’ end marks a cut; its 3’ end is merely where sequencing stopped. With paired-end data, the 5’ ends of the two mates are the fragment’s two ends, so both cuts are counted). This results in one distinct base pair position per enzyme effect site.
 
@@ -155,14 +155,14 @@ Below is a summary of changes applied in the [optimization kit](https://github.c
 
 | Kit optimization | What does it do? | Measured effect (vs. original `chrombpnet`): On L40S | On H200 | Applied in `chrombpnet-refactor`? |
 |---|---|---|---|---|
-| 1. `prefetch` | Reads the genome through a memory map; one-hot encodes with an int8 lookup table | 15x faster (3.6 s → 0.2 s) | 15x (3.6 s → 0.2 s) | ✓ |
-| 2. `metrics_stage` | Computes the profile JSD for all regions at once, with the same random stream | 10x faster (9.8 s → 1.0 s) | 10x (9.1 s → 0.9 s) | ✓ |
+| 1. `prefetch` | Reads the genome through a memory map; one-hot encodes with an int8 lookup table | 15x (3.6 s → 0.2 s) | 15x (3.6 s → 0.2 s) | ✓ |
+| 2. `metrics_stage` | Computes the profile JSD for all regions at once, with the same random stream | 10x (9.8 s → 1.0 s) | 10x (9.1 s → 0.9 s) | ✓ |
 | 3. `bigwig_writer`, side processes | Writes the bigWig and metrics in a separate process, during the GPU forward | Save write time (23 s → 0.6 s) | 22 s → 0.6 s | ✓ |
 | 4. `preimport` | Imports SciPy and Matplotlib on a background thread during the forward | Save 1.3 s in imports | 1.8 s | ✓ |
 | 5. `exit_fast` | Exits without interpreter and CUDA teardown once outputs are verified | Save teardown (1.2 s → 0 s) | 1.2 s → 0 s | ✓ |
-| 6. `forward_route` (Triton kernels) | Fused, fp32-exact Triton forward | 2.3x faster (34 s → 15 s) | 2.6x (25 s → 9.5 s) | Optional (`--predict-fused-kernel`); slower in `chrombpnet-refactor` [L40S: 76 s → 79 s; H200: 66 s → 73 s] |
-| 7. `h5_writer` | Compresses the predictions HDF5's chunks on a thread pool and writes them directly | 17x faster (3.7 s → 0.2 s) | 14x (3.4 s → 0.2 s) | ✓ |
-| 8. `malloc_env` | glibc memory-allocator settings: freed memory is kept for reuse instead of returned to the system, and the heap grows 512 MiB at a time | – | – | ✗: faster but holds more memory [L40S: 76 s → 72 s; H200: 66 s → 59 s] |
+| 6. `forward_route` (Triton kernels) | Fused, fp32-exact Triton forward | 2.3x (34 s → 15 s) | 2.6x (25 s → 9.5 s) | Optional (`--predict-fused-kernel`); slower in `chrombpnet-refactor` [L40S: 76 s → 79 s; H200: 66 s → 73 s] |
+| 7. `h5_writer` | Compresses the predictions HDF5's chunks on a thread pool and writes them directly | 17x (3.7 s → 0.2 s) | 14x (3.4 s → 0.2 s) | ✓ |
+| 8. `malloc_env` | glibc memory-allocator settings: freed memory is kept for reuse instead of returned to the system, and the heap grows 512 MiB at a time | 1.1x (76 s → 72 s) | 1.12x (66 s → 59 s) | ✗: faster but holds significantly more memory |
 | 9. `warmup`, `jit_cache`, `native_dilation`, `tail` | One forward per batch shape at load time; a CUDA JIT cache for TensorFlow's PTX; dilated convolutions as native `conv2d`; the last batch padded to full size | – | – | – |
 | **All adopted kit changes** | | **2.8x** | **3.7x** | - |
 
@@ -192,10 +192,10 @@ Against the original ChromBPNet (TensorFlow 2.8, as shipped), on the same GPU (a
 
 | Command (L40S) | Original ChromBPNet (reference) | chrombpnet-refactor (PyTorch) | cherimoya |
 |---|---|---|---|
-| `pred_bw`: 3 models, 20,000 peaks; predicted bigWigs, predictions HDF5, metrics against the observed bigWig | 194 s | 76 s (2.6x) | _(no equivalent command)_ |
-| ↳ Best comparison: one model's predictions over the 20,000 peaks, scored against the observed bigWig; nothing written (cherimoya `evaluate`) | 54 s | 29 s (1.8x) | 15 s (3.6x) |
-| `contribs_bw`: DeepLIFT/DeepSHAP on the profile head, 2,000 peaks; scores HDF5 and bigWig | 341 s | 257 s (1.3x) | _(no equivalent command)_ |
-| ↳ Best comparison: the attributions alone, 20 shuffled references per sequence; nothing written (cherimoya `attribute`) | 334 s | 252 s (1.3x) | 161 s (2.1x) |
+| `pred_bw`: 3 models, 20,000 peaks; predicted bigWigs, predictions HDF5, metrics against the observed bigWig | base (194 s) | 2.6x (76 s) | _(no equivalent command)_ |
+| ↳ Best comparison: one model's predictions over the 20,000 peaks, scored against the observed bigWig; nothing written (cherimoya `evaluate`) | base (54 s) | 1.8x (29 s) | 3.6x (15 s) |
+| `contribs_bw`: DeepLIFT/DeepSHAP on the profile head, 2,000 peaks; scores HDF5 and bigWig | base (341 s) | 1.3x (257 s) | _(no equivalent command)_ |
+| ↳ Best comparison: the attributions alone, 20 shuffled references per sequence; nothing written (cherimoya `attribute`) | base (334 s) | 1.3x (252 s) | 2.1x (161 s) |
 
 _In parentheses: the speedup over the original ChromBPNet. `pred_bw`: the same runs as in Sections 3 and 4. `contribs_bw` and the head-to-head rows: one job over the same 5 folds, medians of 15 runs (5 folds × 3 rounds) per command, each after an untimed warm-up and in a different order each round. cherimoya 0.3.1 (PyTorch 2.13, in a container on our cluster) ran its own commands on the same inputs with CATv1's ENCSR868FGK models, which use the same folds; medians of 15 runs (5 folds × 3 rounds) after an untimed warm-up, which also compiles its kernels (2-7 minutes the first time on a machine). Its `evaluate` predicts with one model (cherimoya has no bias factorization) and writes only a table of metrics; its `attribute` uses DeepLIFT/DeepSHAP with 20 dinucleotide-shuffled references per sequence, as chrombpnet's DeepLIFT/DeepSHAP does, and writes NumPy arrays. In the head-to-head rows, chrombpnet's `pred_bw` uses the full model only._
 
@@ -233,7 +233,7 @@ To preliminarily assess the reproducibility of distillation to match ensembling,
 
 ![Figure: Ensembled (5-fold) ChromBPNet vs. Distilled Student ChromBPNet: Reproduciblity of test set predictions & DeepLIFT/DeepSHAP contribution scores.](chrombpnet_distill_ensemble_student.png "width=600 Predictions (top) and DeepLIFT/DeepSHAP scores (bottom) of each model against the 5-fold ensemble mean, on ~10,000 shared peaks per dataset (higher = more reproducible). `fold model`: one fold model, against the 5-fold mean it is part of. `LOFO student`: distilled from the 5 fold models on fold k's training chromosomes. `final student`: distilled on every chromosome.")
 
-## [`chrombpnet-refactor`](https://github.com/kundajelab/chrombpnet-refactor/)
+## Refactored: [`chrombpnet-refactor`](https://github.com/kundajelab/chrombpnet-refactor/)
 
 Overall, we share a reproducible, refactored version of [ChromBPNet](https://github.com/kundajelab/chrombpnet-refactor/): supporting all 3 major deep learning engines, a corrected DNase-seq cut site convention, several internal and external optimizations—all with confirmed reproducibility in model performance and contributions.
 
