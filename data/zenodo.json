@@ -133,11 +133,11 @@
   },
   "2026-007": {
     "conceptrecid": "20840269",
-    "current_revision": 2,
-    "current_doi": "10.5281/zenodo.21383205",
-    "current_doi_url": "https://doi.org/10.5281/zenodo.21383205",
-    "current_zenodo_url": "https://zenodo.org/records/21383205",
-    "current_deposition_id": 21383205,
+    "current_revision": 3,
+    "current_doi": "10.5281/zenodo.23951566",
+    "current_doi_url": "https://doi.org/10.5281/zenodo.23951566",
+    "current_zenodo_url": "https://zenodo.org/records/23951566",
+    "current_deposition_id": 23951566,
     "revisions": {
       "1": {
         "doi": "10.5281/zenodo.20840270",
@@ -156,6 +156,15 @@
         "record_id": 21383205,
         "date": "2026-07-15",
         "notes": "Corrected Enformer CRISPRi readout: the cropped model output was indexed with an input-coordinate bin without subtracting the 320-bin (40,960 bp) crop, so the CAGE readout landed ~41 kb off the TSS on background signal. Fix reads the promoter bin. Updates Enformer's correlations and the four figures containing Enformer; Borzoi, NTv3, and AlphaGenome numbers are unchanged."
+      },
+      "3": {
+        "doi": "10.5281/zenodo.23951566",
+        "doi_url": "https://doi.org/10.5281/zenodo.23951566",
+        "zenodo_url": "https://zenodo.org/records/23951566",
+        "deposition_id": 23951566,
+        "record_id": 23951566,
+        "date": "2026-11-04",
+        "notes": "Updated NTv3 to InstaDeep's revised release (NTv3_tracks_1mb, released with the bioRxiv v2 preprint on 29 October 2026), replacing NTv3_650M_post. Updates NTv3's correlations, the three figures containing NTv3 (Figures 2, 3 and 5), the ensemble result, and NTv3-related text. Also corrects the Methods description of each model's output readout. Enformer, Borzoi and AlphaGenome numbers are unchanged."
       }
     }
   },
