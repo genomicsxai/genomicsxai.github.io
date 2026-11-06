@@ -8,6 +8,8 @@ The `Deploy Hugo Site` workflow syncs Zenodo DOI metadata for accepted blog post
 
 To publish a new version of a post, update the post content and increment its `revision` frontmatter. Zenodo creates a new numeric version DOI under the same concept record, for example `https://doi.org/10.5281/zenodo.20277035`; it does not create `v2` or `v3` DOI URL suffixes. Frontmatter `doi` and `zenodo_url` values are still supported as manual fallback fields, but maintainers should normally leave them blank and let `data/zenodo.json` be the source of truth.
 
+Accepted posts with a DOI display an Altmetric badge for the current version. The badge uses the same DOI resolved from `data/zenodo.json` (or the frontmatter fallback) as the citation and Scholar metadata; posts without a DOI do not load the Altmetric embed script. Altmetric also requires the site domain and RSS feed to be registered as a tracked blog source through its [blog submission process](https://help.altmetric.com/en/articles/9801089).
+
 The archived DOI workflow validation post confirmed production v1/v2/v3 versioning and is now withdrawn from the public site.
 
 ## Manual Test Publish
