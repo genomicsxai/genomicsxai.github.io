@@ -182,7 +182,7 @@ Further, we have implemented several additional optimizations in the pre- and po
 | 4. Streaming each model's outputs during its own forward | Predicts in chunks of whole batches and hands each to two workers as it lands: one writes the bigWig (building its zoom levels as it goes), one computes the metrics; the observed signal is read ~3.5x | 1.7x (36.9 s → 21.4 s) |
 | 5. Batched cast into a preallocated output | Casts and transposes each batch as it is needed | 1.0x (15.2 s → 15.1 s) _[713 MB less peak memory]_ |
 | 6. Inference: the forward over the 20,000 peaks | Standard PyTorch, with TF32 convolutions in cuDNN (the default); or the kit's Triton kernels in TF32 (`--predict-fused-kernel-fast`) | 4.7x (34.4 s → 7.3 s) _[without Triton kernels: 2.3x (34.4 s → 15.1 s)]_ |
-| 7. Threaded _(optional: maximum HDF5 compression)_ | `*_predictions.h5`, `*_scores.h5`, `*_footprints.h5` and TF-MoDISco's results at gzip 4 (optional: gzip 9) with byte-shuffle, compressed on threads; identical values | 1.2x (3.7 s → 3.1 s) |
+| 7. Threaded, maximum HDF5 compression _(adjustable)_ | `*_predictions.h5`, `*_scores.h5`, `*_footprints.h5` and TF-MoDISco's results at gzip 9 with byte-shuffle by default (was gzip 4), compressed on threads; identical values. `--h5-gzip-level` and `--no-h5-shuffle` change it (`--h5-gzip-level 4 --no-h5-shuffle` is the original's) | 1.2x (3.7 s → 3.1 s) |
 | 8. GC-matched non-peaks | Candidates as compact arrays, shuffled once per fold, sorted by GC bin and drawn without replacement, with a binary search for the nearest non-empty bin | 54x (200 s → 3.7 s) _[900 MB less peak memory]_ |
 | 9. One random seed per command | Every random draw (negatives, initial weights, jitter, interpretation subsample, DeepLIFT/DeepSHAP references) follows it | _(reproducible seed)_ |
 | 10. Standardized command line interface | One shared, framework-neutral pipeline behind `--engine` and `--device`; options validated before any output directory is created | _(standardized CLI)_ |
@@ -195,7 +195,7 @@ Against the original ChromBPNet (TensorFlow 2.8, as shipped), on the same GPU (a
 | Command (L40S) | Original ChromBPNet (reference) | chrombpnet-refactor (PyTorch) | cherimoya |
 |---|---|---|---|
 | `pred_bw`: the full model, 20,000 peaks; predicted bigWig, predictions HDF5, metrics against the observed bigWig | _base_ (86.7 s) | 5.7x (15.2 s) | _(no equivalent command)_ |
-| ↳ Best comparison: one model's predictions over the 20,000 peaks, scored against the observed bigWig; nothing written (`evaluate` in cherimoya) | _base_ (54 s) | 1.8x (29 s) | 3.6x (15 s) |
+| ↳ Best comparison: one model's predictions over the 20,000 peaks, scored against the observed bigWig; nothing written (`evaluate` in cherimoya) | _base_ (54 s) | 4.3x (13 s) _[without Triton kernels: 2.7x (20 s)]_ | 3.6x (15 s) |
 | `contribs_bw`: DeepLIFT/DeepSHAP on the profile head, 2,000 peaks; scores HDF5 and bigWig | _base_ (341 s) | 1.3x (257 s) | _(no equivalent command)_ |
 | ↳ Best comparison: the attributions alone, 20 shuffled references per sequence; nothing written (`attribute` in cherimoya) | _base_ (334 s) | 1.3x (252 s) | 2.1x (161 s) |
 
