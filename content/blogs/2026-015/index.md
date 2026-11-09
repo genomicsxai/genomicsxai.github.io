@@ -74,25 +74,25 @@ ChromBPNet is a deep learning model of __chromatin accessibility__: where __chro
 
 However, the enzymes, DNase I and Tn5 transposase, also have preferences for particular DNA sequences, so the observed signal profiles reflect both genuine chromatin accessibility and assay-specific sequence bias. Separating these can be especially important when interpreting the signal at single-base resolution.
 
-Here, ChromBPNet was developed to learn and predict chromatin accessibility signal from DNA sequence at base-resolution, with the explicit factorization of the enzyme’s sequence bias. ChromBPNet, together with robust model interpretation methods, (has previously shown)[https://doi.org/10.1101/2024.12.25.630221] to predict accessibility in unseen chromosomes, identify the binding preference and binding sites of known, cell type-specific transcription factors (TFs) that influence accessibility, and predict the effects of genomic variation on accessibility (caQTLs) across cell type and population—which we expanded to train 1,512 ChromBPNet models as part of [ENCODE GRAMMAR](https://genomicsxai.github.io/blogs/2026-012/).
+Here, ChromBPNet was developed to learn and predict chromatin accessibility signal from DNA sequence at base-resolution, with the explicit factorization of the enzyme’s sequence bias. ChromBPNet, together with robust model interpretation methods, [has previously shown](https://doi.org/10.1101/2024.12.25.630221) to predict accessibility in unseen chromosomes, identify the binding preference and binding sites of known, cell type-specific transcription factors (TFs) that influence accessibility, and predict the effects of genomic variation on accessibility (caQTLs) across cell type and population—which we expanded to train 1,512 ChromBPNet models as part of [ENCODE GRAMMAR](https://genomicsxai.github.io/blogs/2026-012/).
 
-However, while highly effective, like any model, ChromBPNet had continued room for improvements—which we implemented in `chrombpnet-refactor`.
+However, while highly effective, like any model, ChromBPNet had continued room for improvements—which we implemented in [`chrombpnet-refactor`](https://github.com/kundajelab/chrombpnet-refactor/).
 
 ## 1. Support all 3 major deep learning libraries, on modern hardware: PyTorch, TensorFlow, JAX
 
 > _Note: We are grateful for [Eugenio Mattei](https://github.com/emattei) at the Broad Institute for implementing [an initial JAX version of the original ChromBPNet](https://github.com/kundajelab/chrombpnet/pull/284), that inspired our expansion to other libraries._
 
-__Problem__: Deep learning advances rapidly. While development of the original ChromBPNet began in 2021, and hence developed on the latest deep learning packages and hardware at the time—TensorFlow 2.8 on Python 3.8—the deep learning stack has rapidly accelerated since, making ChromBPNet incompatible with modern versions.
+__Problem__: Deep learning advances rapidly. Development of the original ChromBPNet began in 2021, and was developed on the latest deep learning packages and hardware at the time: TensorFlow 2.8 on Python 3.8. However the deep learning stack has rapidly accelerated since, making ChromBPNet frequently poorly compatible with modern packages and hardware.
 
-__Solution__: Here, we reimplemented ChromBPNet across all 3 major deep learning libraries: PyTorch 2.14.1 (default), TensorFlow 2.21.0 (with tf-keras 2.21.0, the Keras 2 API), and JAX 0.11.2 (with Keras 3.15.1), all behind one shared, framework-neutral pipeline.
+__Solution__: Here, we reimplemented ChromBPNet across all 3 major deep learning libraries: PyTorch 2.14.1 (default), TensorFlow 2.21.0 (with tf-keras 2.21.0, the Keras 2 API), and JAX 0.11.2 (with Keras 3.15.1), all behind one shared, framework-neutral pipeline. This allows better compatibility with modern hardware (e.g., H100/H200) and modern packages (e.g., [`tangermeme`](https://github.com/jmschrei/tangermeme)).
 
 __How to use__: Each engine has its own conda environment, because their frameworks cannot share one. Create the ones you need from the repository root:
 
-| Engine | Create the environment | Then | Python and framework |
+| Engine | How to create the environment | Activate the environment | Version |
 |---|---|---|---|
-| PyTorch _(default)_ | `conda env create -f envs/chrombpnet-pytorch.yml` | `conda activate chrombpnet-pytorch` | Python 3.12, PyTorch 2.14.1 |
-| TensorFlow | `conda env create -f envs/chrombpnet-tensorflow.yml` | `conda activate chrombpnet-tensorflow` | Python 3.12, TensorFlow 2.21.0 (Keras 3.15.1) |
-| JAX | `conda env create -f envs/chrombpnet-jax.yml` | `conda activate chrombpnet-jax` | Python 3.12, JAX 0.11.2 (Keras 3.15.1) |
+| PyTorch _(default)_ | `conda env create -f envs/chrombpnet-pytorch.yml` | `conda activate chrombpnet-pytorch` | PyTorch 2.14.1 (Python 3.12) |
+| TensorFlow | `conda env create -f envs/chrombpnet-tensorflow.yml` | `conda activate chrombpnet-tensorflow` | TensorFlow 2.21.0 (Python 3.12; Keras 3.15.1) |
+| JAX | `conda env create -f envs/chrombpnet-jax.yml` | `conda activate chrombpnet-jax` | JAX 0.11.2 (Python 3.12; Keras 3.15.1) |
 
 Pick the engine with `--engine` (the checkpoint suffix decides when it is omitted) and the device with `--device cpu`, `cuda` or e.g. `cuda:1`. [`envs/README.md`](https://github.com/kundajelab/chrombpnet-refactor/blob/main/envs/README.md) describes each engine, its GPU libraries, and what differs between them.
 
@@ -153,7 +153,7 @@ __Problem__: Anthropic’s optimizations focused on drop-in optimization kits th
 
 Below is a summary of changes applied in the [optimization kit](https://github.com/anthropics/uplifting-biomolecular-modeling/tree/main/chrombpnet) from the model release of Fable/Mythos 5.1:
 
-| Kit optimization | What does it do? | Measured on L40S (vs. original ChromBPNet) | Applied in `chrombpnet-refactor`? |
+| Fable/Mythos' optimization | What does it do? | Measured on L40S (vs. original ChromBPNet) | Applied in `chrombpnet-refactor`? |
 |---|---|---|---|
 | 1. `prefetch` | Reads the genome through a memory map; one-hot encodes with an int8 lookup table | 15x (3.8 s → 0.2 s) | ✓ |
 | 2. `metrics_stage` | Computes the metrics during the forward: the observed signal and the shuffled baseline's random stream first, each chunk's profile JSD as it arrives | 11x (10.4 s → 1.0 s) | ✓ |
@@ -163,12 +163,12 @@ Below is a summary of changes applied in the [optimization kit](https://github.c
 | 6. `forward_route` (Triton kernels, with `warmup`) | Fused Triton forward, its convolutions on the TF32 tensor cores, with one forward per batch shape at load time | 4.8x (34.6 s → 7.2 s) | _Optional: `--predict-fused-kernel-fast` (TF32); `--predict-fused-kernel-exact` (fp32)_ |
 | 7. `h5_writer` | Compresses the predictions HDF5's chunks on a thread pool and writes them directly | 15x (3.7 s → 0.2 s) | ✓ |
 | 8. `malloc_env` | glibc memory-allocator settings: freed memory is kept for reuse instead of returned to the system, and the heap grows 512 MiB at a time | 1.0x (86.7 s → 85.9 s); peak RAM 5.2 → 5.6 GB | ✓ |
-| 9. `jit_cache`, `native_dilation`, `tail` | a CUDA JIT cache for TensorFlow's PTX; dilated convolutions as native `conv2d`; the last batch padded to full size | _(not applicable; not used with Triton kernels)_ | – |
+| 9. `jit_cache`, `native_dilation`, `tail` | CUDA JIT cache for TensorFlow's PTX; dilated convolutions as native `conv2d`; the last batch padded to full size | _(not applicable; not used with Triton kernels)_ | – |
 | **Total:** | _Applying all optimizations above_ | **4.4x faster (88.1 s → 20.2 s)** | - |
 
-_Measured on an NVIDIA L40S, using the pretrained K562 ATAC-seq ChromBPNet model (ENCSR868FGK), fold 0, full model (bias + main tower), on 20,000 of its peaks, at batch size 256, across a median of 5 rounds. Original ChromBPNet: the kit's pinned chrombpnet 1.0.1. Anthropic's kit optimizations: each row compares one stage's time in stock original ChromBPNet and in the kit's `fast` mode with the Triton kernels' TF32 forward. On an L40S the kit's own route table keeps TensorFlow's forward in `fast` (1.7x overall, 52.4 s); this run overrides that one table entry. Every configuration ran in the same job (`malloc_env`: a separate job of the same setup), after an untimed warm-up, in a different order each round._
+_Measured on an NVIDIA L40S, using the pretrained K562 ATAC-seq ChromBPNet model (ENCSR868FGK), fold 0, full model (bias + main tower), on 20,000 of its peaks, at batch size 256, across a median of 5 rounds. Original ChromBPNet: chrombpnet v1.0.1. Anthropic's optimization kit: each row compares one stage's time in stock original ChromBPNet and in the kit's Triton kernels TF32 forward. (Note: The kit prevents running Triton kernels TF32 forward on L40S; this run overrided this setting). Every configuration ran after an untimed warm-up, in a different order each round._
 
-While the kit's speedup is very useful for users of the original package (4.4x on an L40S), interestingly, most of the kit’s gain came not from faster model inference (accounting for only 40% of speed up), but by __running CPU I/O in parallel with GPU inference (accounting for 60% of speed up)__. In fact, writing the BigWig and metrics while the GPU predicts accounted for the largest gains (47% of speed up), which, if allowing for flexible file size, could be further sped up by 3.1x with 1.5x smaller files using fixed-step bigWigs (implemented in Section 4; not part of Anthropic's optimization kit). Further, while the kit's Triton  kernels did improve inference, the speed up was less pronounced compared to a standard PyTorch reimplementation: the forward pass takes 34.4 s in TensorFlow 2.8, 15.1 s (2.3x) in PyTorch TF32, and 7.3 s (4.7x) with the kernels in TF32. In other words, the inference gains could mostly be attributed to TensorFlow 2.8's forward itself being largely outdated and not optimized on modern hardware. Further, fused kernels cannot be used with DeepLIFT/DeepSHAP during interpretation without a specific rule for the new kernel (and hence also, cannot be used during training either). Therefore, we kept the Triton kernels as optional: `--predict-fused-kernel-fast` for TF32 precision (fast); `--predict-fused-kernel-exact` for fp32 precision (exact).
+While the kit's speedup is very useful for users of the original package (total: 4.4x on an L40S), interestingly, most of the kit’s gain came not from faster model inference (accounting for only 40% of the speed up), but by __running CPU I/O in parallel with GPU inference (accounting for 60% of the speed up)__. In fact, writing the BigWig and metrics while the GPU predicts accounted for the largest gains (47% of the speed up), which, if allowing for flexible file size, could be further sped up by 3.1x with 1.5x smaller files using a fixed-step bigWig (implemented in Section 4; not part of Anthropic's optimization kit). Further, while the kit's Triton  kernels did improve inference, the speed up was less pronounced compared to a standard PyTorch reimplementation: the forward pass takes 34.4 s (base) in the original TensorFlow 2.8, 15.1 s (2.3x) in PyTorch TF32, and 7.3 s (4.7x) with the kernels in TF32. In other words, TensorFlow 2.8's forward itself was largely outdated and no longer optimized on modern hardware. Further, fused kernels cannot be used with DeepLIFT/DeepSHAP during interpretation without a specific rule for the new kernel (and hence also, cannot be used during training either). Therefore, we kept the Triton kernels as optional: `--predict-fused-kernel-fast` for TF32 precision (fast); `--predict-fused-kernel-exact` for fp32 precision (exact).
 
 ## 4. Additional optimizations in pre- and post-processing
 
@@ -184,8 +184,8 @@ Further, we have implemented several additional optimizations in the pre- and po
 | 6. Inference: the forward over the 20,000 peaks | Standard PyTorch, with TF32 convolutions in cuDNN (the default); or the kit's Triton kernels in TF32 (`--predict-fused-kernel-fast`) | 4.7x (34.4 s → 7.3 s) _[without Triton kernels: 2.3x (34.4 s → 15.1 s)]_ |
 | 7. Threaded _(optional: maximum HDF5 compression)_ | `*_predictions.h5`, `*_scores.h5`, `*_footprints.h5` and TF-MoDISco's results at gzip 4 (optional: gzip 9) with byte-shuffle, compressed on threads; identical values | 1.2x (3.7 s → 3.1 s) |
 | 8. GC-matched non-peaks | Candidates as compact arrays, shuffled once per fold, sorted by GC bin and drawn without replacement, with a binary search for the nearest non-empty bin | 54x (200 s → 3.7 s) _[900 MB less peak memory]_ |
-| 9. One random seed per command | Every random draw (negatives, initial weights, jitter, interpretation subsample, DeepLIFT/DeepSHAP references) follows it | _(Reproducible seed)_ |
-| 10. Standardized command line interface | One shared, framework-neutral pipeline behind `--engine` and `--device`; options validated before any output directory is created | _(Standardized CLI)_ |
+| 9. One random seed per command | Every random draw (negatives, initial weights, jitter, interpretation subsample, DeepLIFT/DeepSHAP references) follows it | _(reproducible seed)_ |
+| 10. Standardized command line interface | One shared, framework-neutral pipeline behind `--engine` and `--device`; options validated before any output directory is created | _(standardized CLI)_ |
 | **Total:** | _Applying all optimizations from Section 3 and above_ | **5.7x faster (86.7 s → 15.2 s)** _[without Triton kernels: 4.1x faster (86.7 s → 21.2 s)]_ |
 
 _Measured on an NVIDIA L40S, using the pretrained K562 ATAC-seq ChromBPNet model (ENCSR868FGK), fold 0, full model (bias + main tower), on 20,000 of its peaks, at batch size 256 (same as Section 3). Rows 1-3, 5, 7 and 8: one change at a time, each in a fresh process, in a different order each round, medians of 3 rounds; HDF5 sizes are for one model's `*_predictions.h5`. Rows 4 and 6 and Total: in jobs of the same setup as Section 3's table, `pred_bw` with the full model only at batch size 256, medians of 5 rounds._
@@ -237,13 +237,14 @@ To preliminarily assess the reproducibility of distillation to match ensembling,
 
 ## Refactored: [`chrombpnet-refactor`](https://github.com/kundajelab/chrombpnet-refactor/)
 
-Overall, we share a reproducible, refactored version of [ChromBPNet](https://github.com/kundajelab/chrombpnet-refactor/): supporting all 3 major deep learning engines, a corrected DNase-seq cut site convention, several internal and external optimizations—all with confirmed reproducibility in model performance and contributions.
+Overall, we share a [reproducible, refactored version of ChromBPNet](https://github.com/kundajelab/chrombpnet-refactor/): supporting all 3 major deep learning engines, a corrected DNase-seq cut site convention, several internal and external optimizations—all with confirmed reproducibility in model performance and contributions. The scripts behind every figure and table in this post are in [`analysis/blog-2026-015/`](https://github.com/kundajelab/chrombpnet-refactor/tree/main/analysis/blog-2026-015), with a README mapping each one to its commands.
 
-Moving forward, we recommend using the refactored ChromBPNet codebase for __all future use cases of ChromBPNet__. And we continue to invite any further improvements to the model and codebase!
+Moving forward, we recommend using the refactored ChromBPNet codebase for *__all future use cases of ChromBPNet__*. And we continue to welcome any further improvements to the model and codebase.
 
 ## References
 1. Pampari, A. et al. ChromBPNet: bias factorized, base-resolution deep learning models of chromatin accessibility reveal cis-regulatory sequence syntax, transcription factor footprints and regulatory variants. _bioRxiv_ 2024.12.25.630221 (2024). ([https://doi.org/10.1101/2024.12.25.630221](https://doi.org/10.1101/2024.12.25.630221))
 1. Yun, C. M. et al. A unified lexicon of predictive DNA sequence motifs from ENCODE transcription factor binding and chromatin accessibility assays. (2025) doi:10.5281/zenodo.17179111. ([https://doi.org/10.5281/zenodo.17179111](https://doi.org/10.5281/zenodo.17179111))
 1. The ENCODE Project Consortium et al. The Encyclopedia of DNA Elements. _bioRxiv_ 2026.07.06.731365 (2026). ([https://doi.org/10.64898/2026.07.06.731365](https://doi.org/10.64898/2026.07.06.731365))
+1. Tangermeme: a toolkit for understanding cis-regulatory logic using deep learning models. _Nat Methods_ __23__, 2136–2140 (2026). ([https://doi.org/10.1038/s41592-026-03254-z](https://doi.org/10.1038/s41592-026-03254-z))
 1. Shrikumar, A., Greenside, P. & Kundaje, A. Learning Important Features Through Propagating Activation Differences. _arXiv_ (2019). ([https://doi.org/10.48550/arXiv.1704.02685](https://doi.org/10.48550/arXiv.1704.02685))
 1. Lundberg, S. M. & Lee, S.-I. A unified approach to interpreting model predictions. in _Proceedings of the 31st International Conference on Neural Information Processing Systems_ 4768–4777 (Curran Associates Inc., Red Hook, NY, USA, 2017). ([https://dl.acm.org/doi/10.5555/3295222.3295230](https://dl.acm.org/doi/10.5555/3295222.3295230))
