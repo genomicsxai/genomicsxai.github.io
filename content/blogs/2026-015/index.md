@@ -176,19 +176,19 @@ Further, we have implemented several additional optimizations in the pre- and po
 
 | Optimization | What does it do? | Measured on L40S (vs. original ChromBPNet) |
 |---|---|---|
-| 1. Shared inputs across models | Featurizes the regions and reads the observed bigWig once for all models (three in these timings; the one-model runs below have nothing to share) | 2.9x (13.0 s → 4.5 s) |
-| 2. Fixed-step bigWigs | The same values, written as fixed-step instead of variable-step sections | 3.1x (21.2 s → 6.8 s) _[files 1.5x smaller]_ |
-| 3. NumPy bigWig writer arguments | Builds the writer's arguments as arrays | 1.1x (21.2 s → 19.7 s) |
-| 4. Streaming each model's outputs during its own forward | Predicts in chunks of whole batches and hands each to two workers as it lands: one writes the bigWig (building its zoom levels as it goes), one computes the metrics; the observed signal is read ~3.5x | 1.7x (36.9 s → 21.4 s) |
-| 5. Batched cast into a preallocated output | Casts and transposes each batch as it is needed | 1.0x (15.2 s → 15.1 s) _[713 MB less peak memory]_ |
-| 6. Inference: the forward over the 20,000 peaks | Standard PyTorch, with TF32 convolutions in cuDNN (the default); or the kit's Triton kernels in TF32 (`--predict-fused-kernel-fast`) | 4.7x (34.4 s → 7.3 s) _[without Triton kernels: 2.3x (34.4 s → 15.1 s)]_ |
-| 7. Threaded, maximum HDF5 compression _(adjustable)_ | `*_predictions.h5`, `*_scores.h5`, `*_footprints.h5` and TF-MoDISco's results at gzip 9 with byte-shuffle by default (was gzip 4), compressed on threads; identical values. `--h5-gzip-level` and `--no-h5-shuffle` change it (`--h5-gzip-level 4 --no-h5-shuffle` is the original's) | 1.2x (3.7 s → 3.1 s) |
-| 8. GC-matched non-peaks | Candidates as compact arrays, shuffled once per fold, sorted by GC bin and drawn without replacement, with a binary search for the nearest non-empty bin | 54x (200 s → 3.7 s) _[900 MB less peak memory]_ |
+| 1. GC-matched non-peaks | Candidates as compact arrays, shuffled once per fold, sorted by GC bin and drawn without replacement, with a binary search for the nearest non-empty bin | 54x (200 s → 3.7 s) _[900 MB less peak memory]_ |
+| 2. Shared inputs across models | Featurizes the regions and reads the observed bigWig once for all models (three in these timings; the one-model runs below have nothing to share) | 2.9x (13.0 s → 4.5 s) |
+| 3. Batched cast into a preallocated output | Casts and transposes each batch as it is needed | 1.0x (15.2 s → 15.1 s) _[713 MB less peak memory]_ |
+| 4. Inference: the forward over the 20,000 peaks | Standard PyTorch, with TF32 convolutions in cuDNN (the default); or the kit's Triton kernels in TF32 (`--predict-fused-kernel-fast`) | 4.7x (34.4 s → 7.3 s) _[without Triton kernels: 2.3x (34.4 s → 15.1 s)]_ |
+| 5. Streaming each model's outputs during its own forward | Predicts in chunks of whole batches and hands each to two workers as it lands: one writes the bigWig (building its zoom levels as it goes), one computes the metrics; the observed signal is read ~3.5x | 1.7x (36.9 s → 21.4 s) |
+| 6. NumPy bigWig writer arguments | Builds the writer's arguments as arrays | 1.1x (21.2 s → 19.7 s) |
+| 7. Fixed-step bigWigs | The same values, written as fixed-step instead of variable-step sections | 3.1x (21.2 s → 6.8 s) _[files 1.5x smaller]_ |
+| 8. Threaded HDF5 compression, maximum by default _(adjustable)_ | `*_predictions.h5`, `*_scores.h5`, `*_footprints.h5` and TF-MoDISco's results at gzip 9 with byte-shuffle by default (was gzip 4), compressed on threads; identical values. `--h5-gzip-level` and `--no-h5-shuffle` change it (`--h5-gzip-level 4 --no-h5-shuffle` is the original's) | 6.6x at the original's gzip 4 (3.7 s → 0.6 s) _[at gzip 9 (new default): 1.0x (3.7 s → 3.5 s), files 1.2x smaller]_ |
 | 9. One random seed per command | Every random draw (negatives, initial weights, jitter, interpretation subsample, DeepLIFT/DeepSHAP references) follows it | _(reproducible seed)_ |
 | 10. Standardized command line interface | One shared, framework-neutral pipeline behind `--engine` and `--device`; options validated before any output directory is created | _(standardized CLI)_ |
 | **Total:** | _Applying all optimizations from Section 3 and above_ | **5.7x faster (86.7 s → 15.2 s)** _[without Triton kernels: 4.1x faster (86.7 s → 21.2 s)]_ |
 
-_Measured on an NVIDIA L40S, using the pretrained K562 ATAC-seq ChromBPNet model (ENCSR868FGK), fold 0, full model (bias + main tower), on 20,000 of its peaks, at batch size 256 (same as Section 3). Rows 1-3, 5, 7 and 8: one change at a time, each in a fresh process, in a different order each round, medians of 3 rounds; HDF5 sizes are for one model's `*_predictions.h5`. Rows 4 and 6 and Total: in jobs of the same setup as Section 3's table, `pred_bw` with the full model only at batch size 256, medians of 5 rounds._
+_Measured on an NVIDIA L40S, using the pretrained K562 ATAC-seq ChromBPNet model (ENCSR868FGK), fold 0, full model (bias + main tower), on 20,000 of its peaks, at batch size 256 (same as Section 3). Rows 1, 2 and 5-8: one change at a time, each in a fresh process, in a different order each round, medians of 3 rounds; HDF5 sizes are for one model's `*_predictions.h5`. Rows 3 and 4 and Total: in jobs of the same setup as Section 3's table, `pred_bw` with the full model only at batch size 256, medians of 5 rounds._
 
 Against the original ChromBPNet (TensorFlow 2.8, as shipped), on the same GPU (an L40S) and folds. cherimoya writes no predicted bigWigs or HDF5 files, so it is compared only on the head-to-head rows (↳), where each chrombpnet package runs its own command with those writers switched off:
 
