@@ -133,11 +133,11 @@
   },
   "2026-007": {
     "conceptrecid": "20840269",
-    "current_revision": 3,
-    "current_doi": "10.5281/zenodo.23951566",
-    "current_doi_url": "https://doi.org/10.5281/zenodo.23951566",
-    "current_zenodo_url": "https://zenodo.org/records/23951566",
-    "current_deposition_id": 23951566,
+    "current_revision": 4,
+    "current_doi": "10.5281/zenodo.24146859",
+    "current_doi_url": "https://doi.org/10.5281/zenodo.24146859",
+    "current_zenodo_url": "https://zenodo.org/records/24146859",
+    "current_deposition_id": 24146859,
     "revisions": {
       "1": {
         "doi": "10.5281/zenodo.20840270",
@@ -165,6 +165,15 @@
         "record_id": 23951566,
         "date": "2026-11-04",
         "notes": "Updated NTv3 to InstaDeep's revised release (NTv3_tracks_1mb, released with the bioRxiv v2 preprint on 29 October 2026), replacing NTv3_650M_post. Updates NTv3's correlations, the three figures containing NTv3 (Figures 2, 3 and 5), the ensemble result, and NTv3-related text. Also corrects the Methods description of each model's output readout. Enformer, Borzoi and AlphaGenome numbers are unchanged."
+      },
+      "4": {
+        "doi": "10.5281/zenodo.24146859",
+        "doi_url": "https://doi.org/10.5281/zenodo.24146859",
+        "zenodo_url": "https://zenodo.org/records/24146859",
+        "deposition_id": 24146859,
+        "record_id": 24146859,
+        "date": "2026-11-11",
+        "notes": "Added Calico's Cerberus (bioRxiv, 9 October 2026) as a fifth model. Borzoi is now read over the target gene's exons, as NTv3 and AlphaGenome already were and as Calico scores genes, instead of a window on the TSS; this updates Borzoi's correlations. Updates the results table, Figures 2, 3 and 5, the ensemble result, and related text. Enformer, NTv3 and AlphaGenome numbers are unchanged."
       }
     }
   },
