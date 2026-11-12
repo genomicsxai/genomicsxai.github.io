@@ -133,11 +133,11 @@
   },
   "2026-007": {
     "conceptrecid": "20840269",
-    "current_revision": 4,
-    "current_doi": "10.5281/zenodo.24146859",
-    "current_doi_url": "https://doi.org/10.5281/zenodo.24146859",
-    "current_zenodo_url": "https://zenodo.org/records/24146859",
-    "current_deposition_id": 24146859,
+    "current_revision": 5,
+    "current_doi": "10.5281/zenodo.24179387",
+    "current_doi_url": "https://doi.org/10.5281/zenodo.24179387",
+    "current_zenodo_url": "https://zenodo.org/records/24179387",
+    "current_deposition_id": 24179387,
     "revisions": {
       "1": {
         "doi": "10.5281/zenodo.20840270",
@@ -174,6 +174,15 @@
         "record_id": 24146859,
         "date": "2026-11-11",
         "notes": "Added Calico's Cerberus (bioRxiv, 9 October 2026) as a fifth model. Borzoi is now read over the target gene's exons, as NTv3 and AlphaGenome already were and as Calico scores genes, instead of a window on the TSS; this updates Borzoi's correlations. Updates the results table, Figures 2, 3 and 5, the ensemble result, and related text. Enformer, NTv3 and AlphaGenome numbers are unchanged."
+      },
+      "5": {
+        "doi": "10.5281/zenodo.24179387",
+        "doi_url": "https://doi.org/10.5281/zenodo.24179387",
+        "zenodo_url": "https://zenodo.org/records/24179387",
+        "deposition_id": 24179387,
+        "record_id": 24179387,
+        "date": "2026-11-12",
+        "notes": "Added Google DeepMind's AlphaGenome 2 (released 11 November 2026) as a sixth model, queried through the hosted AlphaGenome API. Updates the results table, Figures 2, 3 and 5, the ensemble result, and related text, with a note on its track count and a check of the distal shortfall against enhancer accessibility (K562 DNase-seq and H3K27ac). Retitles the scoring section. Also corrects the Methods description of the AlphaGenome readout, which averages the 3 K562 RNA-Seq tracks matching the gene's strand, not all 5. Enformer, Borzoi, Cerberus, NTv3 and AlphaGenome numbers are unchanged."
       }
     }
   },
