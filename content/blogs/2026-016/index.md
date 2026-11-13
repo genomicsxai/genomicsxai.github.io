@@ -48,7 +48,7 @@ revision_history:
 {{< summary >}}
 [Bolero](https://doi.org/10.64898/2026.10.19.760026) predicts cell-state-specific ATAC signal and gene counts from DNA sequence. We benchmarked it in three settings. The main finding is that Bolero's gains come from the ATAC background reference signal, Bolero's most effective design choice, not from its AP-1 score.
 
-1. **Seen cell state, unseen DNA.** Bolero-10M's test regions overlap the pretraining data of its Flashzoi trunk, so its reported held-out scores are optimistic due to data leakage. We retrained Bolero on NeurIPS BMMC with Scooby's split. Run from DNA alone, Bolero matches the published [Scooby](https://doi.org/10.1038/s41592-025-02854-5) on both ATAC and RNA. It clearly wins only when the reference signal is supplied at inference.
+1. **Seen cell state, unseen DNA.** Bolero-10M's test regions overlap the pretraining data of its Flashzoi trunk, so there is data leakage. We retrained Bolero on NeurIPS BMMC with Scooby's split. Run from DNA alone, Bolero matches the published [Scooby](https://doi.org/10.1038/s41592-025-02854-5) on both ATAC and RNA. It clearly wins only when the reference signal is supplied at inference.
 2. **Unseen cell state, unseen DNA.** In the preprint's own DNA-only setting on the fear engram dataset, Bolero does not beat copying the control profile. With the reference signal, it ties or slightly beats copying.
 3. **Unseen cell state, seen DNA.** On the KA, Fear and MS datasets, AP-1 adds almost nothing. Measured, shuffled and random AP-1 scores give the same accuracy, and so does Bolero-10M, which has no AP-1 input. For ATAC, Bolero beats the copy-control baseline only when it receives the stimulated cells' own embedding plus the reference signal, so the answer is already in the input. For RNA, it does not beat copy-control.
 4. **Cell-state representation.** In both the MultiVI embedding and the condition vector *e*, stimulation moves a cell type only about half as far as its average distance to other cell types. Changing AP-1 shifts every metacell by exactly the same vector regardless of cell type.
@@ -88,9 +88,9 @@ Below is adapted from Bolero's Figure 1c, d. Bolero did not compare with Scooby 
 
 Bolero's Scooby baseline is not the published Scooby. The Methods say only that "a hypernetwork head reproduces the published Scooby model". In Bolero's code, the "scooby" preset puts a Scooby-style head on Bolero's framework, with plain rank-8 LoRA instead of Bolero's cell-state-conditional LoRA.
 
-We therefore ran an additional comparison using the original Scooby and Bolero models. Both Scooby and Bolero were trained on the NeurIPS BMMC dataset, but they used different DNA folds. Thus, we retrained Bolero on the NeurIPS BMMC dataset.
+We conducted an additional comparison experiment using the original Scooby and Bolero models. Both Scooby and Bolero were trained on the NeurIPS BMMC dataset, but they used different DNA folds. Thus, we retrained Bolero on the NeurIPS BMMC dataset.
 
-The released Bolero-10M configuration validates on fold 0 and tests on fold 1, although the preprint says it uses Borzoi's split. Its frozen trunk is Flashzoi replicate 0, which was trained on every fold except fold 3 (test) and fold 4 (validation). Bolero's test and validation regions were therefore in the trunk's training data, so there is data leakage and its reported held-out scores are optimistic (see table below).
+The released Bolero-10M configuration validates on fold 0 and tests on fold 1, although the preprint says it uses Borzoi's split. Its frozen trunk is Flashzoi replicate 0, which was trained on every fold except fold 3 (test) and fold 4 (validation). Bolero's test and validation regions were therefore in the trunk's training data, so there is data leakage (see table below).
 
 To avoid this, we retrained Bolero on the same split as Scooby and its trunk: test fold 3, validation fold 4. Neither the trunks nor any retrained model saw the test regions.
 
@@ -239,7 +239,7 @@ Bolero's Hugging Face repository has five activity datasets. Their control group
 
 Only Fear (Fig. 4b) and Stress (Fig. 4c) appear in the preprint. KA, MS and EE are not reported.
 
-In the authors' public records, pseudobulks are not independent. Neighbouring pseudobulks of the same cell type share metacells, and some mix metacells from control and stimulated samples. From here on, we drop the mixed pseudobulks and keep only pseudobulks that share no metacell with any other.
+In the authors' public records, pseudobulks are not independent. Neighbouring pseudobulks of the same cell type share metacells, and some mix metacells from control and stimulated samples. From now on, we drop the mixed pseudobulks and keep only pseudobulks that share no metacell with any other.
 
 We left out EE and Stress. After this filtering, their stimulation effect does not replicate between two independent halves of the data.
 
