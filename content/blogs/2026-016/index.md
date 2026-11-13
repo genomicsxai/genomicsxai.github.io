@@ -181,7 +181,7 @@ Bolero Fig. 4a, b:
 
 Our replication:
 
-![Our replication of Bolero's Figure 4b on the fear engram dataset using the released code, weights and data.](08_fear_fig4b_replication.png "width=900 Our replication of Bolero's Figure 4b on the fear engram dataset using the released code, weights and data.")
+![Our replication of Bolero's Figure 4b on the fear engram dataset.](08_fear_fig4b_replication.png "width=900 Our replication of Bolero's Figure 4b on the fear engram dataset.")
 
 ### On AP-1
 
