@@ -133,11 +133,11 @@
   },
   "2026-007": {
     "conceptrecid": "20840269",
-    "current_revision": 5,
-    "current_doi": "10.5281/zenodo.24179387",
-    "current_doi_url": "https://doi.org/10.5281/zenodo.24179387",
-    "current_zenodo_url": "https://zenodo.org/records/24179387",
-    "current_deposition_id": 24179387,
+    "current_revision": 6,
+    "current_doi": "10.5281/zenodo.24198935",
+    "current_doi_url": "https://doi.org/10.5281/zenodo.24198935",
+    "current_zenodo_url": "https://zenodo.org/records/24198935",
+    "current_deposition_id": 24198935,
     "revisions": {
       "1": {
         "doi": "10.5281/zenodo.20840270",
@@ -183,6 +183,15 @@
         "record_id": 24179387,
         "date": "2026-11-12",
         "notes": "Added Google DeepMind's AlphaGenome 2 (released 11 November 2026) as a sixth model, queried through the hosted AlphaGenome API. Updates the results table, Figures 2, 3 and 5, the ensemble result, and related text, with a note on its track count and a check of the distal shortfall against enhancer accessibility (K562 DNase-seq and H3K27ac). Retitles the scoring section. Also corrects the Methods description of the AlphaGenome readout, which averages the 3 K562 RNA-Seq tracks matching the gene's strand, not all 5. Enformer, Borzoi, Cerberus, NTv3 and AlphaGenome numbers are unchanged."
+      },
+      "6": {
+        "doi": "10.5281/zenodo.24198935",
+        "doi_url": "https://doi.org/10.5281/zenodo.24198935",
+        "zenodo_url": "https://zenodo.org/records/24198935",
+        "deposition_id": 24198935,
+        "record_id": 24198935,
+        "date": "2026-11-13",
+        "notes": "AlphaGenome 2 is now read from the 5 strand-matched K562 RNA-Seq tracks that were measured in K562, leaving out 3 tracks the model imputes for assays never measured there; revision 5 averaged all 8. Its correlations change by at most 0.01 and the conclusions are unchanged. Updates the results table, Figures 2, 3 and 5, and AlphaGenome 2's numbers in the text. Other models' numbers are unchanged."
       }
     }
   },
