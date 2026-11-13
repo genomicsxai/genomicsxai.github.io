@@ -1,7 +1,7 @@
 ---
 post_id: "2026-016"
 title: "Benchmarking Bolero"
-image: "17_activity_atac_ablation.png"
+image: "03_atac_deviation.png"
 math: false
 
 authors: ["Yue Wu", "Alan Murphy", "Peter K. Koo"]
@@ -84,7 +84,7 @@ Bolero proposes using the AP-1 score to set the trans environment.
 
 Below is adapted from Bolero's Figure 1c, d. Bolero did not compare with Scooby on RNA.
 
-![Figure 1](01_bolero_fig1cd.png "width=900 Figure 1: Adapted from Bolero's Figure 1c, d. Bolero's comparison against its own Scooby-style baseline on ATAC.")
+![Adapted from Bolero's Figure 1c, d. Bolero's comparison against its own Scooby-style baseline on ATAC.](01_bolero_fig1cd.png "width=900 Adapted from Bolero's Figure 1c, d. Bolero's comparison against its own Scooby-style baseline on ATAC.")
 
 Bolero's Scooby baseline is not the published Scooby. The Methods say only that "a hypernetwork head reproduces the published Scooby model". In Bolero's code, the "scooby" preset puts a Scooby-style head on Bolero's framework, with plain rank-8 LoRA instead of Bolero's cell-state-conditional LoRA.
 
@@ -119,13 +119,13 @@ Panel order in the figures below:
 
 Cross-peak comparison:
 
-![Figure 2](02_atac_crosspeak.png "width=900 Figure 2: Cross-peak Pearson r on fold 3 of NeurIPS BMMC for Scooby, the retrained Bolero variants, Bolero-10M and the dataset-average baseline.")
+![Cross-peak Pearson r on fold 3 of NeurIPS BMMC for Scooby, the retrained Bolero variants, Bolero-10M and the dataset-average baseline.](02_atac_crosspeak.png "width=900 Cross-peak Pearson r on fold 3 of NeurIPS BMMC for Scooby, the retrained Bolero variants, Bolero-10M and the dataset-average baseline.")
 
 Note that the published Bolero-10M model, which saw fold 3 of this dataset during training, has nearly the same performance as the retrained Bolero model, which did not see fold 3. Thus, the retrained Bolero model's performance is not underestimated here.
 
 Deviation *r* (subtract peak mean and cell type mean):
 
-![Figure 3](03_atac_deviation.png "width=900 Figure 3: Deviation r on fold 3, after subtracting the peak mean and the cell-type mean, so that only cell-type-specific variation is scored.")
+![Deviation r on fold 3, after subtracting the peak mean and the cell-type mean, so that only cell-type-specific variation is scored.](03_atac_deviation.png "width=900 Deviation r on fold 3, after subtracting the peak mean and the cell-type mean, so that only cell-type-specific variation is scored.")
 
 Bolero clearly outperforms Scooby only when the reference signal is added at inference. With or without the reference signal during training, Bolero has roughly the same performance as Scooby.
 
@@ -137,13 +137,13 @@ To match Bolero's whole-gene count, we also converted Scooby's output to a whole
 
 Cross-gene *r*:
 
-![Figure 4](04_rna_crossgene.png "width=900 Figure 4: Cross-gene Pearson r on fold 3 for whole-gene 10x counts.")
+![Cross-gene Pearson r on fold 3 for whole-gene 10x counts.](04_rna_crossgene.png "width=900 Cross-gene Pearson r on fold 3 for whole-gene 10x counts.")
 
 The dataset-average baseline scores highest here because across-gene *r* mostly reflects which genes are highly expressed overall, not cell-type differences.
 
 Deviation *r* (subtract gene mean and cell type mean):
 
-![Figure 5](05_rna_deviation.png "width=900 Figure 5: Deviation r on fold 3 for RNA, after subtracting the gene mean and the cell-type mean.")
+![Deviation r on fold 3 for RNA, after subtracting the gene mean and the cell-type mean.](05_rna_deviation.png "width=900 Deviation r on fold 3 for RNA, after subtracting the gene mean and the cell-type mean.")
 
 A similar conclusion is observed: without the reference signal at inference, the retrained Bolero's DNA-only performance is approximately the same as Scooby's. When the reference signal is added, Bolero outperforms Scooby.
 
@@ -157,7 +157,7 @@ Figure 2g–j of Bolero examines the unseen cell types of unseen cell states. Bo
 
 The weights of the 18 individually trained models in Figure 2g–j have not been published, and the test split arrangement is not described either. Thus, we cannot conduct additional benchmarking experiments in the same setting.
 
-![Figure 6](06_bolero_fig2gj.png "width=900 Figure 6: Adapted from Bolero's Figure 2g–j, the held-out cell-type evaluation.")
+![Adapted from Bolero's Figure 2g–j, the held-out cell-type evaluation.](06_bolero_fig2gj.png "width=900 Adapted from Bolero's Figure 2g–j, the held-out cell-type evaluation.")
 
 In Figure 4, Bolero is evaluated on five datasets: fear engram (Fig. 4b), novel environment, stress, mouse visual experience and human visual experience.
 
@@ -177,11 +177,11 @@ We replicated Figure 4b from Bolero on the fear engram dataset.
 
 Bolero Fig. 4a, b:
 
-![Figure 7](07_bolero_fig4ab.png "width=900 Figure 7: Adapted from Bolero's Figure 4a, b, the fear engram prediction.")
+![Adapted from Bolero's Figure 4a, b, the fear engram prediction.](07_bolero_fig4ab.png "width=900 Adapted from Bolero's Figure 4a, b, the fear engram prediction.")
 
 Our replication:
 
-![Figure 8](08_fear_fig4b_replication.png "width=900 Figure 8: Our replication of Bolero's Figure 4b on the fear engram dataset using the released code, weights and data.")
+![Our replication of Bolero's Figure 4b on the fear engram dataset using the released code, weights and data.](08_fear_fig4b_replication.png "width=900 Our replication of Bolero's Figure 4b on the fear engram dataset using the released code, weights and data.")
 
 ### On AP-1
 
@@ -191,11 +191,11 @@ We used the input (24 h Trap− DG) to predict the perturbed group (24 h Fos-Tra
 
 No reference signal. This is the preprint's own setting, as all Fig. 4 predictions were made in DNA-only mode. Here Bolero does not beat copying the control.
 
-![Figure 9](09_fear_ap1_noref.png "width=900 Figure 9: Fear engram prediction without the reference signal (the preprint's DNA-only setting), compared with copying the control pseudobulk.")
+![Fear engram prediction without the reference signal (the preprint's DNA-only setting), compared with copying the control pseudobulk.](09_fear_ap1_noref.png "width=900 Fear engram prediction without the reference signal (the preprint's DNA-only setting), compared with copying the control pseudobulk.")
 
 With the reference signal, Bolero ties or slightly beats copying.
 
-![Figure 10](10_fear_ap1_withref.png "width=900 Figure 10: Fear engram prediction with the reference signal, compared with copying the control pseudobulk.")
+![Fear engram prediction with the reference signal, compared with copying the control pseudobulk.](10_fear_ap1_withref.png "width=900 Fear engram prediction with the reference signal, compared with copying the control pseudobulk.")
 
 ### On cell representation and the encoder
 
@@ -205,25 +205,25 @@ Each dot is a metacell, and each panel highlights one cell type, with blue for i
 
 Cell embedding:
 
-![Figure 11](11_fear_cell_embedding.png "width=900 Figure 11: MultiVI cell embedding. Blue: 24 h Trap− metacells of the highlighted cell type. Red: its Fos-Trap+ metacells.")
+![MultiVI cell embedding. Blue: 24 h Trap− metacells of the highlighted cell type. Red: its Fos-Trap+ metacells.](11_fear_cell_embedding.png "width=900 MultiVI cell embedding. Blue: 24 h Trap− metacells of the highlighted cell type. Red: its Fos-Trap+ metacells.")
 
 *e* of the embedding:
 
-![Figure 12](12_fear_e_embedding.png "width=900 Figure 12: Encoder output e of the same metacells.")
+![Encoder output e of the same metacells.](12_fear_e_embedding.png "width=900 Encoder output e of the same metacells.")
 
 *e* with the AP-1 dial:
 
-![Figure 13](13_fear_e_ap1_dial.png "width=900 Figure 13: Encoder output e of the Trap− metacells with the AP-1 score raised to +8.")
+![Encoder output e of the Trap− metacells with the AP-1 score raised to +8.](13_fear_e_ap1_dial.png "width=900 Encoder output e of the Trap− metacells with the AP-1 score raised to +8.")
 
 AP-1 only changes *e*. It moves every metacell by exactly the same vector. The moving direction is almost orthogonal to PC1 and PC2.
 
 Below is the distance matrix between cell-type centroids. Rows of panels: MultiVI embedding, *e*, and *e* with the AP-1 dial. First column: distances between cell types within 24 h Trap−. Second column: Fos-Trap+ (rows) vs 24 h Trap− (columns); the boxed diagonal is how far each cell type moved. Third column: distances between cell types within Fos-Trap+.
 
-![Figure 14](14_fear_dist_matrix.png "width=900 Figure 14: Distances between cell-type centroids in the MultiVI embedding, in e, and in e with the AP-1 dial, within and between the Trap− and Fos-Trap+ groups.")
+![Distances between cell-type centroids in the MultiVI embedding, in e, and in e with the AP-1 dial, within and between the Trap− and Fos-Trap+ groups.](14_fear_dist_matrix.png "width=900 Distances between cell-type centroids in the MultiVI embedding, in e, and in e with the AP-1 dial, within and between the Trap− and Fos-Trap+ groups.")
 
 The bar graph of normalized distances sums this up. Stimulation moves a cell type about half as far as its average distance to other cell types.
 
-![Figure 15](15_fear_dist_bars.png "width=600 Figure 15: Normalized distance moved by each cell type under stimulation, relative to its average distance to other cell types.")
+![Normalized distance moved by each cell type under stimulation, relative to its average distance to other cell types.](15_fear_dist_bars.png "width=600 Normalized distance moved by each cell type under stimulation, relative to its average distance to other cell types.")
 
 ## Unseen cell state, seen DNA
 
@@ -245,7 +245,7 @@ We left out EE and Stress. After this filtering, their stimulation effect does n
 
 The same pattern from before is also here: stimulation moves a cell type about half as far as its average distance to other cell types.
 
-![Figure 16](16_activity_dist_bars.png "width=600 Figure 16: Normalized distance moved by each cell type under stimulation in the KA, Fear and MS datasets.")
+![Normalized distance moved by each cell type under stimulation in the KA, Fear and MS datasets.](16_activity_dist_bars.png "width=600 Normalized distance moved by each cell type under stimulation in the KA, Fear and MS datasets.")
 
 We ran ablations on them. Unlike Fig. 4, these use training-fold peaks, so the DNA was seen in training; only the cell state is new.
 
@@ -263,7 +263,7 @@ The grey bar copies the matched control profile without any model, so it is the 
 
 For ATAC:
 
-![Figure 17](17_activity_atac_ablation.png "width=900 Figure 17: ATAC ablations on the KA, Fear and MS datasets. Grey: copy-control baseline. Red dashed line: ceiling. Light bars: without the reference signal. Dark bars: with it.")
+![ATAC ablations on the KA, Fear and MS datasets. Grey: copy-control baseline. Red dashed line: ceiling. Light bars: without the reference signal. Dark bars: with it.](17_activity_atac_ablation.png "width=900 ATAC ablations on the KA, Fear and MS datasets. Grey: copy-control baseline. Red dashed line: ceiling. Light bars: without the reference signal. Dark bars: with it.")
 
 AP-1 adds approximately nothing. Measured, shuffled and random AP-1 give the same *r* (0.80, 0.79, 0.78). Bolero-10M, which has no AP-1 input, also gives 0.80.
 
@@ -271,7 +271,7 @@ The reference signal helps in every setting. Only the stimulated embedding plus 
 
 For RNA, Bolero does not beat the copy-control baseline.
 
-![Figure 18](18_activity_rna_ablation.png "width=900 Figure 18: RNA ablations on the KA, Fear and MS datasets, with the same layout as Figure 17.")
+![RNA ablations on the KA, Fear and MS datasets, with the same layout as the ATAC figure above.](18_activity_rna_ablation.png "width=900 RNA ablations on the KA, Fear and MS datasets, with the same layout as the ATAC figure above.")
 
 Gene expression changes little after stimulation, so the control profile is already very close. The reference signal helps. The stimulated embedding helps a little (+0.01 without the reference signal, +0.02 with it). Again AP-1 adds approximately nothing, as measured, shuffled and random AP-1 all give 0.85.
 
