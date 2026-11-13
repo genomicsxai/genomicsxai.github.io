@@ -1,0 +1,52 @@
+{{/* The image that link unfurlers (X, Slack, LinkedIn, iMessage, ...) show on
+     a page's preview card, used by head/opengraph/provider/*.
+
+     Context: the page. Returns "" when the page has no usable image, else:
+       Permalink — absolute URL of the preview image
+       Width, Height — its pixel size (absent unless it is a PNG/JPEG)
+
+     Which image: the post's `image` (the "Featured" thumbnail authors may pick
+     on the submission form). When there is none, the first figure the post
+     embeds, so a post never goes out with a blank preview just because its
+     author skipped that optional step. Only the preview falls back: the
+     homepage card and the post header still show `image` alone.
+
+     It is always the uploaded file, never helper/image's lossless WebP
+     derivative (not every unfurler reads WebP), and PNG/JPEG images are scaled
+     down to fit 1200x1200 (the size the platforms recommend) in their own
+     format. Figures here are often 5000-9000 px wide; X rejects card images
+     larger than 4096x4096. */}}
+{{- $resource := "" -}}
+{{- with .Params.image -}}
+    {{- with partial "helper/source-image" (dict "Image" . "Resources" $.Resources) -}}
+        {{- $resource = .Resource -}}
+    {{- end -}}
+{{- else -}}
+    {{- /* In document order: markdown images (alt text may contain escaped
+         brackets, as the submission form writes them), then <img> tags and
+         figure shortcodes. Remote and static-folder images are skipped: the
+         post's own bundle is the only place a figure is guaranteed to exist. */ -}}
+    {{- $figures := `!\[(?:\\.|[^\]\\])*\]\(\s*<?([^\s)>]+)|(?:<img|\{\{[<%]\s*figure)\b[^>]*?\bsrc\s*=\s*["']([^"']+)` -}}
+    {{- range findRESubmatch $figures .RawContent -}}
+        {{- $url := urls.Parse (cond (ne (index . 1) "") (index . 1) (index . 2)) -}}
+        {{- if not (or $url.Scheme $url.Host) -}}
+            {{- with $.Resources.Get (strings.TrimPrefix "./" $url.Path) -}}
+                {{- if and (eq .ResourceType "image") (in (slice "png" "jpeg" "gif" "webp") .MediaType.SubType) -}}
+                    {{- $resource = . -}}
+                    {{- break -}}
+                {{- end -}}
+            {{- end -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+
+{{- $result := "" -}}
+{{- with $resource -}}
+    {{- $result = dict "Permalink" .Permalink -}}
+    {{- if in (slice "png" "jpeg") .MediaType.SubType -}}
+        {{- with .Fit "1200x1200 Lanczos" -}}
+            {{- $result = dict "Permalink" .Permalink "Width" .Width "Height" .Height -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+{{- return $result -}}
