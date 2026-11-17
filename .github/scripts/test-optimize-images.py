@@ -144,5 +144,53 @@ class ImageTests(unittest.TestCase):
             self.assertNotIn('/images/plain.jpg', manifest)
 
 
+    def test_pdf_post_cover(self):
+        """A PDF post's first page becomes its card thumbnail and preview image."""
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            bundle = root / 'content/blogs/example'
+            bundle.mkdir(parents=True)
+            post = bundle / 'index.md'
+            post.write_text('---\nformat: "pdf"\npdf: "paper.pdf"\n---\n\nAbstract.\n')
+            first = Image.new('RGB', (612, 792), 'white')
+            first.paste((200, 0, 0), (0, 0, 612, 100))  # a red band across the top of page 1
+            first.save(bundle / 'paper.pdf', save_all=True, resolution=72,
+                       append_images=[Image.new('RGB', (612, 792), 'black')])
+            pdf_bytes = (bundle / 'paper.pdf').read_bytes()
+            optimizer.optimize(root)
+            cover = bundle / 'paper.pdf.cover.png'
+            with Image.open(cover) as image:
+                self.assertEqual(image.size, (optimizer.COVER_WIDTH, round(optimizer.COVER_WIDTH * 792 / 612)))
+                red, green, blue = image.getpixel((600, 50))[:3]
+                self.assertTrue(red > 150 and green < 60 and blue < 60, 'cover must be page 1')
+            for width in (480, 960):
+                self.assertTrue((bundle / f'paper.pdf.cover.png.optimized-card-{width}.webp').exists())
+            self.assertEqual((bundle / 'paper.pdf').read_bytes(), pdf_bytes)
+            # Rebuilt from scratch each run: once the post is no longer a PDF
+            # post, its cover and the cover's derivatives disappear.
+            post.write_text('---\ntitle: now a written post\n---\n\nBody.\n')
+            optimizer.optimize(root)
+            self.assertFalse(cover.exists())
+            self.assertFalse(list(bundle.glob('*.webp')))
+
+    def test_pdf_post_without_a_usable_pdf(self):
+        """A damaged PDF, or one outside the post's folder, never stops a deploy."""
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            broken = root / 'content/blogs/broken'
+            broken.mkdir(parents=True)
+            (broken / 'index.md').write_text('---\nformat: pdf\npdf: paper.pdf\n---\n\nAbstract.\n')
+            (broken / 'paper.pdf').write_bytes(b'%PDF-1.4 not really a PDF')
+            outside = root / 'content/blogs/outside'
+            outside.mkdir(parents=True)
+            (outside / 'index.md').write_text('---\nformat: pdf\npdf: ../broken/paper.pdf\n---\n\nAbstract.\n')
+            written = root / 'content/blogs/written'
+            written.mkdir(parents=True)
+            (written / 'index.md').write_text('---\ntitle: has a PDF but is a written post\n---\n')
+            Image.new('RGB', (612, 792), 'white').save(written / 'notes.pdf')
+            optimizer.optimize(root)
+            self.assertFalse(list(root.rglob('*.cover.png')))
+
+
 if __name__ == '__main__':
     unittest.main()

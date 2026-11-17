@@ -107,12 +107,19 @@ Dir.glob(File.join(ROOT, "content", "blogs", "*", "index.md")).sort.each do |pat
     errors << "#{path}: citation_doi must be #{expected_doi}"
   end
 
-  # The PDF is an author-supplied pdf_url, or the one render-post-pdfs.sh
-  # printed into the bundle (deploy only; PR builds have none).
+  # A PDF post (format: "pdf") offers the PDF its author uploaded, in every
+  # build. A written post offers an author-supplied pdf_url, or the one
+  # render-post-pdfs.sh printed into the bundle (deploy only; PR builds have
+  # none).
   pdf_urls = meta_values(html, "citation_pdf_url")
+  pdf_post = fm["format"].to_s == "pdf"
   printed_pdf = File.join(File.dirname(path), "#{post_id}.pdf")
-  if (fm["pdf_url"] || fm["pdf"] || File.exist?(printed_pdf)) && pdf_urls.empty?
+  if (pdf_post || fm["pdf_url"] || File.exist?(printed_pdf)) && pdf_urls.empty?
     errors << "#{path}: missing citation_pdf_url"
+  end
+  if pdf_post && !pdf_urls.empty?
+    own_pdf = "#{expected_url}#{fm['pdf']}"
+    errors << "#{path}: citation_pdf_url must be the post's own PDF, #{own_pdf}" unless pdf_urls.include?(own_pdf)
   end
   errors << "#{path}: more than one citation_pdf_url" if pdf_urls.length > 1
   pdf_urls.select { |url| url.start_with?("#{BASE_URL}/") }.each do |url|

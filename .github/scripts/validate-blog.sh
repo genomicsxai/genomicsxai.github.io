@@ -6,6 +6,31 @@
 set -e
 ERR=0
 
+# Google Scholar ignores PDFs larger than this; render-post-pdfs.sh and
+# validate-scholar-metadata.rb use the same limit.
+MAX_PDF_BYTES=5000000
+
+# Value of a top-level frontmatter key, without quotes ("" when absent). Reads
+# only the frontmatter, so a matching line in the post body never counts.
+fm_value() {
+  awk -v key="$1" '
+    NR == 1 && /^---[[:space:]]*$/ { inside = 1; next }
+    inside && /^---[[:space:]]*$/ { exit }
+    inside && $0 ~ ("^" key "[[:space:]]*:") {
+      sub("^" key "[[:space:]]*:[[:space:]]*", "")
+      sub("[[:space:]]+#.*$", "")
+      print
+      exit
+    }' "$2" | sed -e "s/^[\"']//" -e "s/[\"'][[:space:]]*\$//"
+}
+
+# Everything after the frontmatter's closing ---.
+post_body() {
+  awk 'NR == 1 && /^---[[:space:]]*$/ { inside = 1; next }
+       inside && /^---[[:space:]]*$/ { inside = 0; body = 1; next }
+       body' "$1"
+}
+
 for file in $(find content/blogs -name index.md 2>/dev/null || true); do
   [ -z "$file" ] && continue
   echo "Checking $file..."
@@ -62,6 +87,60 @@ for file in $(find content/blogs -name index.md 2>/dev/null || true); do
     echo "::error file=$file::Frontmatter 'title:' must not be empty."
     ERR=1
   fi
+
+  # --- 6. Post format: a written post (the default) or a PDF post ---
+  # A PDF post sets format: "pdf" and pdf: "<file>.pdf". Its body is the
+  # paper's abstract, and the PDF is what readers, Google Scholar and Zenodo
+  # get instead of a printout of the page (docs/BLOG_SPEC.md, "Post formats").
+  dir=$(dirname "$file")
+  format=$(fm_value format "$file")
+  pdf=$(fm_value pdf "$file")
+  post_id=$(fm_value post_id "$file")
+  case "$format" in
+    ""|markdown)
+      if [ -n "$pdf" ]; then
+        echo "::error file=$file::'pdf:' is only used by PDF posts. Add format: \"pdf\" to publish the PDF as the post, or remove 'pdf:'."
+        ERR=1
+      fi
+      ;;
+    pdf)
+      pdf_file="$dir/$pdf"
+      if [ -z "$pdf" ]; then
+        echo "::error file=$file::PDF posts need 'pdf:' naming the PDF in the post's folder, e.g. pdf: \"paper.pdf\"."
+        ERR=1
+      elif ! [[ "$pdf" =~ ^[A-Za-z0-9._-]+\.pdf$ ]]; then
+        echo "::error file=$file::'pdf: $pdf' must be a file name in the post's folder ending in .pdf, using only letters, digits, '.', '_' and '-' (e.g. paper.pdf)."
+        ERR=1
+      elif [ "$pdf" = "$post_id.pdf" ]; then
+        echo "::error file=$file::'pdf: $pdf' is reserved for the PDF the deploy prints of written posts. Rename the file, e.g. to paper.pdf."
+        ERR=1
+      elif [ ! -f "$pdf_file" ]; then
+        echo "::error file=$file::'pdf: $pdf' was not found. Add the PDF to $dir/."
+        ERR=1
+      elif [ "$(head -c 5 "$pdf_file")" != "%PDF-" ]; then
+        echo "::error file=$pdf_file::$pdf is not a PDF file."
+        ERR=1
+      else
+        bytes=$(wc -c < "$pdf_file" | tr -d '[:space:]')
+        if [ "$bytes" -gt "$MAX_PDF_BYTES" ]; then
+          echo "::error file=$pdf_file::$pdf is $((bytes / 1000)) kB. Google Scholar ignores PDFs over 5 MB, so a PDF post must stay under that. Re-export the figures at a lower resolution, or compress it with: gs -sDEVICE=pdfwrite -dPDFSETTINGS=/ebook -o smaller.pdf $pdf"
+          ERR=1
+        fi
+        # Best effort: names inside compressed object streams are not visible.
+        if LC_ALL=C grep -aqE '/(JavaScript|JS|Launch)[^A-Za-z]' "$pdf_file"; then
+          echo "::warning file=$pdf_file::$pdf contains embedded JavaScript or a launch action. Editors: ask the author why before merging."
+        fi
+      fi
+      if ! post_body "$file" | grep -q '[^[:space:]]'; then
+        echo "::error file=$file::A PDF post's body must be the paper's abstract, below the closing '---' of the frontmatter."
+        ERR=1
+      fi
+      ;;
+    *)
+      echo "::error file=$file::'format: $format' is not supported. Use format: \"pdf\" for a PDF post, or leave it out for a written post."
+      ERR=1
+      ;;
+  esac
 done
 
 if [ $ERR -eq 1 ]; then

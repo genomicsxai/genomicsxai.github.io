@@ -33,7 +33,8 @@ jobs:
       # Purely an optimization: the image helper falls back to the uploaded
       # originals wherever a derivative is missing, so a failure here must only
       # cost page weight. It must never block publishing a post, minting a DOI,
-      # or deploying the site.
+      # or deploying the site. It also renders each PDF post's first page as
+      # its card and link-preview image; without one they show the placeholder.
       - name: Generate lossless images and card thumbnails
         continue-on-error: true
         uses: ./.github/actions/optimize-images
@@ -158,8 +159,9 @@ jobs:
           ZENODO_API_TOKEN: ${{ secrets.ZENODO_API_TOKEN }}
           ZENODO_COMMUNITY: ${{ secrets.ZENODO_COMMUNITY }}
           SITE_URL: https://genomicsxai.github.io
-          # Adds the post's PDF to each new deposit; if printing fails the
-          # deposit goes out without one, as before.
+          # Adds the post's PDF to each new deposit: a written post is printed
+          # (if printing fails the deposit goes out without one, as before); a
+          # PDF post deposits the PDF its authors uploaded.
           PDF_RENDERER: .github/scripts/render-post-pdfs.sh
         run: |
           chmod +x .github/scripts/sync-zenodo-dois.rb
@@ -234,9 +236,10 @@ jobs:
           path: data/zenodo.json
           retention-days: 7
 
-      # 2.7. Print every accepted post to PDF for Google Scholar, into its
-      # bundle, so the build below publishes it beside the post and
-      # head/scholar-meta.html advertises it via citation_pdf_url. Runs after
+      # 2.7. Print every accepted written post to PDF for Google Scholar, into
+      # its bundle, so the build below publishes it beside the post and
+      # head/scholar-meta.html advertises it via citation_pdf_url. PDF posts
+      # are skipped: citation_pdf_url points to their uploaded PDF. Runs after
       # the Zenodo steps so new DOIs appear in the PDFs. Purely additive: a
       # post that fails to print just has no PDF, and a failure here must
       # never block the deploy.
