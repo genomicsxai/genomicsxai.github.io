@@ -3,11 +3,13 @@ post_id: "2026-017"
 title: "Modeling gene regulation across cellular contexts with deep learning"
 format: "pdf"
 pdf: "paper.pdf"
+# Figure 3, shown on the homepage card and in link previews.
+image: "fig3-context-design.png"
 
-authors: ["Alan E. Murphy", "Ekin D. Aksu", "Selin Jessa", "Ruchir Rastogi", "Wunna Kyaw", "Emily Wong", "Maria Brbić", "Anshul Kundaje", "Peter K. Koo"]
+authors: ["Alan Murphy", "Ekin D. Aksu", "Selin Jessa", "Ruchir Rastogi", "Wunna Kyaw", "Emily Wong", "Maria Brbić", "Anshul Kundaje", "Peter K. Koo"]
 
 authors_display:
-  - name: "Alan E. Murphy"
+  - name: "Alan Murphy"
     affiliation: "Simons Center for Quantitative Biology, Cold Spring Harbor Laboratory, Cold Spring Harbor, NY, USA"
     orcid: "0000-0002-2487-8753"
   - name: "Ekin D. Aksu"
