@@ -140,12 +140,10 @@ def api_upload_file(bucket_url, source_path, filename)
 end
 
 # Build output that sits beside a post's sources but is not part of them:
-# CI's WebP derivatives and PDF first-page covers (optimize-images.py) and the
-# site's printed copy of the PDF.
+# CI's WebP derivatives (optimize-images.py) and the site's copy of the PDF.
 def generated_file?(file, post_id)
   name = File.basename(file)
-  File.fnmatch("*.optimized*.webp", name) || File.fnmatch("*.pdf.cover.png", name) ||
-    name == "#{post_id}.pdf"
+  File.fnmatch("*.optimized*.webp", name) || name == "#{post_id}.pdf"
 end
 
 # A PDF post (format: "pdf") is published as the PDF its authors uploaded,

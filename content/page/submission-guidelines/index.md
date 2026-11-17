@@ -46,6 +46,10 @@ A PDF post needs:
 - **A title and author list that match the PDF's first page exactly.**
   Google Scholar compares the two.
 
+We also recommend adding a key figure as the post's `image`. It becomes the
+post's homepage card and link-preview image, and without one the card shows
+the title.
+
 Start from the
 [PDF post template](https://github.com/genomicsxai/genomicsxai.github.io/blob/main/docs/pdf-post-template.md),
 or pick **PDF paper** under *Post format* in the submission form.
@@ -88,7 +92,8 @@ for you. Sign in with GitHub and you can either:
   title, authors, tags, scope, audience, summary, and body in dedicated
   fields, with drag-and-drop image uploads and a caption per image, or
 - **Submit a PDF paper** — choose **PDF paper** under *Post format*, upload
-  the PDF, and paste its abstract. The form stores the PDF as `paper.pdf` and
+  the PDF, paste its abstract, and optionally upload a figure for its
+  thumbnail. The form stores the PDF as `paper.pdf` and
   sets the frontmatter for you. When you update a PDF post later, the
   published PDF stays unless you upload a replacement.
 

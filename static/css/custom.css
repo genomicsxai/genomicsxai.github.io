@@ -2323,16 +2323,6 @@ span.category-pills__pill {
   color: var(--card-text-color-main);
   text-decoration: none;
 }
-.paper-viewer__cover {
-  flex: 0 0 auto;
-  width: 140px;
-  max-width: 40%;
-  height: auto;
-  border: 1px solid var(--card-separator-color, rgba(218, 218, 218, 0.5));
-  border-radius: 4px;
-  background: #fff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
-}
 .paper-viewer__fallback-text {
   display: flex;
   flex-direction: column;
@@ -2348,13 +2338,7 @@ span.category-pills__pill {
   text-decoration: underline;
 }
 
-/* Homepage cards: a PDF post's first page shows from the top, where the
-   title and authors are, rather than cropped from its middle. */
-.article-card__image--cover {
-  object-position: top center;
-  border: 1px solid var(--card-separator-color, rgba(218, 218, 218, 0.5));
-  border-radius: inherit;
-}
+/* Homepage cards: "PDF" in place of a reading time. */
 .article-card__format {
   font-weight: 600;
   letter-spacing: 0.04em;

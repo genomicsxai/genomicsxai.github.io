@@ -13,8 +13,8 @@ format: "pdf"
 # YYYY-NNN.pdf, which is reserved.
 pdf: "paper.pdf"
 
-# Optional: an image in this folder for the homepage card and link previews.
-# Without one they show the first page of the PDF.
+# Optional but recommended: a key figure, in this folder, for the homepage card
+# and link previews. Without one, the card shows the title.
 # image: "figure1.png"
 
 # Author(s), in the order and spelling of the PDF's first page.

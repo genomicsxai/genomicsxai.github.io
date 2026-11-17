@@ -33,8 +33,7 @@ jobs:
       # Purely an optimization: the image helper falls back to the uploaded
       # originals wherever a derivative is missing, so a failure here must only
       # cost page weight. It must never block publishing a post, minting a DOI,
-      # or deploying the site. It also renders each PDF post's first page as
-      # its card and link-preview image; without one they show the placeholder.
+      # or deploying the site.
       - name: Generate lossless images and card thumbnails
         continue-on-error: true
         uses: ./.github/actions/optimize-images

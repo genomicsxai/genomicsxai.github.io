@@ -156,7 +156,7 @@ A post is either a **written post** (the default) or a **PDF post**: a finished 
 | Body of `index.md` | the post, opening with the `summary` shortcode | the paper's abstract, nothing else |
 | Page readers land on | the article | an arXiv-style abstract page: category, title, authors, dates, tags, abstract, View PDF and Download PDF buttons, then the PDF itself |
 | PDF for Google Scholar and Zenodo | printed from the page on deploy | the uploaded PDF, never printed |
-| Homepage card and link preview | `image`; link previews fall back to the first figure | `image`, else the first page of the PDF |
+| Homepage card and link preview | `image`; link previews fall back to the first figure | `image`, else the title placeholder card and no preview image |
 
 The page shows the PDF in the browser's own viewer on desktop browsers. Phones and tablets get a link that opens it full screen, because most cannot show a PDF inside a page.
 
@@ -172,7 +172,7 @@ To revise a published PDF post, replace the PDF under the same name and bump `re
 
 **Template:** `docs/pdf-post-template.md` (also served at `/pdf-post-template.md`).
 
-**Implementation:** `layouts/blogs/single.html` hands PDF posts to `partials/paper/landing.html`, which uses `paper/dates.html` and `paper/viewer.html`. Every other template finds the PDF through `partials/helper/paper-pdf.html` and its first page through `partials/helper/paper-cover.html`. `.github/scripts/optimize-images.py` renders that first page to `<pdf>.cover.png` on deploy, so local and PR builds show the plain placeholder card instead.
+**Implementation:** `layouts/blogs/single.html` hands PDF posts to `partials/paper/landing.html`, which uses `paper/dates.html` and `paper/viewer.html`. Every other template finds the PDF through `partials/helper/paper-pdf.html`. The page never shows `image`; it only feeds the homepage card and link previews, so PDF posts should upload a key figure for it.
 
 ## 5. Peer review state machine
 

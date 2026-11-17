@@ -2,20 +2,15 @@
 
      Params: Page (the post) and PDF (from helper/paper-pdf).
 
-     The page ships a link to the PDF, with the first page as its picture
-     when the deploy has rendered one (helper/paper-cover). Where the browser
-     can show a PDF inside a page — every current desktop browser, reported
+     The page ships a link to the PDF. Where the browser can show a PDF
+     inside a page — every current desktop browser, reported
      by navigator.pdfViewerEnabled — the script below swaps the link for the
      browser's own viewer, with its search, zoom and print. Phones and tablets
      keep the link: Android cannot show a PDF inside a page at all, and iOS
      shows only its first page, while opening the file gives the full-screen
      reader. No PDF.js or other library is involved. */ -}}
 {{- $page := .Page -}}
-{{- $pdf := .PDF -}}
-{{- $cover := "" -}}
-{{- with partial "helper/paper-cover.html" $page -}}
-  {{- $cover = partial "helper/image" (dict "Image" .Name "Resources" $page.Resources "Card" 480) -}}
-{{- end }}
+{{- $pdf := .PDF }}
 <section class="paper-viewer" id="paper-pdf" aria-label="PDF">
   <div class="paper-viewer__bar">
     <span class="paper-viewer__label">PDF <span class="paper-viewer__size">{{ $pdf.Size }}</span></span>
@@ -26,11 +21,6 @@
   </div>
   <div class="paper-viewer__stage" data-src="{{ $pdf.RelPermalink }}" data-title="{{ $page.Title }}">
     <a class="paper-viewer__fallback" href="{{ $pdf.RelPermalink }}">
-      {{- with $cover }}
-      <img class="paper-viewer__cover" src="{{ .Permalink }}"
-           {{ with .Width }}width="{{ . }}"{{ end }} {{ with .Height }}height="{{ . }}"{{ end }}
-           loading="lazy" decoding="async" alt="First page of the PDF">
-      {{- end }}
       <span class="paper-viewer__fallback-text">
         <strong>Open the PDF</strong>
         <span>{{ $pdf.Size }}, opens in your device's PDF reader</span>

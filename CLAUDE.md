@@ -28,7 +28,7 @@ A post is either a **written post** (the default) or a **PDF post**: front matte
 
 Custom Hugo templates in `layouts/` override the Stack theme (`themes/Stack/`). Key customizations:
 - `layouts/blogs/single.html` — Blog post rendering (authors, meta, citation, comments); hands PDF posts to `layouts/partials/paper/landing.html` (abstract page, with `paper/dates.html` and `paper/viewer.html`)
-- `layouts/partials/helper/paper-pdf.html` / `paper-cover.html` — Resolve a PDF post's PDF and its first-page cover image for every other template
+- `layouts/partials/helper/paper-pdf.html` — Resolves a PDF post's PDF (URL, size, download name) for every other template
 - `layouts/partials/article-meta.html` — Tags, lab, audience, reading time display
 - `layouts/partials/article-comments.html` — Giscus comment embedding
 - `layouts/partials/citation.html` — BibTeX/RIS citation links
@@ -48,7 +48,7 @@ Custom Hugo templates in `layouts/` override the Stack theme (`themes/Stack/`). 
 
 ### CI/CD (GitHub Actions)
 
-- **deploy.yml** (push to main): Creates GitHub Discussions per post, fetches discussion metrics (likes/comments), fetches editors from GitHub API, mints Zenodo DOIs, prints each accepted written post to PDF for Google Scholar (`.github/scripts/render-post-pdfs.sh`, which builds `hugo --environment pdf` from `config/pdf/` and `layouts/blogs/single.print.html`; PDF posts are skipped), builds with Hugo, deploys to `gh-pages` branch. `.github/scripts/optimize-images.py` also renders each PDF post's first page to a gitignored `<pdf>.cover.png` (pypdfium2) for its card and link preview
+- **deploy.yml** (push to main): Creates GitHub Discussions per post, fetches discussion metrics (likes/comments), fetches editors from GitHub API, mints Zenodo DOIs, prints each accepted written post to PDF for Google Scholar (`.github/scripts/render-post-pdfs.sh`, which builds `hugo --environment pdf` from `config/pdf/` and `layouts/blogs/single.print.html`; PDF posts are skipped), builds with Hugo, deploys to `gh-pages` branch
 - **pr-build.yml**: Runs `hugo --minify` to verify build
 - **frontmatter.yml**: Validates YAML frontmatter on PRs touching `content/blogs/`, including a PDF post's PDF (present, named by `pdf:`, under 5 MB)
 - **links.yml**: Checks for broken links with lychee
