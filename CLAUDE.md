@@ -14,6 +14,8 @@ Scientific blogging platform for the "Genomics × AI" community. Built with Hugo
 
 Hugo requires the theme submodule. After a fresh clone: `git submodule update --init --recursive`
 
+CI pins Hugo to 0.169.0 (the last extended release). Hugo 0.170 removed LibSass, which the Stack theme's SCSS needs, so upgrading means installing Dart Sass in every workflow too.
+
 ## Architecture
 
 ### Content
