@@ -1,0 +1,1 @@
+../docs/pdf-post-template.md

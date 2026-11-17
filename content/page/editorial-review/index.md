@@ -19,7 +19,7 @@ Almost all of the mechanical work around a post is handled by CI. Your job is th
 **While a PR is open** (re-runs on every push to the PR):
 
 * **Build check** — the site is rebuilt to confirm the post compiles.
-* **Frontmatter validation** — required fields and formatting are checked.
+* **Frontmatter validation** — required fields and formatting are checked, and for a PDF post, that its PDF is present and under 5 MB.
 * **Link check** — broken links are flagged.
 * **Preview deployment** — an unlisted preview of the post (`noindex`, not linked from the blog) is built and its URL posted as a PR comment. It updates on each new commit and is deleted when the PR closes.
 
@@ -28,9 +28,9 @@ Almost all of the mechanical work around a post is handled by CI. Your job is th
 * **Reviewer credit** — every editor who engaged with the PR (a formal review, a review comment, or a conversation comment) is added to the post's `editor:` list. Only `@genomicsxai/editors` members are credited, so authors and other commenters never are. See [§3](#3-review-outcomes).
 * **Publish date** — `date:` (the field the homepage orders by) is stamped with the merge date, for newly added posts, so "first published" ordering stays correct.
 * **Acceptance** — `status:` is flipped from `submitted` to `accepted`. A post already marked `withdrawn` or `accepted` is left untouched.
-* **Zenodo DOI** — each accepted post is issued a Zenodo DOI (or a new version, for an update), recorded in `data/zenodo.json` and shown in its citation box. The deposit includes a PDF of the post showing that DOI. This only happens once the post is `accepted` — which is why the automatic flip above matters. See [§1H](#h-references-and-google-scholar-indexing).
+* **Zenodo DOI** — each accepted post is issued a Zenodo DOI (or a new version, for an update), recorded in `data/zenodo.json` and shown in its citation box. The deposit includes a PDF of the post showing that DOI, or for a PDF post, the PDF its authors uploaded. This only happens once the post is `accepted` — which is why the automatic flip above matters. See [§1H](#h-references-and-google-scholar-indexing).
 * **GitHub Discussion** — a discussion thread is created to back the post's comments and likes.
-* **Google Scholar metadata + publish** — Scholar/Highwire metadata is emitted, every accepted post is printed to a PDF published beside it (`/blogs/<post_id>/<post_id>.pdf`, pointed to by `citation_pdf_url`), and the site is rebuilt and deployed. The PDF is not linked from the page, so readers see no change.
+* **Google Scholar metadata + publish** — Scholar/Highwire metadata is emitted, every accepted written post is printed to a PDF published beside it (`/blogs/<post_id>/<post_id>.pdf`, pointed to by `citation_pdf_url`), and the site is rebuilt and deployed. That printed PDF is not linked from the page, so readers see no change. A PDF post is never printed: `citation_pdf_url` points to the PDF its authors uploaded, which its page shows and links. Its first page is also rendered as the post's homepage card and link-preview image.
 
 **What this leaves for you:** the review itself — scope, correctness, clarity, tagging, and safety ([§1](#1-core-review-dimensions)); the executive summary ([§2](#2-executive-summary-requirement)); and a recommendation ([§3](#3-review-outcomes)). That's it.
 
@@ -111,8 +111,10 @@ Treat any of the following in a submitted `index.md` as a hard-fail unless the a
 **Pre-merge grep on the PR diff** (run at the repo root after checking out the PR branch):
 
 ```bash
-grep -nEi '<script|<iframe|<object|<embed|<applet|<portal|on[a-z]+=|javascript:|data:text/html|data:application/javascript|<meta[[:space:]]+http-equiv|<form|<link[[:space:]]+rel="import"|expression\(|@import' content/blogs/YYYY-NNN/
+grep -nEiI '<script|<iframe|<object|<embed|<applet|<portal|on[a-z]+=|javascript:|data:text/html|data:application/javascript|<meta[[:space:]]+http-equiv|<form|<link[[:space:]]+rel="import"|expression\(|@import' content/blogs/YYYY-NNN/
 ```
+
+`-I` skips binary files such as images and a PDF post's PDF, which would otherwise match at random. Browsers run any scripts inside a PDF in their PDF viewer's sandbox, not in the site's pages, so a PDF cannot read the sign-in token the way raw HTML in `index.md` could. CI still warns when a PDF contains JavaScript (see [§1I](#i-pdf-posts)).
 
 False positives are usually obvious (the word `onclick` inside a fenced code block discussing event handlers, the string `<script>` inside a quoted example). If a match is genuine raw HTML the author intended to publish, ask them to either remove it or convert it to a fenced code block (` ``` `) so it renders as text, not as live HTML. **When in doubt, reject.**
 
@@ -133,6 +135,19 @@ Note that it is the **rendered list**, not the DOIs, that tracks with inclusion:
 
 **Decision rule:** treat a missing or token References section as a change request, not a blocker. Ask the author to add the papers the post already builds on. A post can still be accepted without one — it will simply be much less likely to surface in Scholar.
 
+### I. PDF posts
+
+A PDF post (`format: "pdf"` in the frontmatter) publishes a finished paper as a PDF. Its `index.md` holds only the frontmatter and the paper's abstract, and readers land on an abstract page with the PDF below it. Review the PDF itself against A–H as you would a written post, and also check that:
+
+* The PDF opens in the preview, and its **first page shows the same title and authors** as the frontmatter. Google Scholar compares the two, and a mismatch can keep the post out of Scholar.
+* The **abstract** in `index.md` matches the PDF's abstract.
+* The PDF ends with a **numbered reference list** ([§1H](#h-references-and-google-scholar-indexing)). For a PDF post, Scholar reads the PDF, not the page.
+* Links inside the PDF go where they claim to.
+
+CI has already checked that the PDF is present, named by `pdf:`, and under Google Scholar's 5 MB limit. It also warns when a PDF contains JavaScript, which a paper has no reason to carry; ask the author to export it again without.
+
+Ask for changes to the paper in the PDF itself. Zenodo archives the uploaded file exactly as it is, and nothing on the post's page can amend it. When a revision of a published PDF post replaces its PDF, check that `revision` was bumped in `index.md` (the submission form does this): Zenodo only mints a new version when `index.md` changes.
+
 ---
 
 ## 2. Executive summary requirement
@@ -149,7 +164,7 @@ Each post must include an **executive summary** (3–5 bullets or a short paragr
 * Highlights key takeaway(s)
 * Indicates intended audience
 
-On this site, that content lives in the **`{{</* summary */>}}` … `{{</* /summary */>}}`** shortcode pair in the post body (see [submission guidelines](/submission-guidelines/) and the blog post template).
+On this site, that content lives in the **`{{</* summary */>}}` … `{{</* /summary */>}}`** shortcode pair in the post body (see [submission guidelines](/submission-guidelines/) and the blog post template). For a PDF post, the paper's abstract, which is the post's whole body, serves as the executive summary, so no summary shortcode is needed.
 
 ### Responsibility
 
@@ -188,7 +203,8 @@ Editors choose one:
 * [ ] Tags, scope, and audience correctly applied
 * [ ] **At least one discipline tag** present (see [§1D](#d-metadata-and-tagging))
 * [ ] Readable and logically structured
-* [ ] Executive summary present in the summary shortcode (or added by editor)
+* [ ] Executive summary present in the summary shortcode (or added by editor), or for a PDF post, its abstract
+* [ ] **PDF posts:** the PDF opens, and its first page matches the frontmatter title and authors (see [§1I](#i-pdf-posts))
 * [ ] No raw HTML/JS that could execute in a reader's browser — ran the §1.G grep and reviewed any matches
 
 ### Should pass (soft requirements)
