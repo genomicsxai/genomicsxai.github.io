@@ -1,5 +1,16 @@
-{{- $image := partial "helper/image" (dict "Image" .Params.image "Resources" .Resources "Card" 480) -}}
-{{- $large := partial "helper/image" (dict "Image" .Params.image "Resources" .Resources "Card" 960) -}}
+{{- /* A PDF post without a featured image shows the first page of its PDF,
+     once the deploy has rendered one (helper/paper-cover). */ -}}
+{{- $isPaper := eq .Params.format "pdf" -}}
+{{- $imageName := .Params.image -}}
+{{- $isCover := false -}}
+{{- if and $isPaper (not $imageName) -}}
+  {{- with partial "helper/paper-cover.html" . -}}
+    {{- $imageName = .Name -}}
+    {{- $isCover = true -}}
+  {{- end -}}
+{{- end -}}
+{{- $image := partial "helper/image" (dict "Image" $imageName "Resources" .Resources "Card" 480) -}}
+{{- $large := partial "helper/image" (dict "Image" $imageName "Resources" .Resources "Card" 960) -}}
 {{- $cats := slice -}}
 {{- range .GetTerms "categories" -}}
   {{- $cats = $cats | append (.Title | urlize) -}}
@@ -16,7 +27,7 @@
   <a class="article-card__link" href="{{ .RelPermalink }}">
     <div class="article-card__media">
       {{ if $image }}
-      <img class="article-card__image" src="{{ $image.Permalink }}"
+      <img class="article-card__image{{ if $isCover }} article-card__image--cover{{ end }}" src="{{ $image.Permalink }}"
            {{ with $image.Width }}width="{{ . }}"{{ end }}
            {{ with $image.Height }}height="{{ . }}"{{ end }}
            {{/* Measured against the theme grid: the container caps at 1536px and
@@ -26,7 +37,7 @@
                 step up to 960w, which is what they genuinely need. */}}
            {{ if and $large $large.Width $image.Width (gt $large.Width $image.Width) }}srcset="{{ $image.Permalink }} {{ $image.Width }}w, {{ $large.Permalink }} {{ $large.Width }}w" sizes="(min-width: 1100px) 260px, (min-width: 600px) 46vw, 95vw"{{ end }}
            loading="lazy" decoding="async"
-           alt="Featured image of {{ .Title }}">
+           alt="{{ if $isCover }}First page of {{ .Title }}{{ else }}Featured image of {{ .Title }}{{ end }}">
       {{ else }}
         {{ partial "widget/image-fallback.html" . }}
       {{ end }}
@@ -42,7 +53,10 @@
         {{ if not .Date.IsZero }}
         <time datetime='{{ .Date.Format "2006-01-02" }}'>{{ .Date | time.Format .Site.Params.dateFormat.published }}</time>
         {{ end }}
-        {{ if .ReadingTime }}
+        {{ if $isPaper }}
+          <span class="article-card__meta-sep">·</span>
+          <span class="article-card__format">PDF</span>
+        {{ else if .ReadingTime }}
           <span class="article-card__meta-sep">·</span>
           <span>{{ T "article.readingTime" .ReadingTime }}</span>
         {{ end }}

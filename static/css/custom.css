@@ -2139,3 +2139,230 @@ span.category-pills__pill {
   outline-offset: 4px;
   border-radius: 4px;
 }
+
+/* ── Submission form: post format ──
+   #submit-form gets submit-form--pdf while "PDF paper" is picked, and each
+   part of the form marked __for-markdown or __for-pdf shows only for its
+   format. Insert is hidden for PDF posts: their body is only the abstract. */
+.submit-form:not(.submit-form--pdf) .submit-form__for-pdf,
+.submit-form--pdf .submit-form__for-markdown,
+.submit-form--pdf .submit-form__image-insert {
+  display: none !important;
+}
+.submit-form__pdf-upload {
+  margin-top: 1.25rem;
+}
+.submit-form__pdf-upload .submit-form__update-banner {
+  margin-bottom: 0.75rem;
+}
+.submit-form__pdf-remove {
+  margin-left: 0.6em;
+  padding: 0 0.4em;
+  border: none;
+  background: none;
+  color: var(--card-text-color-secondary, #555);
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.submit-form__pdf-remove:hover {
+  color: #e74c3c;
+}
+.submit-form__pdf-problem {
+  margin-top: 0.5rem;
+  font-size: 1.3rem;
+  color: #e74c3c;
+}
+
+/* ══ PDF posts (front matter format: "pdf") ═════════════════════════════
+   partials/paper/landing.html: an arXiv-style abstract page. Category and
+   format sit above the title, View/Download buttons under the byline, the
+   post body is the abstract, and the PDF follows in the browser's own
+   viewer (or as a link to it on phones; see partials/paper/viewer.html). */
+.paper-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6em;
+  margin-bottom: 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.paper-kicker__category {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+.paper-kicker__category:hover {
+  text-decoration: underline;
+}
+.paper-kicker__format {
+  padding: 0.1em 0.5em;
+  border: 1px solid var(--card-separator-color, rgba(218, 218, 218, 0.5));
+  border-radius: 4px;
+  color: var(--card-text-color-secondary, #747474);
+}
+
+.paper-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+.paper-actions__btn {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5em;
+  padding: 0.7em 1.3em;
+  border: 1px solid var(--card-separator-color, rgba(218, 218, 218, 0.5));
+  border-radius: 8px;
+  background: var(--card-background);
+  color: var(--card-text-color-main);
+  font-size: 1.45rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.paper-actions__btn:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+.paper-actions__btn--primary,
+.paper-actions__btn--primary:hover {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: var(--accent-color-text, #fff);
+}
+.paper-actions__btn--primary:hover {
+  background: var(--accent-color-darker, #2c3e50);
+  border-color: var(--accent-color-darker, #2c3e50);
+}
+.paper-actions__size {
+  font-size: 0.85em;
+  font-weight: 400;
+  color: var(--card-text-color-secondary, #747474);
+}
+
+/* The post body, presented as the paper's abstract. */
+.article-page .main-article .paper-abstract {
+  margin-top: 2rem;
+}
+.article-content .paper-abstract__title {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--card-text-color-secondary, #747474);
+}
+.paper-abstract .paper-abstract__title + p {
+  margin-top: 0;
+}
+
+.paper-viewer {
+  margin: 0 var(--card-padding) var(--card-padding);
+  border: 1px solid var(--card-separator-color, rgba(218, 218, 218, 0.5));
+  border-radius: 10px;
+  overflow: hidden;
+  scroll-margin-top: 1.5rem;
+}
+.paper-viewer__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1.25rem;
+  padding: 0.8rem 1.2rem;
+  background: var(--card-background-selected, #eaeaea);
+  font-size: 1.3rem;
+  color: var(--card-text-color-secondary, #747474);
+}
+.paper-viewer__label {
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.paper-viewer__size {
+  margin-left: 0.4em;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.paper-viewer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+}
+.paper-viewer__link {
+  color: var(--accent-color);
+  font-weight: 600;
+  text-decoration: none;
+}
+.paper-viewer__link:hover {
+  text-decoration: underline;
+}
+.paper-viewer__frame {
+  display: block;
+  width: 100%;
+  height: 85vh;
+  min-height: 520px;
+  max-height: 1200px;
+  border: 0;
+  /* Chrome's viewer backdrop, so the frame does not flash white while the
+     PDF loads. */
+  background: #525659;
+}
+.paper-viewer__fallback {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  color: var(--card-text-color-main);
+  text-decoration: none;
+}
+.paper-viewer__cover {
+  flex: 0 0 auto;
+  width: 140px;
+  max-width: 40%;
+  height: auto;
+  border: 1px solid var(--card-separator-color, rgba(218, 218, 218, 0.5));
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
+.paper-viewer__fallback-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  font-size: 1.4rem;
+  color: var(--card-text-color-secondary, #747474);
+}
+.paper-viewer__fallback-text strong {
+  font-size: 1.6rem;
+  color: var(--accent-color);
+}
+.paper-viewer__fallback:hover strong {
+  text-decoration: underline;
+}
+
+/* Homepage cards: a PDF post's first page shows from the top, where the
+   title and authors are, rather than cropped from its middle. */
+.article-card__image--cover {
+  object-position: top center;
+  border: 1px solid var(--card-separator-color, rgba(218, 218, 218, 0.5));
+  border-radius: inherit;
+}
+.article-card__format {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+@media print {
+  .paper-actions,
+  .paper-viewer {
+    display: none !important;
+  }
+}

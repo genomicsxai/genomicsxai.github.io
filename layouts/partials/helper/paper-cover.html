@@ -1,0 +1,17 @@
+{{- /* The first page of a PDF post's PDF, as an image resource, or "".
+
+     .github/scripts/optimize-images.py renders it beside the PDF on deploy
+     (`<pdf>.cover.png`), so it exists in deploy and build-optimized builds
+     only. Local `hugo server`, PR builds and PR previews have no cover, and
+     every caller must cope: cards fall back to the gradient placeholder and
+     link previews to no image, as for any written post without figures.
+
+     Context: the page. */ -}}
+{{- $result := "" -}}
+{{- if and (eq .Params.format "pdf") .Params.pdf -}}
+  {{- $name := printf "%s.cover.png" (strings.TrimPrefix "./" (string .Params.pdf)) -}}
+  {{- with .Resources.Get $name -}}
+    {{- if eq .ResourceType "image" -}}{{- $result = . -}}{{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- return $result -}}

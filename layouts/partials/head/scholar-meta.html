@@ -25,11 +25,15 @@
 {{- with $zenodoDoi }}
 <meta name="citation_doi" {{ printf "content=%q" . | safeHTMLAttr }}>
 {{- end }}
-{{- /* An author-supplied pdf_url wins; otherwise the PDF that
-       .github/scripts/render-post-pdfs.sh prints into the bundle on deploy.
-       Scholar only accepts a PDF in the same directory as the article page. */ -}}
+{{- /* A PDF post (format: "pdf") offers the PDF its author uploaded beside
+       it. For a written post an author-supplied pdf_url wins; otherwise the
+       PDF that .github/scripts/render-post-pdfs.sh prints into the bundle on
+       deploy. Scholar only accepts a PDF in the same directory as the
+       article page. */ -}}
 {{- $pdfURL := "" -}}
-{{- with .Params.pdf_url | default .Params.pdf -}}
+{{- with partialCached "helper/paper-pdf.html" . .RelPermalink -}}
+  {{- $pdfURL = .Permalink -}}
+{{- else with .Params.pdf_url -}}
   {{- $pdfURL = . | absURL -}}
 {{- else -}}
   {{- with $.Resources.Get (printf "%s.pdf" $.Params.post_id) -}}

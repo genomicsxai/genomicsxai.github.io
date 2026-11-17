@@ -13,6 +13,11 @@
 {{ end }}
 
 {{ define "main" }}
+{{- /* PDF posts (format: "pdf") get an arXiv-style abstract page with the
+     PDF below it; see partials/paper/landing.html. */ -}}
+{{ if eq .Params.format "pdf" }}
+{{ partial "paper/landing.html" . }}
+{{ else }}
 <article class="main-article {{ if .Params.image }}has-image{{ end }}">
   <header class="article-header">
     {{- $image := partial "helper/image" (dict "Image" .Params.image "Resources" .Resources) -}}
@@ -48,6 +53,7 @@
     {{ partial "article-comments.html" . }}
   </div>
 </article>
+{{ end }}
 
 {{ if or .Params.math .Site.Params.article.math }}{{ partial "article/components/math.html" . }}{{ end }}
 {{ partial "article/components/photoswipe" . }}

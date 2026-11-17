@@ -59,12 +59,20 @@
       <span class="action-bar__label">RIS</span>
     </button>
   </div>
-  {{/* Row 3: PDF download */}}
+  {{/* Row 3: PDF download. A PDF post links to its author's PDF; a written
+       post prints the page through the browser, as before. */}}
   <div class="action-bar__row">
+    {{- with partialCached "helper/paper-pdf.html" $page $page.RelPermalink }}
+    <a href="{{ .RelPermalink }}" download="{{ .DownloadName }}" class="action-bar__btn" title="Download the PDF ({{ .Size }})">
+      <span class="action-bar__icon"><svg width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><polyline points="7 11 12 16 17 11"/><line x1="12" y1="4" x2="12" y2="16"/></svg></span>
+      <span class="action-bar__label">PDF</span>
+    </a>
+    {{- else }}
     <button type="button" class="action-bar__btn js-download-pdf" title="Download as PDF">
       <span class="action-bar__icon"><svg width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><polyline points="7 11 12 16 17 11"/><line x1="12" y1="4" x2="12" y2="16"/></svg></span>
       <span class="action-bar__label">PDF</span>
     </button>
+    {{- end }}
   </div>
   {{/* Row 4: Tweet + LinkedIn + Link */}}
   <div class="action-bar__row">
