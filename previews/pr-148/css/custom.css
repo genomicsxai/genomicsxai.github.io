@@ -2140,15 +2140,9 @@ span.category-pills__pill {
   border-radius: 4px;
 }
 
-/* ── Submission form: post format ──
-   #submit-form gets submit-form--pdf while "PDF paper" is picked, and each
-   part of the form marked __for-markdown or __for-pdf shows only for its
-   format. Insert is hidden for PDF posts: their body is only the abstract. */
-.submit-form:not(.submit-form--pdf) .submit-form__for-pdf,
-.submit-form--pdf .submit-form__for-markdown,
-.submit-form--pdf .submit-form__image-insert {
-  display: none !important;
-}
+/* ── Submission form: optional PDF version ──
+   The PDF upload section (#submit-form__pdf-section): the current PDF of a
+   post being updated, the picked file, and why a file was refused. */
 .submit-form__pdf-upload {
   margin-top: 1.25rem;
 }
@@ -2174,36 +2168,8 @@ span.category-pills__pill {
   color: #e74c3c;
 }
 
-/* ══ PDF posts (front matter format: "pdf") ═════════════════════════════
-   partials/paper/landing.html: an arXiv-style abstract page. Category and
-   format sit above the title, View/Download buttons under the byline, the
-   post body is the abstract, and the PDF follows in the browser's own
-   viewer (or as a link to it on phones; see partials/paper/viewer.html). */
-.paper-kicker {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.6em;
-  margin-bottom: 0.75rem;
-  font-size: 1.15rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-.paper-kicker__category {
-  color: var(--accent-color);
-  text-decoration: none;
-}
-.paper-kicker__category:hover {
-  text-decoration: underline;
-}
-.paper-kicker__format {
-  padding: 0.1em 0.5em;
-  border: 1px solid var(--card-separator-color, rgba(218, 218, 218, 0.5));
-  border-radius: 4px;
-  color: var(--card-text-color-secondary, #747474);
-}
-
+/* ══ A post's PDF version (front matter `pdf:`) ═════════════════════════
+   View PDF / Download PDF buttons under the byline (blogs/single.html). */
 .paper-actions {
   display: flex;
   flex-wrap: wrap;
@@ -2245,108 +2211,8 @@ span.category-pills__pill {
   color: var(--card-text-color-secondary, #747474);
 }
 
-/* The post body, presented as the paper's abstract. */
-.article-page .main-article .paper-abstract {
-  margin-top: 2rem;
-}
-.article-content .paper-abstract__title {
-  margin-top: 0;
-  margin-bottom: 0.75rem;
-  font-size: 1.4rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--card-text-color-secondary, #747474);
-}
-.paper-abstract .paper-abstract__title + p {
-  margin-top: 0;
-}
-
-.paper-viewer {
-  margin: 0 var(--card-padding) var(--card-padding);
-  border: 1px solid var(--card-separator-color, rgba(218, 218, 218, 0.5));
-  border-radius: 10px;
-  overflow: hidden;
-  scroll-margin-top: 1.5rem;
-}
-.paper-viewer__bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem 1.25rem;
-  padding: 0.8rem 1.2rem;
-  background: var(--card-background-selected, #eaeaea);
-  font-size: 1.3rem;
-  color: var(--card-text-color-secondary, #747474);
-}
-.paper-viewer__label {
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-.paper-viewer__size {
-  margin-left: 0.4em;
-  font-weight: 400;
-  letter-spacing: 0;
-  text-transform: none;
-}
-.paper-viewer__links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.25rem;
-}
-.paper-viewer__link {
-  color: var(--accent-color);
-  font-weight: 600;
-  text-decoration: none;
-}
-.paper-viewer__link:hover {
-  text-decoration: underline;
-}
-.paper-viewer__frame {
-  display: block;
-  width: 100%;
-  height: 85vh;
-  min-height: 520px;
-  max-height: 1200px;
-  border: 0;
-  /* Chrome's viewer backdrop, so the frame does not flash white while the
-     PDF loads. */
-  background: #525659;
-}
-.paper-viewer__fallback {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 1.5rem;
-  color: var(--card-text-color-main);
-  text-decoration: none;
-}
-.paper-viewer__fallback-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3em;
-  font-size: 1.4rem;
-  color: var(--card-text-color-secondary, #747474);
-}
-.paper-viewer__fallback-text strong {
-  font-size: 1.6rem;
-  color: var(--accent-color);
-}
-.paper-viewer__fallback:hover strong {
-  text-decoration: underline;
-}
-
-/* Homepage cards: "PDF" in place of a reading time. */
-.article-card__format {
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
-
 @media print {
-  .paper-actions,
-  .paper-viewer {
+  .paper-actions {
     display: none !important;
   }
 }
