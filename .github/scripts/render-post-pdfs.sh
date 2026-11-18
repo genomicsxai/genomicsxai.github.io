@@ -18,6 +18,10 @@
 #       published. sync-zenodo-dois.rb uses this to put the PDF in the
 #       deposit.
 #
+# PDF posts (front matter format: "pdf") are never printed: their authors
+# upload the PDF, and every consumer (the page, citation_pdf_url, Zenodo) uses
+# that file instead. --post on a PDF post prints nothing and says so.
+#
 # A post that fails to print, or prints larger than Scholar's 5 MB limit, is
 # skipped with a warning and simply has no PDF. Exits non-zero if any post was
 # skipped or nothing could be printed, so a CI step shows the failure, but
@@ -67,6 +71,10 @@ posts="$(ruby -ryaml -rdate -e '
     id = fm["post_id"].to_s
     next if id.empty? || fm["draft"] == true || fm["status"].to_s != "accepted"
     next unless wanted.empty? || wanted == id
+    if fm["format"].to_s == "pdf"
+      warn "#{id} is a PDF post: it publishes its authors\u2019 own PDF, so there is nothing to print." unless wanted.empty?
+      next
+    end
     puts "#{File.basename(File.dirname(path))}\t#{id}"
   end' "$post" "$ROOT"/content/blogs/*/index.md)"
 if [ -z "$posts" ]; then

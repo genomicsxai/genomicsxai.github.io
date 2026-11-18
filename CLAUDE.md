@@ -14,16 +14,21 @@ Scientific blogging platform for the "Genomics × AI" community. Built with Hugo
 
 Hugo requires the theme submodule. After a fresh clone: `git submodule update --init --recursive`
 
+CI pins Hugo to 0.169.0 (the last extended release). Hugo 0.170 removed LibSass, which the Stack theme's SCSS needs, so upgrading means installing Dart Sass in every workflow too.
+
 ## Architecture
 
 ### Content
 
-Blog posts live in `content/blogs/YYYY-NNN/index.md` (e.g., `2026-002/index.md`). Each post directory can contain colocated images. Static pages (forum, policies, editorial board, submission guidelines) live in `content/page/<section>/index.md`.
+Blog posts live in `content/blogs/YYYY-NNN/index.md` (e.g., `2026-002/index.md`). Each post directory can contain colocated images.
+
+A post is either a **written post** (the default) or a **PDF post**: front matter `format: "pdf"` plus `pdf: "paper.pdf"` naming a PDF (under 5 MB) in the same folder, with the paper's abstract as the whole body. PDF posts get an arXiv-style abstract page with the PDF embedded below it, and the uploaded PDF replaces the deploy's printout everywhere (Scholar `citation_pdf_url`, Zenodo deposit, sidebar PDF button). See `docs/BLOG_SPEC.md` §4.8 and `docs/pdf-post-template.md`. Static pages (forum, policies, editorial board, submission guidelines) live in `content/page/<section>/index.md`.
 
 ### Layouts & Templating
 
 Custom Hugo templates in `layouts/` override the Stack theme (`themes/Stack/`). Key customizations:
-- `layouts/blogs/single.html` — Blog post rendering (authors, meta, citation, comments)
+- `layouts/blogs/single.html` — Blog post rendering (authors, meta, citation, comments); hands PDF posts to `layouts/partials/paper/landing.html` (abstract page, with `paper/dates.html` and `paper/viewer.html`)
+- `layouts/partials/helper/paper-pdf.html` — Resolves a PDF post's PDF (URL, size, download name) for every other template
 - `layouts/partials/article-meta.html` — Tags, lab, audience, reading time display
 - `layouts/partials/article-comments.html` — Giscus comment embedding
 - `layouts/partials/citation.html` — BibTeX/RIS citation links
@@ -43,14 +48,14 @@ Custom Hugo templates in `layouts/` override the Stack theme (`themes/Stack/`). 
 
 ### CI/CD (GitHub Actions)
 
-- **deploy.yml** (push to main): Creates GitHub Discussions per post, fetches discussion metrics (likes/comments), fetches editors from GitHub API, mints Zenodo DOIs, prints each accepted post to PDF for Google Scholar (`.github/scripts/render-post-pdfs.sh`, which builds `hugo --environment pdf` from `config/pdf/` and `layouts/blogs/single.print.html`), builds with Hugo, deploys to `gh-pages` branch
+- **deploy.yml** (push to main): Creates GitHub Discussions per post, fetches discussion metrics (likes/comments), fetches editors from GitHub API, mints Zenodo DOIs, prints each accepted written post to PDF for Google Scholar (`.github/scripts/render-post-pdfs.sh`, which builds `hugo --environment pdf` from `config/pdf/` and `layouts/blogs/single.print.html`; PDF posts are skipped), builds with Hugo, deploys to `gh-pages` branch
 - **pr-build.yml**: Runs `hugo --minify` to verify build
-- **frontmatter.yml**: Validates YAML frontmatter on PRs touching `content/blogs/`
+- **frontmatter.yml**: Validates YAML frontmatter on PRs touching `content/blogs/`, including a PDF post's PDF (present, named by `pdf:`, under 5 MB)
 - **links.yml**: Checks for broken links with lychee
 
 ### Blog Post Frontmatter
 
-Required fields: `post_id`, `title`, `authors`, `editor`, `tags`, `categories`, `scope`, `labs`, `status`, `date`, `date_submitted`, `revision_history`. See `docs/blog-post-template.md` for the full template and `docs/BLOG_SPEC.md` for the schema spec.
+Required fields: `post_id`, `title`, `authors`, `editor`, `tags`, `categories`, `scope`, `labs`, `status`, `date`, `date_submitted`, `revision_history`. PDF posts add `format: "pdf"` and `pdf`. See `docs/blog-post-template.md` (written posts) and `docs/pdf-post-template.md` (PDF posts) for the full templates and `docs/BLOG_SPEC.md` for the schema spec.
 
 Image width syntax uses Hugo title attribute: `![Alt](img.png "width=400")` — not `{width=400}`.
 

@@ -1,0 +1,39 @@
+{{- /* The PDF an author uploaded for a PDF post (front matter `format: "pdf"`),
+     as a page resource, or "" for written posts.
+
+     Context: the page. Returns a dict:
+       Resource     — the PDF page resource
+       Permalink    — absolute URL, e.g. for citation_pdf_url
+       RelPermalink — site-relative URL for links on the page
+       Size         — human-readable size, e.g. "1.2 MB"
+       DownloadName — the file name readers get when they download it
+
+     `pdf` names a file in the post's own folder. The deploy never prints PDF
+     posts (render-post-pdfs.sh skips them), so this file is the post's only
+     PDF: Google Scholar, Zenodo and the download buttons all use it. */ -}}
+{{- $result := "" -}}
+{{- if eq .Params.format "pdf" -}}
+  {{- $name := strings.TrimPrefix "./" (string (.Params.pdf | default "")) -}}
+  {{- $resource := "" -}}
+  {{- with $name -}}{{- $resource = $.Resources.Get . -}}{{- end -}}
+  {{- if and $resource (eq $resource.MediaType.SubType "pdf") -}}
+    {{- $bytes := len $resource.Content -}}
+    {{- $size := printf "%d kB" (int (math.Ceil (div (float $bytes) 1000))) -}}
+    {{- if ge $bytes 1000000 -}}
+      {{- $size = printf "%.1f MB" (div (float $bytes) 1000000) -}}
+    {{- end -}}
+    {{- /* "2026-015-a-short-title.pdf" rather than the stored file name. */ -}}
+    {{- $slug := strings.TrimRight "-" (truncate 60 "" (lower (urlize $.Title))) -}}
+    {{- $downloadName := printf "%s.pdf" (delimit (slice (string $.Params.post_id) $slug) "-") -}}
+    {{- $result = dict
+        "Resource" $resource
+        "Permalink" $resource.Permalink
+        "RelPermalink" $resource.RelPermalink
+        "Size" $size
+        "DownloadName" $downloadName
+    -}}
+  {{- else -}}
+    {{- warnf "%s: format is \"pdf\" but pdf: %q is not a PDF in the post's folder" .File.Path $name -}}
+  {{- end -}}
+{{- end -}}
+{{- return $result -}}

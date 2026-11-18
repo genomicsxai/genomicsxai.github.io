@@ -86,6 +86,9 @@ jobs:
         uses: peaceiris/actions-hugo@v3
         with:
           extended: true
+          # 0.170.0 dropped the extended edition and its LibSass, which the
+          # theme's SCSS needs. Moving past 0.169 means installing Dart Sass.
+          hugo-version: '0.169.0'
 
       - name: Detect changed blog posts
         if: steps.safety.outputs.safe == 'true'

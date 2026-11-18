@@ -2,6 +2,8 @@
 post_id: "YYYY-NNN"
 title: "Your Post Title"
 
+# Publishing a finished paper as a PDF instead? Start from pdf-post-template.md.
+
 # Optional: image filename "your-image.png" in the same folder
 
 # Optional: Enable KaTeX for inline/block math (e.g. $10^{-K}$)

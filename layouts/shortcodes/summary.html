@@ -1,6 +1,12 @@
+{{- if eq .Page.Params.format "pdf" -}}
+{{- /* A PDF post's whole body is its abstract (partials/paper/landing.html
+     titles it), so a summary block there renders as plain text. */ -}}
+{{ .Page.RenderString (dict "display" "block") .Inner }}
+{{- else -}}
 <aside class="summary-box">
   <h2 class="summary-box__title">{{ .Get "title" | default "Summary" }}</h2>
   <div class="summary-box__body">
     {{ .Inner | markdownify }}
   </div>
 </aside>
+{{ end -}}

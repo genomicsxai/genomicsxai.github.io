@@ -1,5 +1,8 @@
 {{- $image := partial "helper/image" (dict "Image" .Params.image "Resources" .Resources "Card" 480) -}}
 {{- $large := partial "helper/image" (dict "Image" .Params.image "Resources" .Resources "Card" 960) -}}
+{{- /* A PDF post's body is only its abstract, so its card says "PDF" instead
+     of a reading time. */ -}}
+{{- $isPaper := eq .Params.format "pdf" -}}
 {{- $cats := slice -}}
 {{- range .GetTerms "categories" -}}
   {{- $cats = $cats | append (.Title | urlize) -}}
@@ -42,7 +45,10 @@
         {{ if not .Date.IsZero }}
         <time datetime='{{ .Date.Format "2006-01-02" }}'>{{ .Date | time.Format .Site.Params.dateFormat.published }}</time>
         {{ end }}
-        {{ if .ReadingTime }}
+        {{ if $isPaper }}
+          <span class="article-card__meta-sep">·</span>
+          <span class="article-card__format">PDF</span>
+        {{ else if .ReadingTime }}
           <span class="article-card__meta-sep">·</span>
           <span>{{ T "article.readingTime" .ReadingTime }}</span>
         {{ end }}
