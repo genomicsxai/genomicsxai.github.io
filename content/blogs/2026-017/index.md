@@ -41,7 +41,7 @@ editor: "TBD"
 submitter_github: "Al-Murphy"
 
 tags: ["genomics", "gene-regulation", "review", "context-seq2func", "seq2func", "single-cell", "interpretability", "ai-agents"]
-categories: ["Paper Reviews"]
+categories: ["Perspective"]
 
 scope: ["insights", "discussions"]
 audience: ["technical", "general"]
