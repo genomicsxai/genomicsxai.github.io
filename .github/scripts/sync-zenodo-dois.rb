@@ -146,10 +146,10 @@ def generated_file?(file, post_id)
   File.fnmatch("*.optimized*.webp", name) || name == "#{post_id}.pdf"
 end
 
-# A PDF post (format: "pdf") is published as the PDF its authors uploaded,
-# named by `pdf:` in its folder; written posts are printed instead.
-def pdf_post?(frontmatter)
-  frontmatter["format"].to_s == "pdf"
+# A post with a PDF version (front matter `pdf:`, a file in its folder)
+# deposits that PDF; other posts are printed instead.
+def own_pdf?(frontmatter)
+  !frontmatter["pdf"].to_s.empty?
 end
 
 def supplied_pdf(frontmatter, post_path)
@@ -157,13 +157,13 @@ def supplied_pdf(frontmatter, post_path)
   path = File.join(File.dirname(post_path), name)
   return path if !name.empty? && File.file?(path)
 
-  puts "::warning::#{post_path} is a PDF post without its PDF (pdf: #{name.inspect}); its Zenodo deposit will not include one."
+  puts "::warning::#{post_path} names a PDF version that is missing (pdf: #{name.inspect}); its Zenodo deposit will not include a PDF."
   nil
 end
 
-# The deposit's PDF is always uploaded as "<post_id>-v<N>.pdf". A PDF post's
-# own file sits in the post folder too, so it is left out of the folder's
-# files rather than uploaded twice.
+# The deposit's PDF is always uploaded as "<post_id>-v<N>.pdf". A post's own
+# PDF version sits in its folder too, so it is left out of the folder's files
+# rather than uploaded twice.
 def upload_post_files(draft, post_path, post_id, revision_number, pdf: nil)
   bucket_url = draft.dig("links", "bucket")
   raise "Zenodo draft response missing bucket link for #{post_id}" unless bucket_url
@@ -285,12 +285,12 @@ changed.each do |path|
       raise "Zenodo newversion response missing latest_draft for #{post_id}" unless latest_draft
       draft = api_request(:get, latest_draft)
       draft = update_draft_metadata(draft.fetch("id"), metadata)
-      pdf = pdf_post?(frontmatter) ? supplied_pdf(frontmatter, path) : render_pdf(post_id, draft)
+      pdf = own_pdf?(frontmatter) ? supplied_pdf(frontmatter, path) : render_pdf(post_id, draft)
       upload_post_files(draft, path, post_id, revision_number, pdf: pdf)
       publish_draft(draft.fetch("id"))
     else
       draft = create_initial_draft(metadata)
-      pdf = pdf_post?(frontmatter) ? supplied_pdf(frontmatter, path) : render_pdf(post_id, draft)
+      pdf = own_pdf?(frontmatter) ? supplied_pdf(frontmatter, path) : render_pdf(post_id, draft)
       upload_post_files(draft, path, post_id, revision_number, pdf: pdf)
       publish_draft(draft.fetch("id"))
     end

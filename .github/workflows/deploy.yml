@@ -161,9 +161,9 @@ jobs:
           ZENODO_API_TOKEN: ${{ secrets.ZENODO_API_TOKEN }}
           ZENODO_COMMUNITY: ${{ secrets.ZENODO_COMMUNITY }}
           SITE_URL: https://genomicsxai.github.io
-          # Adds the post's PDF to each new deposit: a written post is printed
-          # (if printing fails the deposit goes out without one, as before); a
-          # PDF post deposits the PDF its authors uploaded.
+          # Adds the post's PDF to each new deposit: its own PDF version
+          # (front matter pdf:) if it has one, otherwise a printout of the page
+          # (if printing fails the deposit goes out without one, as before).
           PDF_RENDERER: .github/scripts/render-post-pdfs.sh
         run: |
           chmod +x .github/scripts/sync-zenodo-dois.rb
@@ -238,13 +238,13 @@ jobs:
           path: data/zenodo.json
           retention-days: 7
 
-      # 2.7. Print every accepted written post to PDF for Google Scholar, into
-      # its bundle, so the build below publishes it beside the post and
-      # head/scholar-meta.html advertises it via citation_pdf_url. PDF posts
-      # are skipped: citation_pdf_url points to their uploaded PDF. Runs after
-      # the Zenodo steps so new DOIs appear in the PDFs. Purely additive: a
-      # post that fails to print just has no PDF, and a failure here must
-      # never block the deploy.
+      # 2.7. Print every accepted post to PDF for Google Scholar, into its
+      # bundle, so the build below publishes it beside the post and
+      # head/scholar-meta.html advertises it via citation_pdf_url. Posts with
+      # their own PDF version (pdf:) are skipped: citation_pdf_url points to
+      # that file. Runs after the Zenodo steps so new DOIs appear in the PDFs.
+      # Purely additive: a post that fails to print just has no PDF, and a
+      # failure here must never block the deploy.
       - name: Render Google Scholar PDFs
         continue-on-error: true
         run: bash .github/scripts/render-post-pdfs.sh

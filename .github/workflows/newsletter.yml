@@ -109,19 +109,6 @@ jobs:
               else:
                   summary = ""
 
-              # A PDF post (format: "pdf") has no summary block: its whole body
-              # is the paper's abstract, so the digest quotes the opening of it.
-              if not summary and re.search(r"^format:\s*[\"']?pdf[\"']?\s*$", fm, re.MULTILINE):
-                  abstract = content[fm_match.end():]
-                  abstract = re.sub(r"\*\*(.+?)\*\*", r"\1", abstract)
-                  abstract = re.sub(r"\*(.+?)\*", r"\1", abstract)
-                  abstract = re.sub(r"`(.+?)`", r"\1", abstract)
-                  abstract = re.sub(r"\[(.+?)\]\(.+?\)", r"\1", abstract)
-                  abstract = " ".join(abstract.split())
-                  if len(abstract) > 400:
-                      abstract = abstract[:400].rsplit(" ", 1)[0] + "…"
-                  summary = abstract
-
               posts.append({
                   "title": title,
                   "authors": authors,

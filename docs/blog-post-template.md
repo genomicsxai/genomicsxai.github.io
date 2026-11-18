@@ -2,9 +2,13 @@
 post_id: "YYYY-NNN"
 title: "Your Post Title"
 
-# Publishing a finished paper as a PDF instead? Start from pdf-post-template.md.
-
 # Optional: image filename "your-image.png" in the same folder
+
+# Optional: a PDF version of the post, e.g. the paper or preprint it reports,
+# in the same folder and under 5 MB. Readers get View PDF and Download PDF
+# buttons, and Google Scholar and Zenodo get this PDF instead of a printout of
+# the page. Its first page should show the same title and authors as below.
+# pdf: "paper.pdf"
 
 # Optional: Enable KaTeX for inline/block math (e.g. $10^{-K}$)
 math: true

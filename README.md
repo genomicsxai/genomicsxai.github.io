@@ -6,7 +6,7 @@
 
 The `Deploy Hugo Site` workflow syncs Zenodo DOI metadata for accepted blog posts changed on `main` before building the public site. It publishes Zenodo records when `ZENODO_API_TOKEN` is configured, commits the resulting metadata to `data/zenodo.json`, and renders the current version DOI from that data.
 
-Each deposit includes the post's PDF: a printout of the page for a written post, or for a PDF post (`format: "pdf"`, see `docs/BLOG_SPEC.md` §4.8) the PDF its authors uploaded.
+Each deposit includes the post's PDF: its own PDF version if it has one (front matter `pdf:`, see `docs/BLOG_SPEC.md` §4.8), otherwise a printout of the page.
 
 To publish a new version of a post, update the post content and increment its `revision` frontmatter. Zenodo creates a new numeric version DOI under the same concept record, for example `https://doi.org/10.5281/zenodo.20277035`; it does not create `v2` or `v3` DOI URL suffixes. Frontmatter `doi` and `zenodo_url` values are still supported as manual fallback fields, but maintainers should normally leave them blank and let `data/zenodo.json` be the source of truth.
 

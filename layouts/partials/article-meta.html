@@ -2,8 +2,6 @@
 {{- $hasLabs := or (.GetTerms "labs") .Params.labs -}}
 {{- $hasAudience := and .Params.audience (gt (len (.GetTerms "audience")) 0) -}}
 {{- $showReadingTime := .Params.readingTime | default .Site.Params.ShowReadingTime -}}
-{{- /* A PDF post's body is only its abstract, so a reading time would mislead. */ -}}
-{{- if eq .Params.format "pdf" -}}{{- $showReadingTime = false -}}{{- end -}}
 {{- if or $hasTags $hasLabs $hasAudience $showReadingTime }}
 <div class="article-meta">
   {{ if $hasTags }}

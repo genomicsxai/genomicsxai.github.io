@@ -587,25 +587,6 @@
       if (this.body) this._syncToTextarea(this.body, false);
     },
 
-    // PDF posts (format: "pdf"): the whole body is the paper's abstract, edited
-    // in the summary editor, and the hidden body editor is emptied.
-    setSummaryOnly: function (md) {
-      var summaryTa = document.getElementById('submit-form__summary-input');
-      var bodyTa = document.getElementById('submit-form__body-input');
-      if (this.summary) {
-        this.summary.setContent(markdownToHtml(md || ''));
-        this._syncToTextarea(this.summary, true);
-      } else if (summaryTa) {
-        summaryTa.value = md || '';
-      }
-      if (this.body) {
-        this.body.setContent('');
-        this._syncToTextarea(this.body, false);
-      } else if (bodyTa) {
-        bodyTa.value = '';
-      }
-    },
-
     // Read the current body, with summary prepended as a {{< summary >}}
     // shortcode if any. Called by onSubmit just before building the PR.
     getMarkdown: function () {

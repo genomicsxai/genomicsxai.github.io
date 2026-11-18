@@ -59,8 +59,8 @@
       <span class="action-bar__label">RIS</span>
     </button>
   </div>
-  {{/* Row 3: PDF download. A PDF post links to its author's PDF; a written
-       post prints the page through the browser, as before. */}}
+  {{/* Row 3: PDF download. A post with a PDF version (front matter `pdf:`)
+       links to that file; other posts print the page through the browser. */}}
   <div class="action-bar__row">
     {{- with partialCached "helper/paper-pdf.html" $page $page.RelPermalink }}
     <a href="{{ .RelPermalink }}" download="{{ .DownloadName }}" class="action-bar__btn" title="Download the PDF ({{ .Size }})">

@@ -25,8 +25,8 @@
 {{- with $zenodoDoi }}
 <meta name="citation_doi" {{ printf "content=%q" . | safeHTMLAttr }}>
 {{- end }}
-{{- /* A PDF post (format: "pdf") offers the PDF its author uploaded beside
-       it. For a written post an author-supplied pdf_url wins; otherwise the
+{{- /* A post with a PDF version (front matter `pdf:`) offers that file. A
+       post without one offers an author-supplied pdf_url, or otherwise the
        PDF that .github/scripts/render-post-pdfs.sh prints into the bundle on
        deploy. Scholar only accepts a PDF in the same directory as the
        article page. */ -}}
