@@ -3,10 +3,9 @@
   <!-- Template / start -->
   <div class="submit-form__section submit-form__template-card">
     <strong>Prepare your post</strong>
-    <p>Two ways to start. Either way, you'll review frontmatter, edit your post text, and add images in the form below before submitting. Publishing a finished paper as a PDF instead? Pick <strong>PDF paper</strong> under <em>Post format</em> once you've signed in.</p>
+    <p>Two ways to start. Either way, you'll review frontmatter, edit your post text, and add images in the form below before submitting.</p>
     <div class="submit-form__template-actions">
       <a href="/blog-post-template.md" download="blog-post-template.md" class="submit-form__btn submit-form__btn--secondary">Download blog post template</a>
-      <a href="/pdf-post-template.md" download="pdf-post-template.md" class="submit-form__btn submit-form__btn--secondary">Download PDF post template</a>
       <button type="button" id="submit-form__start-blank-btn" class="submit-form__btn submit-form__btn--secondary">Fill in the form manually</button>
     </div>
     <p class="submit-form__help">
@@ -108,48 +107,6 @@
 
     <!-- Banner for update mode -->
     <div id="submit-form__update-banner" class="submit-form__update-banner" hidden></div>
-
-    <!-- Post format. A written post is composed below; a PDF post is a
-         finished paper uploaded as a PDF plus its abstract. The form toggles
-         submit-form--pdf on #submit-form, and CSS shows the
-         .submit-form__for-markdown or .submit-form__for-pdf parts to match. -->
-    <div id="submit-form__format-section" class="submit-form__section">
-      <h3 class="submit-form__section-title">Post format</h3>
-      <div class="submit-form__radio-group">
-        <div class="submit-form__radio-item">
-          <label class="submit-form__radio">
-            <input type="radio" name="sf-format" value="markdown" id="sf-format-markdown" checked>
-            <span class="submit-form__radio-label">
-              Written post <em>(default)</em>
-              <span class="submit-form__radio-note">Write your post in the form below. It is published as a web page, and we also make a PDF of it for Google Scholar.</span>
-            </span>
-          </label>
-        </div>
-        <div class="submit-form__radio-item">
-          <label class="submit-form__radio">
-            <input type="radio" name="sf-format" value="pdf" id="sf-format-pdf">
-            <span class="submit-form__radio-label">
-              PDF paper
-              <span class="submit-form__radio-note">Upload a finished paper, review or preprint as a PDF, with its abstract. Readers land on a page with the title, authors and abstract, and the PDF below them.</span>
-            </span>
-          </label>
-        </div>
-      </div>
-
-      <div id="submit-form__pdf-subsection" class="submit-form__pdf-upload submit-form__for-pdf">
-        <div id="submit-form__pdf-current" class="submit-form__update-banner" hidden></div>
-        <div id="submit-form__pdf-drop-zone" class="submit-form__drop-zone">
-          <p>Drag &amp; drop your PDF here, or click to browse (max 5 MB)</p>
-          <input type="file" id="submit-form__pdf-input" accept="application/pdf,.pdf" hidden>
-        </div>
-        <div id="submit-form__pdf-file" class="submit-form__file-name" hidden></div>
-        <div id="submit-form__pdf-problem" class="submit-form__pdf-problem" hidden></div>
-        <div id="sf-error-pdf" class="submit-form__field-error" hidden></div>
-        <p class="submit-form__help">
-          Google Scholar checks that the title and authors you enter below match the first page of the PDF, and it ignores PDFs over 5 MB. Ending the PDF with its numbered reference list helps it be indexed.
-        </p>
-      </div>
-    </div>
 
     <!-- Upload index.md -->
     <div class="submit-form__section">
@@ -289,27 +246,20 @@
     <!-- Summary editor. Visible by default after Continue. -->
     <div id="submit-form__summary-section" class="submit-form__section">
       <h3 class="submit-form__section-title">
-        <span class="submit-form__for-markdown">Summary <span class="submit-form__label-note">(optional, but recommended)</span></span>
-        <span class="submit-form__for-pdf">Abstract <span class="submit-form__label-note">(required)</span></span>
+        Summary <span class="submit-form__label-note">(optional, but recommended)</span>
       </h3>
-      <p class="submit-form__help submit-form__for-markdown">
+      <p class="submit-form__help">
         A short overview shown at the top of your post — typically 2–4 sentences.
         Skippable, but posts with a summary are far more likely to be read.
-      </p>
-      <p class="submit-form__help submit-form__for-pdf">
-        Paste the paper's abstract. It appears above the PDF on your post's page,
-        and in the post's Zenodo record, the newsletter and link previews.
       </p>
       <textarea id="submit-form__summary-editor"></textarea>
       <!-- Hidden markdown mirror — kept in sync by submission-editor.js and read
            by the submission pipeline. -->
       <textarea id="submit-form__summary-input" hidden></textarea>
-      <div id="sf-error-abstract" class="submit-form__field-error" hidden></div>
     </div>
 
     <!-- Body editor. Visible by default after Continue. -->
     <div id="submit-form__body-section" class="submit-form__section">
-      <div class="submit-form__for-markdown">
       <h3 class="submit-form__section-title">Write your post</h3>
       <p class="submit-form__help">
         Write or paste your post below — it works like a regular word processor (you don't
@@ -322,17 +272,11 @@
       <!-- Hidden markdown mirror — kept in sync by submission-editor.js and read
            by the submission pipeline. -->
       <textarea id="submit-form__body-input" hidden></textarea>
-      </div>
 
-      <!-- Image upload, co-located with the body. For a PDF post it only
-           supplies an optional thumbnail, so Insert is hidden there (CSS). -->
+      <!-- Image upload, co-located with the body -->
       <div id="submit-form__images-subsection" class="submit-form__body-images">
-        <h4 class="submit-form__subsection-title">
-          <span class="submit-form__for-markdown">Images</span>
-          <span class="submit-form__for-pdf">Thumbnail <span class="submit-form__label-note">(optional)</span></span>
-        </h4>
-        <p class="submit-form__help submit-form__for-pdf">Recommended: upload a key figure and click <strong>☆ Featured</strong> to show it on your post's homepage card and in link previews (sets <code>image:</code> in the frontmatter). Without one, the card shows your post's title.</p>
-        <p class="submit-form__help submit-form__for-markdown">Upload images you want to embed. Max 10 MB per file, 50 MB total. Type an optional <strong>caption</strong> next to each thumbnail (shown as the figure legend on the published page), then click <strong>Insert</strong> to drop a placeholder into the text above. Click <strong>☆ Featured</strong> on any image to use it as the post's thumbnail (sets <code>image:</code> in the frontmatter).</p>
+        <h4 class="submit-form__subsection-title">Images</h4>
+        <p class="submit-form__help">Upload images you want to embed. Max 10 MB per file, 50 MB total. Type an optional <strong>caption</strong> next to each thumbnail (shown as the figure legend on the published page), then click <strong>Insert</strong> to drop a placeholder into the text above. Click <strong>☆ Featured</strong> on any image to use it as the post's thumbnail (sets <code>image:</code> in the frontmatter).</p>
 
         <!-- Existing images carried over from the published post (update mode only) -->
         <div id="submit-form__existing-images-wrap" class="submit-form__existing-images" hidden>
@@ -349,14 +293,36 @@
       </div>
     </div>
 
+    <!-- Optional PDF version of the post, e.g. the paper or preprint it
+         reports. Stored as paper.pdf and named by pdf: in the frontmatter. -->
+    <div id="submit-form__pdf-section" class="submit-form__section">
+      <h3 class="submit-form__section-title">
+        PDF version <span class="submit-form__label-note">(optional)</span>
+      </h3>
+      <p class="submit-form__help">
+        If your post is also a paper or preprint, upload its PDF (max 5 MB). Your post gets
+        <strong>View PDF</strong> and <strong>Download PDF</strong> buttons, and Google Scholar
+        and Zenodo get this PDF instead of a printout of the page. Its first page should show
+        the same title and authors as above, because Google Scholar compares them.
+      </p>
+      <div class="submit-form__pdf-upload">
+        <div id="submit-form__pdf-current" class="submit-form__update-banner" hidden></div>
+        <div id="submit-form__pdf-drop-zone" class="submit-form__drop-zone">
+          <p>Drag &amp; drop a PDF here, or click to browse</p>
+          <input type="file" id="submit-form__pdf-input" accept="application/pdf,.pdf" hidden>
+        </div>
+        <div id="submit-form__pdf-file" class="submit-form__file-name" hidden></div>
+        <div id="submit-form__pdf-problem" class="submit-form__pdf-problem" hidden></div>
+      </div>
+    </div>
+
     <!-- Submit -->
     <div id="submit-form__actions" class="submit-form__section">
       <div id="submit-form__missing-summary" class="submit-form__missing-summary" hidden>
         Please complete: <span id="submit-form__missing-list"></span>
       </div>
       <button type="button" id="submit-form__submit-btn" class="submit-form__btn submit-form__btn--primary submit-form__btn--large" disabled>
-        <span class="submit-form__for-markdown">Submit Blog Post</span>
-        <span class="submit-form__for-pdf">Submit PDF Post</span>
+        Submit Blog Post
       </button>
     </div>
 

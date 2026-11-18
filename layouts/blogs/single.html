@@ -13,11 +13,6 @@
 {{ end }}
 
 {{ define "main" }}
-{{- /* PDF posts (format: "pdf") get an arXiv-style abstract page with the
-     PDF below it; see partials/paper/landing.html. */ -}}
-{{ if eq .Params.format "pdf" }}
-{{ partial "paper/landing.html" . }}
-{{ else }}
 <article class="main-article {{ if .Params.image }}has-image{{ end }}">
   <header class="article-header">
     {{- $image := partial "helper/image" (dict "Image" .Params.image "Resources" .Resources) -}}
@@ -40,6 +35,14 @@
       </div>
       {{ partial "article-dates.html" . }}
       {{ partial "article-meta.html" . }}
+      {{- /* A post with a PDF version (front matter `pdf:`) offers it here.
+           View opens the browser's own PDF viewer in a new tab. */ -}}
+      {{- with partialCached "helper/paper-pdf.html" . .RelPermalink }}
+      <div class="paper-actions">
+        <a class="paper-actions__btn paper-actions__btn--primary" href="{{ .RelPermalink }}" target="_blank" rel="noopener">View PDF</a>
+        <a class="paper-actions__btn" href="{{ .RelPermalink }}" download="{{ .DownloadName }}">Download PDF <span class="paper-actions__size">{{ .Size }}</span></a>
+      </div>
+      {{- end }}
     </div>
   </header>
 
@@ -53,7 +56,6 @@
     {{ partial "article-comments.html" . }}
   </div>
 </article>
-{{ end }}
 
 {{ if or .Params.math .Site.Params.article.math }}{{ partial "article/components/math.html" . }}{{ end }}
 {{ partial "article/components/photoswipe" . }}

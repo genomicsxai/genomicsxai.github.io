@@ -7,10 +7,10 @@
   {{- end -}}
 {{- end -}}
 {{- $doi := $zenodoEntry.current_doi | default (.Params.doi | default "") -}}
-{{- $paper := partialCached "helper/paper-pdf.html" . .RelPermalink -}}
+{{- $pdf := partialCached "helper/paper-pdf.html" . .RelPermalink -}}
 {
   "@context": "https://schema.org",
-  "@type": "{{ if $paper }}ScholarlyArticle{{ else }}BlogPosting{{ end }}",
+  "@type": "BlogPosting",
   "headline": "{{ .Title | htmlEscape }}",
   "datePublished": "{{ .Date | dateFormat "2006-01-02" }}",
   "dateModified": "{{ .Params.date_accepted | default .Date | dateFormat "2006-01-02" }}",
@@ -40,8 +40,7 @@
   {{ with $doi }}
   "identifier": "https://doi.org/{{ . }}",
   {{ end }}
-  {{ with $paper }}
-  "abstract": "{{ strings.TrimSpace $.Plain }}",
+  {{ with $pdf }}
   "encoding": {
     "@type": "MediaObject",
     "contentUrl": "{{ .Permalink }}",

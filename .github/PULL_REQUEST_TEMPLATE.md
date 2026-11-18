@@ -5,10 +5,9 @@
 - [ ] Lab review completed
 - [ ] Links and assets validated
 
-**PDF posts only** (`format: "pdf"`, see the [PDF post template](https://github.com/genomicsxai/genomicsxai.github.io/blob/main/docs/pdf-post-template.md)):
+**Posts with a PDF version only** (`pdf:` in the frontmatter):
 
 - [ ] The PDF is in the post's folder, named in `pdf:`, and under 5 MB
-- [ ] The body of `index.md` is the paper's abstract
 - [ ] `title` and `authors` match the first page of the PDF exactly
 
 ## Notes for Editors

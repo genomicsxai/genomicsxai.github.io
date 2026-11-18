@@ -29,10 +29,10 @@
     AUDIENCE_OPTIONS: ['technical', 'general', 'new-to-field'],
     MAX_IMAGE_SIZE: 10 * 1024 * 1024, // 10 MB
     MAX_TOTAL_SIZE: 50 * 1024 * 1024,  // 50 MB
-    // PDF posts: Google Scholar ignores PDFs over 5 MB, the same limit
-    // .github/scripts/validate-blog.sh enforces on every PR.
+    // A post's optional PDF version. Google Scholar ignores PDFs over 5 MB,
+    // the same limit .github/scripts/validate-blog.sh enforces on every PR.
     MAX_PDF_SIZE: 5000000,
-    // A new PDF post's PDF is stored as content/blogs/<post_id>/paper.pdf.
+    // A new PDF version is stored as content/blogs/<post_id>/paper.pdf.
     PDF_NAME: 'paper.pdf',
   };
 
@@ -53,8 +53,6 @@
     audience: 'Audience',
     labs: 'Lab',
     discipline: 'Discipline',
-    pdf: 'PDF file',
-    abstract: 'Abstract',
   };
 
   // ── Utility ──
@@ -511,12 +509,6 @@
         }
       }
 
-      // PDF posts need the PDF itself and its abstract (the post's whole body).
-      if (fm.format === 'pdf') {
-        if (!PdfHandler.hasPdf()) errors.pdf = 'Upload the PDF.';
-        if (!FormController.getAbstract().trim()) errors.abstract = "Paste the paper's abstract.";
-      }
-
       return errors;
     },
 
@@ -713,19 +705,24 @@
   };
 
   // ── PdfHandler ──
-  // The PDF of a PDF post (front matter format: "pdf"). A new post stores it as
-  // paper.pdf. An update keeps the published post's file name, so the PDF's URL
-  // never changes, and in pre-fill mode keeps the published PDF itself unless
-  // the author uploads a replacement.
+  // A post's optional PDF version (front matter pdf:), e.g. the paper or
+  // preprint it reports. A new one is stored as paper.pdf. An update keeps the
+  // published post's file name, so the PDF's URL never changes, and in
+  // pre-fill mode keeps the published PDF itself unless the author uploads a
+  // replacement or removes it.
   var PdfHandler = {
     file: null,           // the File picked in this session, if any
-    targetName: '',       // the published post's `pdf:` when updating a PDF post
-    keepExisting: false,  // pre-fill update of a PDF post: its PDF stays
+    targetName: '',       // `pdf:` of the published post being updated, if it has one
+    canKeep: false,       // pre-fill update of a post with a PDF: Keep/Remove apply
+    keepExisting: false,  // ...and the published PDF stays
+    namedInUpload: '',    // `pdf:` of an uploaded index.md, whose PDF still needs uploading
 
     reset: function () {
       this.file = null;
       this.targetName = '';
+      this.canKeep = false;
       this.keepExisting = false;
+      this.namedInUpload = '';
     },
 
     // What `pdf:` will name, or '' while the post has no PDF.
@@ -743,7 +740,7 @@
         return file.name + ' is not a PDF.';
       }
       if (file.size > CONFIG.MAX_PDF_SIZE) {
-        return file.name + ' is ' + formatSize(file.size) + '. Google Scholar ignores PDFs over 5 MB, so a PDF post ' +
+        return file.name + ' is ' + formatSize(file.size) + '. Google Scholar ignores PDFs over 5 MB, so a post\'s PDF ' +
           'has to be smaller. Re-export its figures at a lower resolution, or compress it, and upload it again.';
       }
       var head = '';
@@ -753,19 +750,45 @@
     },
 
     render: function () {
+      var self = this;
       var current = $('#submit-form__pdf-current');
       if (current) {
         current.textContent = '';
-        if (this.keepExisting && !this.file && UpdateMode.postId) {
-          var name = this.targetName || CONFIG.PDF_NAME;
+        var text = function (t) { current.appendChild(document.createTextNode(t)); };
+        var button = function (label, onClick) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'submit-form__btn submit-form__btn--link';
+          b.textContent = label;
+          b.addEventListener('click', function () { onClick(); self.render(); FormController.revalidate(); });
+          current.appendChild(b);
+        };
+        if (this.canKeep && !this.file) {
+          var name = this.targetName;
           var link = document.createElement('a');
           link.href = '/blogs/' + encodeURIComponent(UpdateMode.postId) + '/' + encodeURIComponent(name);
           link.target = '_blank';
           link.rel = 'noopener';
           link.textContent = name;
-          current.appendChild(document.createTextNode('Current PDF: '));
-          current.appendChild(link);
-          current.appendChild(document.createTextNode('. It stays unless you upload a replacement below.'));
+          if (this.keepExisting) {
+            text('Current PDF: ');
+            current.appendChild(link);
+            text('. It stays unless you upload a replacement below, or ');
+            button('remove it', function () { self.keepExisting = false; });
+            text('.');
+          } else {
+            current.appendChild(link);
+            text(' will be removed from the post. ');
+            button('Keep it', function () { self.keepExisting = true; });
+          }
+          show(current);
+        } else if (this.targetName && !this.file && UpdateMode.active) {
+          // A blank rewrite replaces every published file, the PDF included.
+          text('This rewrite removes the published PDF (' + this.targetName + '). Upload it again below to keep a PDF version.');
+          show(current);
+        } else if (this.namedInUpload && !this.file) {
+          text('Your index.md names a PDF version (' + this.namedInUpload + '). Upload it here to include it; ' +
+            'otherwise the post goes without one.');
           show(current);
         } else {
           hide(current);
@@ -776,7 +799,7 @@
         picked.textContent = '';
         if (this.file) {
           picked.appendChild(document.createTextNode(this.file.name + ' (' + formatSize(this.file.size) + ')' +
-            (this.keepExisting ? ', replacing the current PDF' : '')));
+            (this.targetName ? ', replacing ' + this.targetName : '')));
           var remove = document.createElement('button');
           remove.type = 'button';
           remove.className = 'submit-form__pdf-remove';
@@ -875,10 +898,7 @@
       lines.push('post_id: "' + fm.post_id + '"');
       lines.push('title: "' + (fm.title || '').replace(/"/g, '\\"') + '"');
       if (fm.image) lines.push('image: "' + fm.image + '"');
-      if (fm.format === 'pdf') {
-        lines.push('format: "pdf"');
-        lines.push('pdf: "' + (fm.pdf || CONFIG.PDF_NAME) + '"');
-      }
+      if (fm.pdf) lines.push('pdf: "' + fm.pdf + '"');
       lines.push('');
 
       // authors
@@ -1034,10 +1054,7 @@
         imgDropZone.addEventListener('click', function () { if (imgInput) imgInput.click(); });
       }
 
-      // Post format, and the PDF of a PDF post
-      $$('input[name="sf-format"]').forEach(function (r) {
-        r.addEventListener('change', function () { self.applyFormat(); self.revalidate(); });
-      });
+      // The optional PDF version
       var pdfInput = $('#submit-form__pdf-input');
       if (pdfInput) {
         pdfInput.addEventListener('change', function (e) {
@@ -1157,6 +1174,7 @@
       if (!isUpdate) {
         UpdateMode.reset();
         PdfHandler.reset();
+        PdfHandler.render();
         this.revealPostModeBody();
         // Show the full form by default so users can fill it in manually
         // without first uploading an index.md. Uploading just pre-fills.
@@ -1178,13 +1196,14 @@
         UpdateMode.active = true;
         UpdateMode.startMode = startMode;
         UpdateMode.notes = notes;
-        // Updating a PDF post keeps its PDF's file name, and in pre-fill mode
-        // the PDF itself unless a replacement is uploaded.
+        // A post with a PDF version keeps its file name, and in pre-fill mode
+        // the PDF itself unless the author replaces or removes it.
         PdfHandler.reset();
-        var published = UpdateMode.existingFrontmatter || {};
-        if (String(published.format || '') === 'pdf' && published.pdf) {
-          PdfHandler.targetName = String(published.pdf);
-          PdfHandler.keepExisting = startMode === 'prefill';
+        var publishedPdf = String((UpdateMode.existingFrontmatter || {}).pdf || '');
+        if (publishedPdf && UpdateMode.existingFiles.some(function (f) { return f.name === publishedPdf; })) {
+          PdfHandler.targetName = publishedPdf;
+          PdfHandler.canKeep = startMode === 'prefill';
+          PdfHandler.keepExisting = PdfHandler.canKeep;
         }
         this.revealPostModeBody();
 
@@ -1214,7 +1233,7 @@
           // author can upload an entirely new index.md or write from scratch.
           this.parsed = { frontmatter: {}, body: '', rawYaml: '' };
         }
-        this.applyFormat();
+        PdfHandler.render();
         this.revalidate();
       } catch (e) {
         this.showModeError('Could not load post: ' + e.message);
@@ -1376,9 +1395,7 @@
         if (updateOpts) hide(updateOpts);
         UpdateMode.reset();
         PdfHandler.reset();
-        var formatMarkdown = $('#sf-format-markdown');
-        if (formatMarkdown) formatMarkdown.checked = true;
-        this.applyFormat();
+        PdfHandler.render();
       }
     },
 
@@ -1494,10 +1511,6 @@
     // both editors); falls back to writing the hidden textareas directly if
     // the editor module didn't load.
     setBody: function (md) {
-      if (this.isPdfFormat()) {
-        this.setAbstract(md);
-        return;
-      }
       if (window.SubmissionEditor && (window.SubmissionEditor.body || window.SubmissionEditor.summary)) {
         window.SubmissionEditor.setMarkdown(md || '');
         return;
@@ -1506,41 +1519,6 @@
       if (bodyInput) bodyInput.value = md || '';
       var summaryInput = $('#submit-form__summary-input');
       if (summaryInput) summaryInput.value = '';
-    },
-
-    isPdfFormat: function () {
-      var radio = $('input[name="sf-format"]:checked');
-      return !!radio && radio.value === 'pdf';
-    },
-
-    // Show the parts of the form that belong to the chosen post format.
-    applyFormat: function () {
-      var form = $('#submit-form');
-      if (form) form.classList.toggle('submit-form--pdf', this.isPdfFormat());
-      PdfHandler.render();
-    },
-
-    // A PDF post's whole body is its abstract, edited in the summary editor.
-    // An abstract wrapped in a summary block, the way written posts open, is
-    // unwrapped.
-    setAbstract: function (md) {
-      var text = md || '';
-      var block = text.match(/\{\{<\s*summary\s*>\}\}([\s\S]*?)\{\{<\s*\/\s*summary\s*>\}\}/i);
-      if (block && !text.replace(block[0], '').trim()) text = block[1];
-      text = text.trim();
-      if (window.SubmissionEditor && typeof window.SubmissionEditor.setSummaryOnly === 'function') {
-        window.SubmissionEditor.setSummaryOnly(text);
-        return;
-      }
-      var summaryInput = $('#submit-form__summary-input');
-      if (summaryInput) summaryInput.value = text;
-      var bodyInput = $('#submit-form__body-input');
-      if (bodyInput) bodyInput.value = '';
-    },
-
-    getAbstract: function () {
-      var summaryInput = $('#submit-form__summary-input');
-      return summaryInput ? (summaryInput.value || '') : '';
     },
 
     onPdfSelected: async function (file) {
@@ -1646,11 +1624,10 @@
         if (fallback) fallback.checked = true;
       }
 
-      // Post format: a PDF post (format: "pdf") or a written post.
-      var isPdf = String(fm.format || '').toLowerCase() === 'pdf';
-      var formatRadio = $(isPdf ? '#sf-format-pdf' : '#sf-format-markdown');
-      if (formatRadio) formatRadio.checked = true;
-      this.applyFormat();
+      // An uploaded index.md can name a PDF version, but the file itself has
+      // to be uploaded below (an update keeps its published PDF instead).
+      PdfHandler.namedInUpload = !UpdateMode.active && fm.pdf ? String(fm.pdf) : '';
+      PdfHandler.render();
     },
 
     bindAuthorRemoveButtons: function () {
@@ -1740,14 +1717,11 @@
         delete fm.image;
       }
 
-      // Post format. A PDF post names its PDF; a written post carries neither key.
-      if (this.isPdfFormat()) {
-        fm.format = 'pdf';
-        fm.pdf = PdfHandler.fileName();
-      } else {
-        delete fm.format;
-        delete fm.pdf;
-      }
+      // The optional PDF version. Every post is written, so `format` (used
+      // by the retired PDF-only posts) is dropped.
+      delete fm.format;
+      var pdfName = PdfHandler.fileName();
+      if (pdfName) fm.pdf = pdfName; else delete fm.pdf;
 
       fm.date = ($('#sf-date') || {}).value || today();
       fm.date_submitted = fm.date_submitted || today();
@@ -1881,12 +1855,8 @@
         // Pull markdown from the editor — it already prepends the summary as
         // a {{< summary >}} shortcode when one is present. Falls back to the
         // hidden textareas if the editor module failed to load.
-        var pdfMode = fm.format === 'pdf';
         var rawBody;
-        if (pdfMode) {
-          // A PDF post's body is its abstract alone, without a summary block.
-          rawBody = this.getAbstract().trim() + '\n';
-        } else if (window.SubmissionEditor && typeof window.SubmissionEditor.getMarkdown === 'function') {
+        if (window.SubmissionEditor && typeof window.SubmissionEditor.getMarkdown === 'function') {
           rawBody = window.SubmissionEditor.getMarkdown();
         } else {
           var bodyInput = $('#submit-form__body-input');
@@ -1948,8 +1918,9 @@
         var imageItems = await Promise.all(imagePromises);
         treeItems = treeItems.concat(imageItems);
 
-        // A PDF post's PDF (a replacement keeps the published file's name).
-        if (pdfMode && PdfHandler.file) {
+        // The PDF version, if one was picked (a replacement keeps the
+        // published file's name).
+        if (PdfHandler.file) {
           var pdfBase64 = await ImageHandler.readAsBase64(PdfHandler.file);
           var pdfBlob = await GitHubAPI.createBlob(state.forkOwner, pdfBase64, 'base64');
           treeItems.push({ path: blogDir + '/' + fm.pdf, mode: '100644', type: 'blob', sha: pdfBlob.sha });
@@ -1959,12 +1930,12 @@
         // user toggled off (or in "blank" mode, delete every non-uploaded file).
         if (UpdateMode.active) {
           var newNames = ImageHandler.files.map(function (f) { return ImageHandler.sanitizeName(f.name); });
-          if (pdfMode && PdfHandler.file) newNames.push(fm.pdf);
+          if (PdfHandler.file) newNames.push(fm.pdf);
           var existingItems = UpdateMode.buildExistingFileTreeItems(newNames);
-          // A PDF post rewritten as a written post stops publishing its PDF.
+          // A PDF version the author removed is deleted.
           var oldPdf = PdfHandler.targetName;
           var hadPdf = oldPdf && UpdateMode.existingFiles.some(function (f) { return f.name === oldPdf; });
-          if (!pdfMode && hadPdf) {
+          if (hadPdf && !fm.pdf) {
             var oldPdfPath = blogDir + '/' + oldPdf;
             existingItems = existingItems.filter(function (item) { return item.path !== oldPdfPath; });
             existingItems.push({ path: oldPdfPath, mode: '100644', type: 'blob', sha: null });
@@ -1996,12 +1967,14 @@
         // Step 5: Create PR
         Progress.setStep(4);
         var prTitle, prBody;
-        var pdfNote = pdfMode
-          ? '- [x] PDF post (`format: "pdf"`): the paper is `' + fm.pdf + '`' +
-            (PdfHandler.file ? ' (' + formatSize(PdfHandler.file.size) + ')' : ' (unchanged)') +
-            ', and the post body is its abstract\n' +
-            '- [ ] Title and authors match the first page of the PDF\n'
-          : '';
+        var pdfNote = '';
+        if (fm.pdf) {
+          pdfNote = '- [x] Includes a PDF version, `' + fm.pdf + '`' +
+            (PdfHandler.file ? ' (' + formatSize(PdfHandler.file.size) + ')' : ' (unchanged)') + '\n' +
+            '- [ ] The PDF\'s first page shows the same title and authors as the frontmatter\n';
+        } else if (UpdateMode.active && PdfHandler.targetName) {
+          pdfNote = '- [x] Removes the post\'s PDF version, `' + PdfHandler.targetName + '`\n';
+        }
         if (UpdateMode.active) {
           var origSubmitter = (UpdateMode.existingFrontmatter && UpdateMode.existingFrontmatter.submitter_github) || this.user.login;
           var prevRev = (parseInt(UpdateMode.existingFrontmatter && UpdateMode.existingFrontmatter.revision, 10) || 1);
@@ -2023,9 +1996,7 @@
           prTitle = 'Blog post ' + this.postId + ': ' + fm.title;
           prBody =
             '# Blog Post Submission\n\n' +
-            (pdfMode
-              ? '- [x] Post uses the [PDF post template](https://github.com/genomicsxai/genomicsxai.github.io/blob/main/docs/pdf-post-template.md) and required frontmatter is complete\n'
-              : '- [x] Post uses the [blog post template](https://github.com/genomicsxai/genomicsxai.github.io/blob/main/docs/blog-post-template.md) and required frontmatter is complete\n') +
+            '- [x] Post uses the [blog post template](https://github.com/genomicsxai/genomicsxai.github.io/blob/main/docs/blog-post-template.md) and required frontmatter is complete\n' +
             pdfNote +
             '- [ ] Content follows [submission guidelines](https://genomicsxai.github.io/submission-guidelines/)\n' +
             '- [ ] Lab review completed\n' +

@@ -61,7 +61,8 @@ jobs:
             exit 1
           fi
 
-      # Only needed to print the PDF that goes into a written post's deposit.
+      # Only needed to print the PDF that goes into the deposit of a post
+      # without its own PDF version.
       - uses: peaceiris/actions-hugo@v3
         with:
           extended: true
@@ -75,9 +76,9 @@ jobs:
           ZENODO_COMMUNITY: ${{ secrets.ZENODO_COMMUNITY }}
           SITE_URL: https://genomicsxai.github.io
           DRY_RUN: ${{ github.event.inputs.zenodo_dry_run == 'true' && '1' || '0' }}
-          # Adds the post's PDF to each new deposit: a written post is printed
-          # (if printing fails the deposit goes out without one, as before); a
-          # PDF post deposits the PDF its authors uploaded.
+          # Adds the post's PDF to each new deposit: its own PDF version
+          # (front matter pdf:) if it has one, otherwise a printout of the page
+          # (if printing fails the deposit goes out without one, as before).
           PDF_RENDERER: .github/scripts/render-post-pdfs.sh
         run: |
           if [ -z "$ZENODO_API_TOKEN" ]; then

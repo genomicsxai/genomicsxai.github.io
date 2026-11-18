@@ -1,5 +1,5 @@
-{{- /* The PDF an author uploaded for a PDF post (front matter `format: "pdf"`),
-     as a page resource, or "" for written posts.
+{{- /* A post's optional PDF version: the file its front matter names with
+     `pdf: "paper.pdf"`, as a page resource, or "" for a post without one.
 
      Context: the page. Returns a dict:
        Resource     — the PDF page resource
@@ -8,14 +8,14 @@
        Size         — human-readable size, e.g. "1.2 MB"
        DownloadName — the file name readers get when they download it
 
-     `pdf` names a file in the post's own folder. The deploy never prints PDF
-     posts (render-post-pdfs.sh skips them), so this file is the post's only
-     PDF: Google Scholar, Zenodo and the download buttons all use it. */ -}}
+     `pdf` names a file in the post's own folder. The deploy never prints a
+     post that has one (render-post-pdfs.sh skips it), so this file is the
+     post's only PDF: the View/Download buttons, the sidebar's PDF button,
+     Google Scholar and Zenodo all use it. */ -}}
 {{- $result := "" -}}
-{{- if eq .Params.format "pdf" -}}
-  {{- $name := strings.TrimPrefix "./" (string (.Params.pdf | default "")) -}}
-  {{- $resource := "" -}}
-  {{- with $name -}}{{- $resource = $.Resources.Get . -}}{{- end -}}
+{{- with .Params.pdf -}}
+  {{- $name := strings.TrimPrefix "./" (string .) -}}
+  {{- $resource := $.Resources.Get $name -}}
   {{- if and $resource (eq $resource.MediaType.SubType "pdf") -}}
     {{- $bytes := len $resource.Content -}}
     {{- $size := printf "%d kB" (int (math.Ceil (div (float $bytes) 1000))) -}}
@@ -33,7 +33,7 @@
         "DownloadName" $downloadName
     -}}
   {{- else -}}
-    {{- warnf "%s: format is \"pdf\" but pdf: %q is not a PDF in the post's folder" .File.Path $name -}}
+    {{- warnf "%s: pdf: %q is not a PDF in the post's folder" $.File.Path $name -}}
   {{- end -}}
 {{- end -}}
 {{- return $result -}}

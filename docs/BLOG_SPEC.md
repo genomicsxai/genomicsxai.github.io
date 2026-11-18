@@ -52,7 +52,7 @@ A Git-native, open, reproducible scientific blog for Genomics × AI.
 
 - `content/blogs/YYYY-NNN/index.md`
 - any images it uses, in the same folder
-- for a PDF post, the PDF itself, in the same folder (see §4.8)
+- optionally, a PDF version of the post, in the same folder (see §4.8)
 
 The PR represents the post under review; **merge** means the post goes live.
 
@@ -63,7 +63,7 @@ The PR represents the post under review; **merge** means the post goes live.
 
 ### 4.1 Frontmatter
 
-All blogs are submitted as markdown files with any desired images. All markdown files should contain the following frontmatter. A PDF post adds two more fields, `format` and `pdf` (see §4.8).
+All blogs are submitted as markdown files with any desired images. All markdown files should contain the following frontmatter. A post can also name an optional PDF version of itself with `pdf` (see §4.8).
 
 ```markdown
 post_id: "2026-001"
@@ -146,33 +146,33 @@ The homepage pill bar reads the `categories` taxonomy only, not `scope`. A post 
 
 **Implementation:** Hugo taxonomies (`tags`, `scope`, `audience`, `labs`, `authors`, `categories`) + list/term layouts + `data/authors.yaml` for author profiles.
 
-### 4.8 Post formats
+### 4.8 Optional PDF version
 
-A post is either a **written post** (the default) or a **PDF post**: a finished paper, review or preprint published as a PDF. Both formats go through the same review, sit side by side on the homepage, and get the same DOI, likes, comments, citation tools and Google Scholar metadata.
+Every post is written in Markdown. A post can also carry a PDF of itself, typically the paper, review or preprint it reports, by placing the PDF in its folder and naming it in the frontmatter:
 
-| | Written post | PDF post |
-|---|---|---|
-| Frontmatter | no `format` field | `format: "pdf"` and `pdf: "paper.pdf"` |
-| Body of `index.md` | the post, opening with the `summary` shortcode | the paper's abstract, nothing else |
-| Page readers land on | the article | an arXiv-style abstract page: category, title, authors, dates, tags, abstract, View PDF and Download PDF buttons, then the PDF itself |
-| PDF for Google Scholar and Zenodo | printed from the page on deploy | the uploaded PDF, never printed |
-| Homepage card and link preview | `image`; link previews fall back to the first figure | `image`, else the title placeholder card and no preview image |
+```yaml
+pdf: "paper.pdf"
+```
 
-The page shows the PDF in the browser's own viewer on desktop browsers. Phones and tablets get a link that opens it full screen, because most cannot show a PDF inside a page.
+With a PDF version:
 
-A PDF post's PDF must:
+- The post's header shows **View PDF** and **Download PDF** buttons, and the sidebar's PDF button downloads the file instead of printing the page.
+- Google Scholar's `citation_pdf_url` and the Zenodo deposit use this PDF, and the deploy no longer prints the page for that post.
+- The post's JSON-LD lists the PDF as an `encoding`.
 
-- sit in the post's folder, named by `pdf:`, using letters, digits, `.`, `_` and `-` and ending in `.pdf`. `YYYY-NNN.pdf` is reserved for the PDFs the deploy prints of written posts.
+The PDF must:
+
+- sit in the post's folder, named by `pdf:`, using letters, digits, `.`, `_` and `-` and ending in `.pdf`. `YYYY-NNN.pdf` is reserved for the PDFs the deploy prints of posts without their own.
 - be under 5 MB, the most Google Scholar will index.
 - carry the same title and authors on its first page as the frontmatter, since Scholar compares them.
 
-`.github/scripts/validate-blog.sh` checks the first two on every PR, and warns when a PDF contains JavaScript.
+`.github/scripts/validate-blog.sh` checks the first two on every PR, and warns when a PDF contains JavaScript. It also rejects posts made of a PDF alone (`format: "pdf"`), which the blog no longer accepts.
 
-To revise a published PDF post, replace the PDF under the same name and bump `revision` in `index.md`, as for any post. Zenodo only mints a new version when `index.md` changes, so a PDF swapped on its own would leave the archived copy behind.
+To revise a published post's PDF, replace the file under the same name and bump `revision` in `index.md`, as for any revision. Zenodo only mints a new version when `index.md` changes, so a PDF swapped on its own would leave the archived copy behind.
 
-**Template:** `docs/pdf-post-template.md` (also served at `/pdf-post-template.md`).
+**Template:** the optional `pdf:` field in `docs/blog-post-template.md`.
 
-**Implementation:** `layouts/blogs/single.html` hands PDF posts to `partials/paper/landing.html`, which uses `paper/dates.html` and `paper/viewer.html`. Every other template finds the PDF through `partials/helper/paper-pdf.html`. The page never shows `image`; it only feeds the homepage card and link previews, so PDF posts should upload a key figure for it.
+**Implementation:** `partials/helper/paper-pdf.html` resolves the PDF for `layouts/blogs/single.html` (the buttons), `widget/post-actions.html`, `head/scholar-meta.html` and `jsonld.html`. `render-post-pdfs.sh` skips posts that have one, and `sync-zenodo-dois.rb` deposits it in place of a printout.
 
 ## 5. Peer review state machine
 
@@ -200,7 +200,7 @@ To revise a published PDF post, replace the PDF under the same name and bump `re
 ### 7.1 On PR
 
 - Hugo build must pass (with theme submodule).  
-- Required frontmatter fields validated, plus a PDF post's PDF (§4.8).  
+- Required frontmatter fields validated, plus a post's PDF version if it has one (§4.8).  
 - Links/assets validated (optional).  
 - Optional: reproducibility checks.
 
@@ -251,7 +251,7 @@ GitHub Discussions, categories:
 Rendered via Hugo partial (e.g. `citation.html`).
 
 ### 9.2 Machine-readable metadata
-When the repository secret `ZENODO_API_TOKEN` is configured, the deploy workflow mints/publishes Zenodo records for accepted posts changed in the current push and stores the resulting DOI metadata in `data/zenodo.json`. Each deposit carries the post's PDF: a printout for a written post, the uploaded file for a PDF post. Frontmatter DOI fields remain valid as a manual override/fallback. BibTeX and RIS exports use standard bare DOI values, while visible citations use full DOI URLs.
+When the repository secret `ZENODO_API_TOKEN` is configured, the deploy workflow mints/publishes Zenodo records for accepted posts changed in the current push and stores the resulting DOI metadata in `data/zenodo.json`. Each deposit carries the post's PDF: its own PDF version if it has one, otherwise a printout of the page. Frontmatter DOI fields remain valid as a manual override/fallback. BibTeX and RIS exports use standard bare DOI values, while visible citations use full DOI URLs.
 
 - JSON-LD `BlogPosting` schema.  
 - Generated via Hugo partial (e.g. `jsonld.html`).
@@ -259,7 +259,7 @@ When the repository secret `ZENODO_API_TOKEN` is configured, the deploy workflow
 ### 9.3 DOI
 
 - Accepted blog posts changed on `main` are archived through Zenodo by `deploy.yml`.
-- `citation_pdf_url` points Google Scholar at the post's PDF: the one printed on deploy for a written post, the uploaded one for a PDF post.
+- `citation_pdf_url` points Google Scholar at the post's PDF: its own PDF version if it has one, otherwise the one printed on deploy.
 - New post revisions are published as Zenodo new versions under the same concept record.
 - DOI metadata is stored in `data/zenodo.json`; frontmatter `doi` and `zenodo_url` fields are fallback/manual override fields.
 

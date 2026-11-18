@@ -21,38 +21,20 @@ fits how you like to work:
 
 You'll need a [GitHub account](https://github.com/signup) for either path.
 
-### Two post formats: written posts and PDF papers
+### Adding a PDF version (optional)
 
-Either way, a post takes one of two forms:
+If your post reports a paper, review or preprint, you can attach its PDF. The
+post itself is still written in Markdown, and the PDF goes alongside it:
 
-- **Written post** (most posts). You write the post itself, in Markdown or
-  in the form's editor, and readers get a web page. We also print a PDF of it
-  for Google Scholar.
-- **PDF paper.** You already have a finished paper, review or preprint as a
-  PDF. You submit the PDF with its abstract, and readers land on an abstract
-  page with the title, authors, dates, tags and abstract, then the PDF shown
-  below them, much like an arXiv abstract page. Likes, comments, the citation
-  box, the DOI and Google Scholar indexing work just as they do for written
-  posts.
+- Readers get **View PDF** and **Download PDF** buttons at the top of the
+  post, and the sidebar's PDF button downloads it.
+- Google Scholar and the post's Zenodo record get your PDF instead of a
+  printout of the page.
 
-A PDF post needs:
-
-- **The PDF in the post's folder**, under 5 MB. Google Scholar ignores
-  larger PDFs, so the checks on your pull request reject them.
-- **Two frontmatter fields**, `format: "pdf"` and `pdf: "paper.pdf"`, the
-  second naming the file.
-- **The abstract as the whole body of `index.md`.** It is shown above the PDF,
-  and used for the post's Zenodo record, the newsletter and link previews.
-- **A title and author list that match the PDF's first page exactly.**
-  Google Scholar compares the two.
-
-We also recommend adding a key figure as the post's `image`. It becomes the
-post's homepage card and link-preview image, and without one the card shows
-the title.
-
-Start from the
-[PDF post template](https://github.com/genomicsxai/genomicsxai.github.io/blob/main/docs/pdf-post-template.md),
-or pick **PDF paper** under *Post format* in the submission form.
+The PDF must be in the post's folder and under 5 MB. Google Scholar ignores
+larger PDFs, so the checks on your pull request reject them. Name it in the
+frontmatter with `pdf: "paper.pdf"`, and make sure its first page carries the
+same title and author list as the post, because Scholar compares the two.
 
 ---
 
@@ -66,10 +48,9 @@ If you already work in Git, this is the quickest route:
   and fill in the YAML frontmatter.
 - Add your post to `content/blogs/YYYY-NNN/index.md`; place images in the
   **same folder** (e.g. `content/blogs/YYYY-NNN/figure1.png`).
-- For a PDF post, start from the
-  [PDF post template](https://github.com/genomicsxai/genomicsxai.github.io/blob/main/docs/pdf-post-template.md)
-  instead and put the PDF in the same folder too, as
-  `content/blogs/YYYY-NNN/paper.pdf`.
+- To include a PDF version, put it in the same folder too, e.g.
+  `content/blogs/YYYY-NNN/paper.pdf`, and add `pdf: "paper.pdf"` to the
+  frontmatter.
 - Your PR must contain **only** files inside `content/blogs/YYYY-NNN/` — no
   changes to `static/`, `config.toml`, `.github/`, etc. If the preview bot
   posts "Preview Deployment Skipped", the comment lists the offending files.
@@ -90,12 +71,11 @@ for you. Sign in with GitHub and you can either:
   frontmatter and you can edit any field before submitting, or
 - **Write the post from scratch** in the form's text windows — fill in
   title, authors, tags, scope, audience, summary, and body in dedicated
-  fields, with drag-and-drop image uploads and a caption per image, or
-- **Submit a PDF paper** — choose **PDF paper** under *Post format*, upload
-  the PDF, paste its abstract, and optionally upload a figure for its
-  thumbnail. The form stores the PDF as `paper.pdf` and
-  sets the frontmatter for you. When you update a PDF post later, the
-  published PDF stays unless you upload a replacement.
+  fields, with drag-and-drop image uploads and a caption per image.
+
+Either way, you can also attach a PDF version under *PDF version*. The form
+stores it as `paper.pdf` and sets the frontmatter for you. When you update
+the post later, its PDF stays unless you replace or remove it.
 
 When you submit, the form validates the frontmatter, forks the repo, creates
 a branch, commits your files, and opens the PR on your behalf.
@@ -150,8 +130,8 @@ publishes Google Scholar metadata, and is also published as a PDF (on the
 blog and in its Zenodo record), the format Scholar's inclusion guidelines are
 written around. So your post is eligible to appear in Google Scholar and to be
 cited like any other article. Getting listed there is one of the main reasons
-to publish with us rather than on a personal blog. (For a PDF post, the PDF
-published is the one you uploaded.)
+to publish with us rather than on a personal blog. (If your post has a PDF
+version, that PDF is the one published.)
 
 Scholar does not index everything it can crawl, though. It only includes
 documents its parser judges to be *scholarly articles*, and a reference list
@@ -179,9 +159,9 @@ Two practical points follow from that:
   exact boundary, but posts with only a handful of references have not been
   picked up.
 
-For a PDF post, Scholar reads your PDF rather than the web page, so the same
-advice applies to the PDF: end it with a numbered reference list, and keep its
-title and authors identical to the post's.
+If your post has a PDF version, Scholar reads that PDF rather than the web
+page, so the same advice applies to it: end it with a numbered reference list,
+and keep its title and authors identical to the post's.
 
 So: a References section is not a hard requirement for acceptance, and a post
 without one can still be published. But if you would like your post to be
@@ -201,8 +181,7 @@ Editors aim to confirm, in a lightweight pass, that your post:
 - **Works for readers** — logical flow (motivation → content → takeaway),
   appropriate level for the audience
 - **Is complete in the basics** — opening summary via the `summary`
-  shortcode (for a PDF post, its abstract), reasonable attribution, working
-  links, clean formatting
+  shortcode, reasonable attribution, working links, clean formatting
 
 For the full framework, see
 **[Editorial Review (MVR)](https://genomicsxai.github.io/editorial-review/)**.
