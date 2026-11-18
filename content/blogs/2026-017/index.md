@@ -44,7 +44,7 @@ tags: ["genomics", "gene-regulation", "review", "context-seq2func", "seq2func", 
 categories: ["Paper Reviews"]
 
 scope: ["insights", "discussions"]
-audience: ["technical"]
+audience: ["technical", "general"]
 labs: ["Koo lab", "Kundaje lab"]
 
 status: "submitted"
