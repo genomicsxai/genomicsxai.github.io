@@ -2139,3 +2139,80 @@ span.category-pills__pill {
   outline-offset: 4px;
   border-radius: 4px;
 }
+
+/* ── Submission form: optional PDF version ──
+   The PDF upload section (#submit-form__pdf-section): the current PDF of a
+   post being updated, the picked file, and why a file was refused. */
+.submit-form__pdf-upload {
+  margin-top: 1.25rem;
+}
+.submit-form__pdf-upload .submit-form__update-banner {
+  margin-bottom: 0.75rem;
+}
+.submit-form__pdf-remove {
+  margin-left: 0.6em;
+  padding: 0 0.4em;
+  border: none;
+  background: none;
+  color: var(--card-text-color-secondary, #555);
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.submit-form__pdf-remove:hover {
+  color: #e74c3c;
+}
+.submit-form__pdf-problem {
+  margin-top: 0.5rem;
+  font-size: 1.3rem;
+  color: #e74c3c;
+}
+
+/* ══ A post's PDF version (front matter `pdf:`) ═════════════════════════
+   View PDF / Download PDF buttons under the byline (blogs/single.html). */
+.paper-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+.paper-actions__btn {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5em;
+  padding: 0.7em 1.3em;
+  border: 1px solid var(--card-separator-color, rgba(218, 218, 218, 0.5));
+  border-radius: 8px;
+  background: var(--card-background);
+  color: var(--card-text-color-main);
+  font-size: 1.45rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.paper-actions__btn:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+.paper-actions__btn--primary,
+.paper-actions__btn--primary:hover {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: var(--accent-color-text, #fff);
+}
+.paper-actions__btn--primary:hover {
+  background: var(--accent-color-darker, #2c3e50);
+  border-color: var(--accent-color-darker, #2c3e50);
+}
+.paper-actions__size {
+  font-size: 0.85em;
+  font-weight: 400;
+  color: var(--card-text-color-secondary, #747474);
+}
+
+@media print {
+  .paper-actions {
+    display: none !important;
+  }
+}
