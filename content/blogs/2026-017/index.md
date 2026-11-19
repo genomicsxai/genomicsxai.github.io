@@ -47,12 +47,12 @@ scope: ["insights", "discussions"]
 audience: ["technical", "general"]
 labs: ["Koo lab", "Kundaje lab"]
 
-status: "submitted"
+status: "accepted"
 revision: 1
 
 date_submitted: 2026-11-17
 date_accepted:
-date: 2026-11-17
+date: 2026-11-19
 
 doi: ""
 zenodo_url: ""
