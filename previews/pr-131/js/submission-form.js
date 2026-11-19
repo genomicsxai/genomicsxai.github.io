@@ -29,6 +29,11 @@
     AUDIENCE_OPTIONS: ['technical', 'general', 'new-to-field'],
     MAX_IMAGE_SIZE: 10 * 1024 * 1024, // 10 MB
     MAX_TOTAL_SIZE: 50 * 1024 * 1024,  // 50 MB
+    // A post's optional PDF version. Google Scholar ignores PDFs over 5 MB,
+    // the same limit .github/scripts/validate-blog.sh enforces on every PR.
+    MAX_PDF_SIZE: 5000000,
+    // A new PDF version is stored as content/blogs/<post_id>/paper.pdf.
+    PDF_NAME: 'paper.pdf',
   };
 
   // ── Discipline slug list (from data/disciplines.yaml, injected by Hugo) ──
@@ -56,6 +61,9 @@
   function show(el) { el.style.display = ''; el.removeAttribute('hidden'); }
   function hide(el) { el.style.display = 'none'; el.setAttribute('hidden', ''); }
   function today() { return new Date().toISOString().slice(0, 10); }
+  function formatSize(bytes) {
+    return bytes >= 1e6 ? (bytes / 1e6).toFixed(1) + ' MB' : Math.ceil(bytes / 1e3) + ' kB';
+  }
   // Inverse of the existing btoa(unescape(encodeURIComponent(...))) used in onSubmit.
   function decodeBase64Utf8(b64) {
     var clean = (b64 || '').replace(/\s/g, '');
@@ -348,7 +356,8 @@
           if (!parsed) return;
           var fm = parsed.frontmatter || {};
           if (fm.submitter_github !== login) return;
-          if (fm.status && fm.status !== 'published') return;
+          // Live posts are "accepted" (set on merge); "published" is legacy.
+          if (fm.status && fm.status !== 'accepted' && fm.status !== 'published') return;
           results.push({ post_id: dir.name, title: fm.title || '(untitled)', source: 'frontmatter' });
           seen[dir.name] = true;
         } catch (e) { /* ignore individual post failures */ }
@@ -371,7 +380,7 @@
             var parsed = FileParser.parse(decodeBase64Utf8(f.content));
             if (!parsed) return;
             var fm = parsed.frontmatter || {};
-            if (fm.status && fm.status !== 'published') return;
+            if (fm.status && fm.status !== 'accepted' && fm.status !== 'published') return;
             results.push({ post_id: id, title: fm.title || '(untitled)', source: 'pr-search' });
             seen[id] = true;
           } catch (e) { /* ignore */ }
@@ -695,6 +704,121 @@
     },
   };
 
+  // ── PdfHandler ──
+  // A post's optional PDF version (front matter pdf:), e.g. the paper or
+  // preprint it reports. A new one is stored as paper.pdf. An update keeps the
+  // published post's file name, so the PDF's URL never changes, and in
+  // pre-fill mode keeps the published PDF itself unless the author uploads a
+  // replacement or removes it.
+  var PdfHandler = {
+    file: null,           // the File picked in this session, if any
+    targetName: '',       // `pdf:` of the published post being updated, if it has one
+    canKeep: false,       // pre-fill update of a post with a PDF: Keep/Remove apply
+    keepExisting: false,  // ...and the published PDF stays
+    namedInUpload: '',    // `pdf:` of an uploaded index.md, whose PDF still needs uploading
+
+    reset: function () {
+      this.file = null;
+      this.targetName = '';
+      this.canKeep = false;
+      this.keepExisting = false;
+      this.namedInUpload = '';
+    },
+
+    // What `pdf:` will name, or '' while the post has no PDF.
+    fileName: function () {
+      return (this.file || this.keepExisting) ? (this.targetName || CONFIG.PDF_NAME) : '';
+    },
+
+    hasPdf: function () {
+      return !!(this.file || this.keepExisting);
+    },
+
+    // Why a picked file can't be used, or '' when it can.
+    check: async function (file) {
+      if (!/\.pdf$/i.test(file.name) && file.type !== 'application/pdf') {
+        return file.name + ' is not a PDF.';
+      }
+      if (file.size > CONFIG.MAX_PDF_SIZE) {
+        return file.name + ' is ' + formatSize(file.size) + '. Google Scholar ignores PDFs over 5 MB, so a post\'s PDF ' +
+          'has to be smaller. Re-export its figures at a lower resolution, or compress it, and upload it again.';
+      }
+      var head = '';
+      try { head = await file.slice(0, 5).text(); } catch (e) { head = ''; }
+      if (head !== '%PDF-') return file.name + ' does not look like a PDF file.';
+      return '';
+    },
+
+    render: function () {
+      var self = this;
+      var current = $('#submit-form__pdf-current');
+      if (current) {
+        current.textContent = '';
+        var text = function (t) { current.appendChild(document.createTextNode(t)); };
+        var button = function (label, onClick) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'submit-form__btn submit-form__btn--link';
+          b.textContent = label;
+          b.addEventListener('click', function () { onClick(); self.render(); FormController.revalidate(); });
+          current.appendChild(b);
+        };
+        if (this.canKeep && !this.file) {
+          var name = this.targetName;
+          var link = document.createElement('a');
+          link.href = '/blogs/' + encodeURIComponent(UpdateMode.postId) + '/' + encodeURIComponent(name);
+          link.target = '_blank';
+          link.rel = 'noopener';
+          link.textContent = name;
+          if (this.keepExisting) {
+            text('Current PDF: ');
+            current.appendChild(link);
+            text('. It stays unless you upload a replacement below, or ');
+            button('remove it', function () { self.keepExisting = false; });
+            text('.');
+          } else {
+            current.appendChild(link);
+            text(' will be removed from the post. ');
+            button('Keep it', function () { self.keepExisting = true; });
+          }
+          show(current);
+        } else if (this.targetName && !this.file && UpdateMode.active) {
+          // A blank rewrite replaces every published file, the PDF included.
+          text('This rewrite removes the published PDF (' + this.targetName + '). Upload it again below to keep a PDF version.');
+          show(current);
+        } else if (this.namedInUpload && !this.file) {
+          text('Your index.md names a PDF version (' + this.namedInUpload + '). Upload it here to include it; ' +
+            'otherwise the post goes without one.');
+          show(current);
+        } else {
+          hide(current);
+        }
+      }
+      var picked = $('#submit-form__pdf-file');
+      if (picked) {
+        picked.textContent = '';
+        if (this.file) {
+          picked.appendChild(document.createTextNode(this.file.name + ' (' + formatSize(this.file.size) + ')' +
+            (this.targetName ? ', replacing ' + this.targetName : '')));
+          var remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'submit-form__pdf-remove';
+          remove.title = 'Remove';
+          remove.innerHTML = '&times;';
+          remove.addEventListener('click', function () {
+            PdfHandler.file = null;
+            PdfHandler.render();
+            FormController.revalidate();
+          });
+          picked.appendChild(remove);
+          show(picked);
+        } else {
+          hide(picked);
+        }
+      }
+    },
+  };
+
   // ── Progress ──
   var Progress = {
     steps: [
@@ -774,6 +898,7 @@
       lines.push('post_id: "' + fm.post_id + '"');
       lines.push('title: "' + (fm.title || '').replace(/"/g, '\\"') + '"');
       if (fm.image) lines.push('image: "' + fm.image + '"');
+      if (fm.pdf) lines.push('pdf: "' + fm.pdf + '"');
       lines.push('');
 
       // authors
@@ -929,6 +1054,27 @@
         imgDropZone.addEventListener('click', function () { if (imgInput) imgInput.click(); });
       }
 
+      // The optional PDF version
+      var pdfInput = $('#submit-form__pdf-input');
+      if (pdfInput) {
+        pdfInput.addEventListener('change', function (e) {
+          var picked = e.target.files && e.target.files[0];
+          e.target.value = ''; // so the same file can be picked again
+          self.onPdfSelected(picked);
+        });
+      }
+      var pdfDropZone = $('#submit-form__pdf-drop-zone');
+      if (pdfDropZone) {
+        pdfDropZone.addEventListener('dragover', function (e) { e.preventDefault(); pdfDropZone.classList.add('submit-form__drop-zone--active'); });
+        pdfDropZone.addEventListener('dragleave', function () { pdfDropZone.classList.remove('submit-form__drop-zone--active'); });
+        pdfDropZone.addEventListener('drop', function (e) {
+          e.preventDefault();
+          pdfDropZone.classList.remove('submit-form__drop-zone--active');
+          self.onPdfSelected(e.dataTransfer.files[0]);
+        });
+        pdfDropZone.addEventListener('click', function () { if (pdfInput) pdfInput.click(); });
+      }
+
       // Submit
       var submitBtn = $('#submit-form__submit-btn');
       if (submitBtn) submitBtn.addEventListener('click', function () { self.onSubmit(); });
@@ -1027,6 +1173,8 @@
 
       if (!isUpdate) {
         UpdateMode.reset();
+        PdfHandler.reset();
+        PdfHandler.render();
         this.revealPostModeBody();
         // Show the full form by default so users can fill it in manually
         // without first uploading an index.md. Uploading just pre-fills.
@@ -1048,6 +1196,15 @@
         UpdateMode.active = true;
         UpdateMode.startMode = startMode;
         UpdateMode.notes = notes;
+        // A post with a PDF version keeps its file name, and in pre-fill mode
+        // the PDF itself unless the author replaces or removes it.
+        PdfHandler.reset();
+        var publishedPdf = String((UpdateMode.existingFrontmatter || {}).pdf || '');
+        if (publishedPdf && UpdateMode.existingFiles.some(function (f) { return f.name === publishedPdf; })) {
+          PdfHandler.targetName = publishedPdf;
+          PdfHandler.canKeep = startMode === 'prefill';
+          PdfHandler.keepExisting = PdfHandler.canKeep;
+        }
         this.revealPostModeBody();
 
         if (startMode === 'prefill') {
@@ -1076,6 +1233,7 @@
           // author can upload an entirely new index.md or write from scratch.
           this.parsed = { frontmatter: {}, body: '', rawYaml: '' };
         }
+        PdfHandler.render();
         this.revalidate();
       } catch (e) {
         this.showModeError('Could not load post: ' + e.message);
@@ -1236,6 +1394,8 @@
         var updateOpts = $('#submit-form__update-options');
         if (updateOpts) hide(updateOpts);
         UpdateMode.reset();
+        PdfHandler.reset();
+        PdfHandler.render();
       }
     },
 
@@ -1361,6 +1521,20 @@
       if (summaryInput) summaryInput.value = '';
     },
 
+    onPdfSelected: async function (file) {
+      var problem = $('#submit-form__pdf-problem');
+      if (problem) { problem.textContent = ''; hide(problem); }
+      if (!file) return;
+      var issue = await PdfHandler.check(file);
+      if (issue) {
+        if (problem) { problem.textContent = issue; show(problem); }
+        return;
+      }
+      PdfHandler.file = file;
+      PdfHandler.render();
+      this.revalidate();
+    },
+
     onFileSelected: function (e) {
       var file = e.target.files[0];
       if (!file) return;
@@ -1449,6 +1623,11 @@
         var fallback = $('input[name="sf-category"][value="Blog Post"]');
         if (fallback) fallback.checked = true;
       }
+
+      // An uploaded index.md can name a PDF version, but the file itself has
+      // to be uploaded below (an update keeps its published PDF instead).
+      PdfHandler.namedInUpload = !UpdateMode.active && fm.pdf ? String(fm.pdf) : '';
+      PdfHandler.render();
     },
 
     bindAuthorRemoveButtons: function () {
@@ -1537,6 +1716,12 @@
       } else {
         delete fm.image;
       }
+
+      // The optional PDF version. Every post is written, so `format` (used
+      // by the retired PDF-only posts) is dropped.
+      delete fm.format;
+      var pdfName = PdfHandler.fileName();
+      if (pdfName) fm.pdf = pdfName; else delete fm.pdf;
 
       fm.date = ($('#sf-date') || {}).value || today();
       fm.date_submitted = fm.date_submitted || today();
@@ -1733,11 +1918,28 @@
         var imageItems = await Promise.all(imagePromises);
         treeItems = treeItems.concat(imageItems);
 
+        // The PDF version, if one was picked (a replacement keeps the
+        // published file's name).
+        if (PdfHandler.file) {
+          var pdfBase64 = await ImageHandler.readAsBase64(PdfHandler.file);
+          var pdfBlob = await GitHubAPI.createBlob(state.forkOwner, pdfBase64, 'base64');
+          treeItems.push({ path: blogDir + '/' + fm.pdf, mode: '100644', type: 'blob', sha: pdfBlob.sha });
+        }
+
         // Update mode: keep existing images by SHA reference, delete any the
         // user toggled off (or in "blank" mode, delete every non-uploaded file).
         if (UpdateMode.active) {
           var newNames = ImageHandler.files.map(function (f) { return ImageHandler.sanitizeName(f.name); });
+          if (PdfHandler.file) newNames.push(fm.pdf);
           var existingItems = UpdateMode.buildExistingFileTreeItems(newNames);
+          // A PDF version the author removed is deleted.
+          var oldPdf = PdfHandler.targetName;
+          var hadPdf = oldPdf && UpdateMode.existingFiles.some(function (f) { return f.name === oldPdf; });
+          if (hadPdf && !fm.pdf) {
+            var oldPdfPath = blogDir + '/' + oldPdf;
+            existingItems = existingItems.filter(function (item) { return item.path !== oldPdfPath; });
+            existingItems.push({ path: oldPdfPath, mode: '100644', type: 'blob', sha: null });
+          }
           // Existing items first; uploaded items already in treeItems will win
           // on conflict because they appear later in the tree array sent to
           // GitHub's /git/trees endpoint.
@@ -1765,6 +1967,14 @@
         // Step 5: Create PR
         Progress.setStep(4);
         var prTitle, prBody;
+        var pdfNote = '';
+        if (fm.pdf) {
+          pdfNote = '- [x] Includes a PDF version, `' + fm.pdf + '`' +
+            (PdfHandler.file ? ' (' + formatSize(PdfHandler.file.size) + ')' : ' (unchanged)') + '\n' +
+            '- [ ] The PDF\'s first page shows the same title and authors as the frontmatter\n';
+        } else if (UpdateMode.active && PdfHandler.targetName) {
+          pdfNote = '- [x] Removes the post\'s PDF version, `' + PdfHandler.targetName + '`\n';
+        }
         if (UpdateMode.active) {
           var origSubmitter = (UpdateMode.existingFrontmatter && UpdateMode.existingFrontmatter.submitter_github) || this.user.login;
           var prevRev = (parseInt(UpdateMode.existingFrontmatter && UpdateMode.existingFrontmatter.revision, 10) || 1);
@@ -1772,6 +1982,7 @@
           prBody =
             '# Blog Post Update (rev ' + fm.revision + ')\n\n' +
             '- [x] Updates an existing post: [`' + this.postId + '`](https://github.com/' + CONFIG.OWNER + '/' + CONFIG.REPO + '/blob/' + CONFIG.DEFAULT_BRANCH + '/' + CONFIG.BLOGS_PATH + '/' + this.postId + '/index.md)\n' +
+            pdfNote +
             '- [ ] Content follows [submission guidelines](https://genomicsxai.github.io/submission-guidelines/)\n' +
             '- [ ] Lab review completed\n' +
             '- [ ] Links and assets validated\n\n' +
@@ -1786,6 +1997,7 @@
           prBody =
             '# Blog Post Submission\n\n' +
             '- [x] Post uses the [blog post template](https://github.com/genomicsxai/genomicsxai.github.io/blob/main/docs/blog-post-template.md) and required frontmatter is complete\n' +
+            pdfNote +
             '- [ ] Content follows [submission guidelines](https://genomicsxai.github.io/submission-guidelines/)\n' +
             '- [ ] Lab review completed\n' +
             '- [ ] Links and assets validated\n\n' +
@@ -1877,6 +2089,7 @@
     // order coupling beyond "both scripts run by DOMContentLoaded".
     window.__submitForm = {
       ImageHandler: ImageHandler,
+      PdfHandler: PdfHandler,
       UpdateMode: UpdateMode,
       CONFIG: CONFIG,
       FormController: FormController,
