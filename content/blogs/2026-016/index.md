@@ -21,7 +21,7 @@ authors_display:
 editor: ""
 submitter_github: "originalhandsanitizer"
 
-tags: ["genomics", "bolero", "scooby", "borzoi", "flashzoi", "seq2func", "context-seq2func", "single-cell", "benchmarking"]
+tags: ["genomics", "bolero", "scooby", "alphagenome2", "borzoi", "flashzoi", "seq2func", "context-seq2func", "single-cell", "benchmarking"]
 categories: ["Blog Post"]
 
 scope: ["insights"]
@@ -48,7 +48,7 @@ revision_history:
 {{< summary >}}
 [Bolero](https://doi.org/10.64898/2026.10.19.760026) predicts cell-state-specific ATAC signal and gene counts from DNA sequence. We benchmarked it in three settings. The main finding is that Bolero's gains come from the ATAC background reference signal, Bolero's most effective design choice, not from its AP-1 score.
 
-1. **Seen cell state, unseen DNA.** Bolero-10M's test regions overlap the pretraining data of its Flashzoi trunk, so there is data leakage. We retrained Bolero on NeurIPS BMMC with Scooby's split. Run from DNA alone, Bolero matches the published [Scooby](https://doi.org/10.1038/s41592-025-02854-5) on both ATAC and RNA. It clearly wins only when the reference signal is supplied at inference.
+1. **Seen cell state, unseen DNA.** Bolero-10M's test regions overlap the pretraining data of its Flashzoi trunk, so there is data leakage. We retrained Bolero on NeurIPS BMMC with Scooby's split. Run from DNA alone, Bolero matches the published [Scooby](https://doi.org/10.1038/s41592-025-02854-5) on both ATAC and RNA. It clearly wins only when the reference signal is supplied at inference. With the reference signal, Bolero performs comparably to AlphaGenome 2 on across-peak and across-gene prediction and on cell-type-specific ATAC prediction, but falls behind on cell-type-specific RNA prediction.
 2. **Unseen cell state, unseen DNA.** In the preprint's own DNA-only setting on the fear engram dataset, Bolero does not beat copying the control profile. With the reference signal, it ties or slightly beats copying.
 3. **Unseen cell state, seen DNA.** On the KA, Fear and MS datasets, AP-1 adds almost nothing. Measured, shuffled and random AP-1 scores give the same accuracy, and so does Bolero-10M, which has no AP-1 input. For ATAC, Bolero beats the copy-control baseline only when it receives the stimulated cells' own embedding plus the reference signal, so the answer is already in the input. For RNA, it does not beat copy-control.
 4. **Cell-state representation.** In both the MultiVI embedding and the condition vector *e*, stimulation moves a cell type only about half as far as its average distance to other cell types. Changing AP-1 shifts every metacell by exactly the same vector regardless of cell type.
@@ -150,6 +150,53 @@ A similar conclusion is observed: without the reference signal at inference, the
 Bolero-10M scores clearly higher than the retrained model. We cannot tell whether this reflects its leakage exposure to fold 3 or a weaker retrained gene model, so the retrained RNA results may be conservative.
 
 Note that Bolero's gene-count head rarely predicts values near zero, so unexpressed genes are systematically over-predicted.
+
+## Comparison with AlphaGenome 2
+
+AlphaGenome 2 was recently released, so we added it to this benchmark. Its fold-1 model holds out folds 3 and 4, with fold 3 for validation and fold 4 for testing, the reverse of Scooby, Flashzoi and the retrained Bolero. We therefore score every model on each fold separately and report the average, so each model has one test fold and one validation fold. From the results above, each model scores nearly the same on the two folds.
+
+Fold 3 uses the same held-out peaks and genes as above. Fold 4 uses Scooby's validation peaks and genes. The cell types, ground truth, normalisation and scores are unchanged. AlphaGenome 2 returns no prediction for a few genes (21 in fold 3, 28 in fold 4), which are either longer than its 1 Mb input window or absent from its gene list, mostly lncRNAs. This leaves 12,976 peaks and 2,382 genes in fold 3, and 14,998 peaks and 2,712 genes in fold 4.
+
+AlphaGenome 2 can be conditioned on a cell type in two ways. It can look up a training cell type by name, or infer the cell state from the scRNA-seq profiles of a set of cells (256 here). We ran both.
+
+Panel order in the figures below:
+
+1. Scooby (published).
+2. Bolero in its DNA-only mode: trained with the reference signal, run without it.
+3. Bolero in its signal-aware mode: the same model, run with the reference signal.
+4. AlphaGenome 2, cell-type lookup: the fold-1 model, told which cell type to predict by naming a bone-marrow cell type it saw in training.
+5. AlphaGenome 2, cell expression: the same model, given the scRNA-seq profiles of 256 cells of the cell type instead.
+6. Dataset-average baseline.
+
+### ATAC
+
+Cross-peak *r*:
+
+![Cross-peak Pearson r on folds 3 and 4 of NeurIPS BMMC for Scooby, the retrained Bolero, AlphaGenome 2 under both conditioning modes, and the dataset-average baseline.](ag2_atac_crosspeak.png "width=900 Cross-peak Pearson r on folds 3 and 4 of NeurIPS BMMC for Scooby, the retrained Bolero, AlphaGenome 2 under both conditioning modes, and the dataset-average baseline.")
+
+Bolero with the reference signal is the most accurate (0.92), closely followed by AlphaGenome 2 (0.89/0.88). Scooby and Bolero in its DNA-only mode are closely tied to each other.
+
+Deviation *r* (subtract peak mean and cell type mean):
+
+![Deviation r on folds 3 and 4 for ATAC, after subtracting the peak mean and the cell-type mean.](ag2_atac_deviation.png "width=900 Deviation r on folds 3 and 4 for ATAC, after subtracting the peak mean and the cell-type mean.")
+
+Bolero with the reference signal and AlphaGenome 2 are nearly tied, outperforming Scooby and Bolero in DNA-only mode, which are also closely tied to each other.
+
+### RNA
+
+Cross-gene *r*:
+
+![Cross-gene Pearson r on folds 3 and 4 for whole-gene 10x counts.](ag2_rna_crossgene.png "width=900 Cross-gene Pearson r on folds 3 and 4 for whole-gene 10x counts.")
+
+Again, the closely tied Bolero with the reference signal and AlphaGenome 2 outperform the closely tied Bolero in DNA-only mode and Scooby.
+
+Deviation *r* (subtract gene mean and cell type mean):
+
+![Deviation r on folds 3 and 4 for RNA, after subtracting the gene mean and the cell-type mean.](ag2_rna_deviation.png "width=900 Deviation r on folds 3 and 4 for RNA, after subtracting the gene mean and the cell-type mean.")
+
+AlphaGenome 2 is clearly the best (0.50/0.49), signal-aware Bolero is in the middle (0.38), and DNA-only Bolero and Scooby are tied.
+
+The two ways of conditioning AlphaGenome 2 have little effect on its performance. With the reference signal, Bolero performs comparably to AlphaGenome 2 on across-peak and across-gene prediction and on cell-type-specific ATAC prediction, but falls behind on cell-type-specific RNA prediction. Without the reference signal, Bolero ties with Scooby and falls behind AlphaGenome 2.
 
 ## Unseen cell state, unseen DNA
 
@@ -289,18 +336,19 @@ This benchmark was possible only because the authors released their code, model 
 4. Linder, J., Srivastava, D., Yuan, H., Agarwal, V. & Kelley, D. R. Predicting RNA-seq coverage from DNA sequence as a unifying model of gene regulation. *Nature Genetics*, 57, 949–961 (2025). https://doi.org/10.1038/s41588-024-02053-6 (Borzoi)
 5. Hingerl, J. C., Karollus, A. & Gagneur, J. Flashzoi: an enhanced Borzoi for accelerated genomic analysis. *Bioinformatics*, 41, btaf467 (2025). https://doi.org/10.1093/bioinformatics/btaf467 (Flashzoi)
 6. Hu, E. J. et al. LoRA: Low-Rank Adaptation of large language models. *ICLR* (2022). https://arxiv.org/abs/2106.09685 (LoRA)
+7. Gayoso, A., Mottram, A., Karollus, A. et al. AlphaGenome 2 predicts regulatory activity and variant effects across cell states. *Google DeepMind preprint* (2026). https://storage.googleapis.com/deepmind-media/DeepMind.com/Blog/alphagenome-2-deciphering-how-cells-read-dna-to-better-understand-disease/alphagenome-2.pdf (AlphaGenome 2)
 
 **Methods**
 
-7. Schep, A. N., Wu, B., Buenrostro, J. D. & Greenleaf, W. J. chromVAR: inferring transcription-factor-associated accessibility from single-cell epigenomic data. *Nature Methods*, 14, 975–978 (2017). https://doi.org/10.1038/nmeth.4401
-8. Rauluseviciute, I. et al. JASPAR 2024: 20th anniversary of the open-access database of transcription factor binding profiles. *Nucleic Acids Research*, 52, D174–D182 (2024). https://doi.org/10.1093/nar/gkad1059
-9. Ashuach, T. et al. MultiVI: deep generative model for the integration of multimodal data. *Nature Methods*, 20, 1222–1231 (2023). https://doi.org/10.1038/s41592-023-01909-9
-10. Persad, S. et al. SEACells infers transcriptional and epigenomic cellular states from single-cell genomics data. *Nature Biotechnology*, 41, 1746–1757 (2023). https://doi.org/10.1038/s41587-023-01716-9
+8. Schep, A. N., Wu, B., Buenrostro, J. D. & Greenleaf, W. J. chromVAR: inferring transcription-factor-associated accessibility from single-cell epigenomic data. *Nature Methods*, 14, 975–978 (2017). https://doi.org/10.1038/nmeth.4401
+9. Rauluseviciute, I. et al. JASPAR 2024: 20th anniversary of the open-access database of transcription factor binding profiles. *Nucleic Acids Research*, 52, D174–D182 (2024). https://doi.org/10.1093/nar/gkad1059
+10. Ashuach, T. et al. MultiVI: deep generative model for the integration of multimodal data. *Nature Methods*, 20, 1222–1231 (2023). https://doi.org/10.1038/s41592-023-01909-9
+11. Persad, S. et al. SEACells infers transcriptional and epigenomic cellular states from single-cell genomics data. *Nature Biotechnology*, 41, 1746–1757 (2023). https://doi.org/10.1038/s41587-023-01716-9
 
 **Datasets**
 
-11. Luecken, M. D. et al. A sandbox for prediction and integration of DNA, RNA, and proteins in single cells. *NeurIPS Datasets and Benchmarks* (2021). (NeurIPS BMMC)
-12. Traunmüller, L. et al. Novel environment exposure drives temporally defined and region-specific chromatin accessibility and gene expression changes in the hippocampus. *Nature Communications*, 16, 7787 (2025). (Novel environment)
-13. Waag, R. et al. Distinct mechanisms of transcriptomic habituation to repeated stress in the mouse hippocampus. *Nature Communications*, 16, 11569 (2025). (Stress; GEO GSE292240)
-14. Multiple sclerosis mouse model: GEO GSE250589.
-15. Fear engram, KA and EE: unpublished data from the Bolero authors, released in the Bolero data repository (ref. 2).
+12. Luecken, M. D. et al. A sandbox for prediction and integration of DNA, RNA, and proteins in single cells. *NeurIPS Datasets and Benchmarks* (2021). (NeurIPS BMMC)
+13. Traunmüller, L. et al. Novel environment exposure drives temporally defined and region-specific chromatin accessibility and gene expression changes in the hippocampus. *Nature Communications*, 16, 7787 (2025). (Novel environment)
+14. Waag, R. et al. Distinct mechanisms of transcriptomic habituation to repeated stress in the mouse hippocampus. *Nature Communications*, 16, 11569 (2025). (Stress; GEO GSE292240)
+15. Multiple sclerosis mouse model: GEO GSE250589.
+16. Fear engram, KA and EE: unpublished data from the Bolero authors, released in the Bolero data repository (ref. 2).
