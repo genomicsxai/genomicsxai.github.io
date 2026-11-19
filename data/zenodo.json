@@ -327,5 +327,24 @@
         "notes": "Initial submission"
       }
     }
+  },
+  "2026-017": {
+    "conceptrecid": "24374086",
+    "current_revision": 1,
+    "current_doi": "10.5281/zenodo.24374087",
+    "current_doi_url": "https://doi.org/10.5281/zenodo.24374087",
+    "current_zenodo_url": "https://zenodo.org/records/24374087",
+    "current_deposition_id": 24374087,
+    "revisions": {
+      "1": {
+        "doi": "10.5281/zenodo.24374087",
+        "doi_url": "https://doi.org/10.5281/zenodo.24374087",
+        "zenodo_url": "https://zenodo.org/records/24374087",
+        "deposition_id": 24374087,
+        "record_id": 24374087,
+        "date": "2026-11-17",
+        "notes": "Initial submission"
+      }
+    }
   }
 }
