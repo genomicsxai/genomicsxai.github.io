@@ -7,8 +7,7 @@ url: "/submission-guidelines/"
 > **Posts are currently by invitation.** For now, the editorial team invites
 > authors to write for the blog. We plan to open submissions to everyone once
 > we have a pool of reviewers in place, and will announce it in
-> [Announcements](https://github.com/genomicsxai/genomicsxai.github.io/discussions/categories/announcements)
-> and on social media.
+> [Announcements](https://github.com/genomicsxai/genomicsxai.github.io/discussions/categories/announcements).
 > If you have been invited, this page explains how to submit.
 
 ## What we publish

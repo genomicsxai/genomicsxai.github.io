@@ -10,7 +10,7 @@ The Genomics × AI blog follows transparent, Git-native policies for submissions
 
 ### Submission and Review
 
-- Posts are currently **by invitation** from the editorial team. We plan to open submissions to everyone once we have a pool of reviewers in place, and will announce it in [Announcements](https://github.com/genomicsxai/genomicsxai.github.io/discussions/categories/announcements) and on social media.  
+- Posts are currently **by invitation** from the editorial team. We plan to open submissions to everyone once we have a pool of reviewers in place, and will announce it in [Announcements](https://github.com/genomicsxai/genomicsxai.github.io/discussions/categories/announcements).  
 - All posts are submitted via **Pull Request** and require **at least one editor approval** before merge.  
 - Authors are expected to complete lab-internal review before submitting.  
 - Editors review for suitability, scientific accuracy, and adherence to [Submission Guidelines](/submission-guidelines/).  
