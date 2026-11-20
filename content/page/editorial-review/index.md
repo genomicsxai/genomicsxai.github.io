@@ -54,7 +54,7 @@ Almost all of the mechanical work around a post is handled by CI. Your job is th
 
 **For tutorials and protocols:** Steps are logically reproducible; code snippets are coherent (they need not be executed in review).
 
-**For opinion or perspective-style pieces:** Framing is clear (opinion vs. established fact).
+**For opinion or perspective-style pieces:** Framing is clear (opinion vs. established fact), and the piece is of interest to the genomics × AI community.
 
 **Decision rule:** If correctness is uncertain → escalate to the author (or optional second reviewer; see below).
 
@@ -69,15 +69,23 @@ Almost all of the mechanical work around a post is handled by CI. Your job is th
 ### D. Metadata and tagging
 
 * **`tags`** are relevant and consistent with the post
-* **At least one discipline tag** is present (`seq2func`, `context-seq2func`, `single-cell`, `synthetic-biology`, `interpretability`, `multi-omics`, `experimental-design`, or `ai-agents`) so the post surfaces under the homepage Discipline filter — a post may carry more than one when it spans several disciplines
+* **At least one discipline tag** is present so the post surfaces under the homepage Discipline filter — a post may carry more than one when it spans several disciplines
 * **`categories`** and **`scope`** reflect the piece
 * Title accurately reflects content
+
+The disciplines, from `data/disciplines.yaml`:
+
+{{< disciplines-list >}}
+
+If none fits, agree a new one with the other editors and add it to `data/disciplines.yaml` in a separate PR. The homepage filter and the submission form pick it up from there.
 
 ### E. Compliance and risk
 
 * No plagiarism
 * No slander or defamation
 * Proper attribution (figures, code, ideas)
+* Third-party figures are cited and their license allows reuse, marked in the caption when it is not CC BY (see [Policies](/policies/#figures-and-other-third-party-material))
+* If a version is published elsewhere (Substack, lab blog, etc.), the post is distinct content, not a copy-paste of it (see [Policies](/policies/#prior-and-dual-publication))
 * No unethical or sensitive data misuse (especially genomics)
 
 ### F. Presentation quality

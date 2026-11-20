@@ -1,0 +1,7 @@
+{{- /* Renders the curated discipline list from data/disciplines.yaml, so the
+       pages that list disciplines never drift from the homepage filter. */ -}}
+<ul class="disciplines-list">
+  {{- range site.Data.disciplines }}
+  <li><strong>{{ .label }}</strong>: <code>{{ .slug }}</code></li>
+  {{- end }}
+</ul>

@@ -43,3 +43,16 @@
 - label: "AI Agents"
   slug: "ai-agents"
   aliases: ["agentic-ai", "ai-agent", "agents", "llm-agents", "agentic", "agent"]
+
+# Self-supervised models of DNA/RNA sequence (DNA LMs, genomic foundation
+# models). Not "foundation-models" or "glm": the first already tags posts about
+# seq2func oracles, the second also means generalized linear models.
+- label: "Genomic Language Models"
+  slug: "genomic-language-models"
+  aliases: ["genomic-language-model", "dna-language-models", "dna-language-model", "dna-lm", "genomic-lm", "nucleotide-language-models"]
+
+# Benchmarks, evaluation and validation design. The "benchmarking" tag was
+# already on several posts before this became a discipline.
+- label: "Benchmarking & Evaluation"
+  slug: "benchmarking"
+  aliases: ["benchmark", "benchmarks", "evaluation", "model-evaluation", "evaluation-design", "model-validation"]

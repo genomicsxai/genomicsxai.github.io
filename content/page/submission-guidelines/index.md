@@ -4,6 +4,56 @@ date: 2026-05-01
 url: "/submission-guidelines/"
 ---
 
+> **Posts are currently by invitation.** For now, the editorial team invites
+> authors to write for the blog. We plan to open submissions to everyone once
+> we have a pool of reviewers in place, and will announce it in
+> [Announcements](https://github.com/genomicsxai/genomicsxai.github.io/discussions/categories/announcements).
+> If you have been invited, this page explains how to submit.
+
+## What we publish
+
+The blog covers how genomics and machine learning actually get done: methods,
+tools, results and ideas, including what did not work. A post can be:
+
+- **A tutorial or protocol**: a step-by-step guide, a port of a model to
+  another framework, a walk-through of code.
+- **Insights and results**: incremental or negative results, benchmarks,
+  lessons from building a model or a resource.
+- **A perspective**: opinion or commentary, such as how a class of models
+  should be evaluated. Editors ask that opinion is clearly separated from
+  established fact, and that the piece is of interest to the community.
+- **A paper review or resource**: a write-up of a paper, review or preprint
+  (optionally with its PDF), or an introduction to a dataset, model or tool.
+
+Posts can be written for specialists (`audience: ["technical"]`), for a broad
+scientific readership (`general`), or for readers new to the field
+(`new-to-field`).
+
+### Disciplines
+
+Every post needs at least one discipline tag in `tags`, which places it under
+the homepage's Discipline filter. A post can carry several:
+
+{{< disciplines-list >}}
+
+The editors curate this list and add to it as the blog grows. If none fits
+your post, say so in your pull request and suggest one.
+
+### Material published elsewhere
+
+A post can build on your own preprint, paper, talk, lab blog or newsletter,
+and you can publish a version elsewhere too, with no delay. The post here
+should be distinct content written for this blog's readers, not a copy-paste
+of the other version. Link the two versions to each other. See [Prior and dual
+publication](/policies/#prior-and-dual-publication).
+
+### License
+
+Posts are published under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/),
+and authors keep their copyright. Figures from other papers must be cited and
+their license must allow reuse: see [Figures and other third-party
+material](/policies/#figures-and-other-third-party-material).
+
 ## Submit Your Blog Post
 
 The Genomics × AI blog uses a light, non-gate keeping peer-review, Git-native 
