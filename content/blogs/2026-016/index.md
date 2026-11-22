@@ -48,9 +48,9 @@ revision_history:
 {{< summary >}}
 [Bolero](https://doi.org/10.64898/2026.10.19.760026) predicts cell-state-specific ATAC signal and gene counts from DNA sequence. We benchmarked it in three settings. The main finding is that Bolero's gains come from the ATAC background reference signal, Bolero's most effective design choice, not from its AP-1 score.
 
-1. **Seen cell state, unseen DNA.** Bolero-10M's test regions overlap the pretraining data of its Flashzoi trunk, so there is data leakage. We retrained Bolero on NeurIPS BMMC with Scooby's split. Run from DNA alone, Bolero matches the published [Scooby](https://doi.org/10.1038/s41592-025-02854-5) on both ATAC and RNA. It clearly wins only when the reference signal is supplied at inference. With the reference signal, Bolero matches AlphaGenome 2 on ATAC and on across-gene RNA prediction, but falls behind on cell-type-specific RNA prediction.
+1. **Seen cell state, unseen DNA.** Bolero-10M's test regions overlap the pretraining data of its Flashzoi trunk, so there is data leakage. We retrained Bolero on NeurIPS BMMC and compared it with the published [Scooby](https://doi.org/10.1038/s41592-025-02854-5) and AlphaGenome 2. Run from DNA alone, Bolero matches the published Scooby on both ATAC and RNA. It clearly wins only when the reference signal is supplied at inference. With the reference signal, Bolero matches AlphaGenome 2 on ATAC and on across-gene RNA prediction, but falls behind on cell-type-specific RNA prediction.
 2. **Unseen cell state, unseen DNA.** In the preprint's own DNA-only setting on the fear engram dataset, Bolero does not beat copying the control profile. With the reference signal, it ties or slightly beats copying.
-3. **Unseen cell state, seen DNA.** On the KA, Fear and MS datasets, AP-1 adds almost nothing. Measured, shuffled and random AP-1 scores give the same accuracy, and so does Bolero-10M, which has no AP-1 input. For ATAC, Bolero beats the copy-control baseline only when it receives the stimulated cells' own embedding plus the reference signal, so the answer is already in the input. For RNA, it does not beat copy-control.
+3. **Unseen cell state, seen DNA.** On the KA, Fear and MS datasets, AP-1 adds almost nothing. Measured, shuffled and random AP-1 scores, and no AP-1 input at all, give approximately the same accuracy. For ATAC, Bolero beats the copy-control baseline only when it receives the stimulated cells' own embedding plus the reference signal, so the answer is already in the input. For RNA, it does not beat copy-control.
 4. **Cell-state representation.** In both the MultiVI embedding and the condition vector *e*, stimulation moves a cell type only about half as far as its average distance to other cell types. Changing AP-1 shifts every metacell by exactly the same vector regardless of cell type.
 {{< /summary >}}
 
@@ -58,8 +58,7 @@ revision_history:
 
 ## Overview of Bolero
 
-- About 75 similar cells inside each cell type × experimental condition are merged into one metacell. Metacells can share cells.
-- Neighbouring metacells are pooled into a pseudobulk of ~5 M ATAC fragments.
+- About 75 similar cells inside each cell type × experimental condition are merged into one metacell. Metacells can share cells. Neighbouring metacells are pooled into a pseudobulk of ~5 M ATAC fragments.
 - From 524 kb of DNA, the model predicts each pseudobulk's ATAC signal (cut sites per 32 bp) and gene counts.
 - The gene head sits after the final conv, next to the ATAC head, and outputs a single count for that gene. A gene-body mask is a 0/1 track fed in alongside the DNA, which marks 1 from that gene's transcription start to its end and 0 everywhere else. It is added to the output of the DNA conv stem.
 - Three encoders are concatenated into the condition vector *e*, the input of a hypernetwork that generates LoRA weights for every layer of the frozen Flashzoi backbone:
@@ -68,17 +67,17 @@ revision_history:
   - Shared encoder: species, and the pseudobulk's AP-1 motif chromVAR score.
 - Reference signal is the dataset's own bulk ATAC (the sum of 1,000 sampled metacells, scaled to 5 M fragments). It enters the model after the conv tower, before the U-Net/transformer.
   - Training: the reference signal is given, but dropped on a random 20% of batches.
-  - Prediction: the reference signal is optional. With it, Bolero runs in signal-aware mode; without it, it is in DNA-only mode.
+  - Prediction: the reference signal is optional. With it, Bolero runs in signal-aware mode. Without it, it is in DNA-only mode.
 
 Bolero proposes using the AP-1 score to set the trans environment.
 
 - AP-1 is a TF family. Each AP-1 factor is a dimer, a JUN-family protein paired with a FOS-, JUN- or ATF-family protein. It binds the TGA(C/G)TCA motif.
 - Both FOS and JUN are immediate-early genes. When a neuron fires, *Fos* is transcribed within minutes. AP-1 then binds enhancers and recruits chromatin remodellers, turning on a larger set of late-response genes.
-- The AP-1 score in Bolero is computed from ATAC, as the AP-1 chromVAR score:
+- The AP-1 score in Bolero is computed from ATAC as the AP-1 chromVAR score.
   - For each cell, chromVAR takes all peaks that contain the AP-1 motif and measures how much more accessible they are than expected from overall accessibility, resulting in a z-scored deviation.
   - The cells' scores are aggregated and z-scaled on one common scale across all datasets, giving one number per pseudobulk.
   - A high score means the AP-1-bound sites in those cells are more open overall. The score is a second conditioning input, next to the cell-state embedding.
-- To predict the stimulated state: keep the control embedding and turn the AP-1 score up or down (for example, for the fear engram dataset the preprint dials the AP-1 score from −1.5 to +8, but the measured difference is only about +1).
+- To predict the stimulated state: keep the control embedding and turn the AP-1 score up or down (for example, for the fear engram dataset, the preprint dials the AP-1 score from −1.5 to +8, but the measured difference is only about +1).
 
 ## Seen cell state, unseen DNA
 
@@ -86,25 +85,29 @@ Below is adapted from Bolero's Figure 1c, d. Bolero did not compare with Scooby 
 
 ![Adapted from Bolero's Figure 1c, d. Bolero's comparison against its own Scooby-style baseline on ATAC.](01_bolero_fig1cd.png "width=900 Adapted from Bolero's Figure 1c, d. Bolero's comparison against its own Scooby-style baseline on ATAC.")
 
-Bolero's Scooby baseline is not the published Scooby. The Methods say only that "a hypernetwork head reproduces the published Scooby model". In Bolero's code, the "scooby" preset puts a Scooby-style head on Bolero's framework, with plain rank-8 LoRA instead of Bolero's cell-state-conditional LoRA.
+Bolero's Scooby baseline is not the published Scooby. The Methods say only that "a hypernetwork head reproduces the published Scooby model". In Bolero's code, the "Scooby" preset puts a Scooby-style head on Bolero's framework, with plain rank-8 LoRA instead of Bolero's cell-state-conditional LoRA.
 
 We conducted an additional comparison experiment using the original Scooby and Bolero models. Both Scooby and Bolero were trained on the NeurIPS BMMC dataset, but they used different DNA folds. Thus, we retrained Bolero on the NeurIPS BMMC dataset.
 
-The released Bolero-10M configuration validates on fold 0 and tests on fold 1, although the preprint says it uses Borzoi's split. Its frozen trunk is Flashzoi replicate 0, which was trained on every fold except fold 3 (test) and fold 4 (validation). Bolero's test and validation regions were therefore in the trunk's training data, so there is data leakage (see table below).
+The released Bolero-10M configuration validates on fold 0 and tests on fold 1, although the preprint says it uses Borzoi's split. Its frozen trunk is Flashzoi replicate 0, which was trained on every fold except fold 3 (test) and fold 4 (validation). Bolero's test and validation regions were therefore in the trunk's training data, so there is data leakage (see table below). AlphaGenome 2 is also included, for the comparison in the next section.
 
 To avoid this, we retrained Bolero on the same split as Scooby and its trunk: test fold 3, validation fold 4. Neither the trunks nor any retrained model saw the test regions.
 
-| Fold | Scooby LoRA | Bolero-10M LoRA | Scooby trunk: Borzoi | Bolero trunk: Flashzoi | Bolero retrained |
-|---|---|---|---|---|---|
-| 3 | Unseen | Trained | Unseen | Unseen | Unseen |
-| 4 | Validation | Trained | Validation | Validation | Validation |
-| 1 | Trained | Unseen | Trained | Trained | Trained |
-| 0 | Trained | Validation | Trained | Trained | Trained |
-| 2, 5, 6, 7 | Trained | Trained | Trained | Trained | Trained |
+| Fold | Scooby LoRA | Bolero-10M LoRA | Scooby trunk: Borzoi | Bolero trunk: Flashzoi | AlphaGenome 2 (fold-1 model) | Bolero retrained |
+|---|---|---|---|---|---|---|
+| 3 | Unseen | Trained | Unseen | Unseen | Validation | Unseen |
+| 4 | Validation | Trained | Validation | Validation | Unseen | Validation |
+| 1 | Trained | Unseen | Trained | Trained | Trained | Trained |
+| 0 | Trained | Validation | Trained | Trained | Trained | Trained |
+| 2, 5, 6, 7 | Trained | Trained | Trained | Trained | Trained | Trained |
 
 Neither Scooby nor Bolero reports a hyperparameter search. Scooby states that "due to computational constraints, extensive hyperparameter optimization was not performed", and the Bolero preprint does not mention hyperparameter tuning.
 
-Bolero has a published single-dataset training configuration (tutorial 06). We used that configuration to retrain Bolero on NeurIPS BMMC with fold 3 as the test fold. We directly used Scooby's published model weights trained on this dataset. No hyperparameter sweep was done. We rebuilt the pseudobulks so that each contains one subclass only and no metacell is shared between pseudobulks (~5 M fragments each), matched to Scooby's 21 cell types. Across-feature *r* is the mean of the 21 per-cell-type Pearson *r*. We then evaluated on fold 3.
+Bolero has a published single-dataset training configuration (tutorial 06). We used that configuration to retrain Bolero on NeurIPS BMMC with fold 3 as the test fold. We directly used Scooby's published model weights trained on this dataset. No hyperparameter sweep was done.
+
+We rebuilt Bolero's pseudobulks so that each contains one subclass only and no metacell is shared between pseudobulks, matched to Scooby's 21 cell types. Every model here saw all 21 cell types during training, so only the DNA is unseen (the Scooby paper also trained a model with normoblasts held out, but its weights are not public). The comparison is therefore fair with respect to cell types.
+
+Across-feature *r* is the mean of the 21 per-cell-type Pearson *r*. We then evaluated on fold 3.
 
 Panel order in the figures below:
 
@@ -117,7 +120,7 @@ Panel order in the figures below:
 
 ### ATAC
 
-Cross-peak comparison:
+Cross-peak *r*:
 
 ![Cross-peak Pearson r on fold 3 of NeurIPS BMMC for Scooby, the retrained Bolero variants, Bolero-10M and the dataset-average baseline.](02_atac_crosspeak.png "width=900 Cross-peak Pearson r on fold 3 of NeurIPS BMMC for Scooby, the retrained Bolero variants, Bolero-10M and the dataset-average baseline.")
 
@@ -153,9 +156,11 @@ Note that Bolero's gene-count head rarely predicts values near zero, so unexpres
 
 ## Comparison with AlphaGenome 2
 
-AlphaGenome 2 was recently released, so we added it to this benchmark. Its fold-1 model holds out folds 3 and 4, with fold 3 for validation and fold 4 for testing, the reverse of Scooby, Flashzoi and the retrained Bolero. We therefore score every model on each fold separately and report the average, so each model has one test fold and one validation fold. From the results above, each model scores nearly the same on the two folds.
+AlphaGenome 2 was recently released, so we added it to this benchmark. AlphaGenome 2 also uses NeurIPS BMMC as part of its training data, so it also saw all 21 cell types. The comparison therefore remains seen cell type, unseen DNA for all three models.
 
-Fold 3 uses the same held-out peaks and genes as above. Fold 4 uses Scooby's validation peaks and genes. The cell types, ground truth, normalisation and scores are unchanged. AlphaGenome 2 returns no prediction for a few genes (21 in fold 3, 28 in fold 4), which are either longer than its 1 Mb input window or absent from its gene list, mostly lncRNAs. This leaves 12,976 peaks and 2,382 genes in fold 3, and 14,998 peaks and 2,712 genes in fold 4.
+AlphaGenome 2's fold-1 model holds out folds 3 and 4, with fold 3 for validation and fold 4 for testing, the reverse of Scooby, Flashzoi and the retrained Bolero. We therefore score every model on folds 3 and 4 separately and report the average, so each model has one test fold and one validation fold. From the results below, each model scores nearly the same on the two folds.
+
+Fold 3 uses the same held-out peaks and genes as above. Fold 4 uses Scooby's validation peaks and genes. The cell types, ground truth, normalisation and scores are unchanged. AlphaGenome 2 returns no prediction for a few genes (21 in fold 3, 28 in fold 4), which are either longer than its 1 Mb input window or absent from its gene list, mostly lncRNAs, so we removed them for every model.
 
 AlphaGenome 2 can be conditioned on a cell type in two ways. It can look up a training cell type by name, or infer the cell state from the scRNA-seq profiles of a set of cells (256 here). We ran both.
 
@@ -200,7 +205,7 @@ The two ways of conditioning AlphaGenome 2 have little effect on its performance
 
 ## Unseen cell state, unseen DNA
 
-Figure 2g–j of Bolero examines the unseen cell types of unseen cell states. Bolero set up a baseline that reads out from the embedding of the nearest states, but did not set up a baseline that copies the observation of the nearest states.
+Figure 2g–j of Bolero examines the unseen cell types of unseen cell states. Bolero sets up a baseline that reads out from the embedding of the nearest states, but does not set up a baseline that copies the observation of the nearest states.
 
 The weights of the 18 individually trained models in Figure 2g–j have not been published, and the test split arrangement is not described either. Thus, we cannot conduct additional benchmarking experiments in the same setting.
 
@@ -218,7 +223,7 @@ In Figure 4, Bolero is evaluated on five datasets: fear engram (Fig. 4b), novel 
 
 For the novel environment and stress datasets, the evaluation is not independent of the model input, because cells are selected by AP-1 score and then predicted with that score.
 
-The last two datasets (mouse VIS and human V1) have all their pseudobulks seen during training. For the other three, the published cell metadata (sample, experimental group, subclass) defines the input and comparison groups exactly for the fear engram (24 h Trap− vs Trap+ DG). For novel environment and stress, the input pseudobulk is defined, but the cells in the highest- and lowest-AP-1 groups are not published, and the preprint does not specify how they were split. Thus, we conducted the benchmark on the fear engram dataset.
+The last two datasets (mouse VIS and human V1) have all their pseudobulks seen during training, so we cannot use them for unseen-cell-type benchmarking (Bolero does not intend this figure as an unseen-cell-type benchmark either). For novel environment and stress, the input pseudobulk is defined, but the cells in the highest- and lowest-AP-1 groups are not published, and the preprint does not specify how they were split. For the fear engram dataset, the published cell metadata (sample, experimental group, subclass) defines the input and comparison groups exactly (24 h Trap− vs Trap+ DG), so we conducted the benchmark only on the fear engram dataset.
 
 We replicated Figure 4b from Bolero on the fear engram dataset.
 
@@ -230,9 +235,11 @@ Our replication:
 
 ![Our replication of Bolero's Figure 4b on the fear engram dataset.](08_fear_fig4b_replication.png "width=900 Our replication of Bolero's Figure 4b on the fear engram dataset.")
 
+Our *r* differs from the preprint's by 0.01 because the Methods do not fully specify which peaks are evaluated, so our peak set is about 3% smaller than theirs.
+
 ### On AP-1
 
-The authors publish a per-cell chromVAR score for each JASPAR motif, and we took the AP-1 motif (MA0478.2, the same motif the model uses). We averaged this score over all cells in a group and converted it to a z-score, as Bolero was trained on AP-1 values that are z-scores across pseudobulks. The authors' own input file is not public, so this is what we measured: Fos-Trap+ = +0.70, Trap− = −0.31, which is much smaller than the preprint's AP-1 score of +8 vs −1.5.
+The authors publish a per-cell chromVAR score for each JASPAR motif, and we took the AP-1 motif (MA0478.2, the same motif the model uses). As Bolero was trained on AP-1 values that are z-scores across pseudobulks, we averaged this score over all cells in a group and converted it to a z-score. The authors' own input file is not public, so this is what we measured: Fos-Trap+ = +0.70, Trap− = −0.31, which is much smaller than the preprint's AP-1 score of +8 vs −1.5.
 
 We used the input (24 h Trap− DG) to predict the perturbed group (24 h Fos-Trap+ DG) from the input's embedding, dialed with the preprint's AP-1 score and with our measured AP-1 score. We also directly predicted the perturbed group from its own cell embedding. All are compared against the baseline of copying the input pseudobulk.
 
@@ -268,9 +275,9 @@ Below is the distance matrix between cell-type centroids. Rows of panels: MultiV
 
 ![Distances between cell-type centroids in the MultiVI embedding, in e, and in e with the AP-1 dial, within and between the Trap− and Fos-Trap+ groups.](14_fear_dist_matrix.png "width=900 Distances between cell-type centroids in the MultiVI embedding, in e, and in e with the AP-1 dial, within and between the Trap− and Fos-Trap+ groups.")
 
-The bar graph of normalized distances sums this up. Stimulation moves a cell type about half as far as its average distance to other cell types.
+The bar graph of normalised distances sums this up. Stimulation moves a cell type about half as far as its average distance to other cell types.
 
-![Normalized distance moved by each cell type under stimulation, relative to its average distance to other cell types.](15_fear_dist_bars.png "width=600 Normalized distance moved by each cell type under stimulation, relative to its average distance to other cell types.")
+![Normalised distance moved by each cell type under stimulation, relative to its average distance to other cell types.](15_fear_dist_bars.png "width=600 Normalised distance moved by each cell type under stimulation, relative to its average distance to other cell types.")
 
 ## Unseen cell state, seen DNA
 
@@ -286,31 +293,31 @@ Bolero's Hugging Face repository has five activity datasets. Their control group
 
 Only Fear (Fig. 4b) and Stress (Fig. 4c) appear in the preprint. KA, MS and EE are not reported.
 
-In the authors' public records, pseudobulks are not independent. Neighbouring pseudobulks of the same cell type share metacells, and some mix metacells from control and stimulated samples. From now on, we drop the mixed pseudobulks and keep only pseudobulks that share no metacell with any other.
+In the authors' public records, pseudobulks are not independent. Neighbouring pseudobulks, mostly of the same cell type, share metacells, and some mix metacells from control and stimulated samples. From now on, we drop the mixed pseudobulks and keep only pseudobulks that share no metacell with any other.
 
-We left out EE and Stress. After this filtering, their stimulation effect does not replicate between two independent halves of the data.
+We left out EE and Stress because, after this filtering, their stimulation effect does not replicate between two independent halves of the data.
 
 The same pattern from before is also here: stimulation moves a cell type about half as far as its average distance to other cell types.
 
-![Normalized distance moved by each cell type under stimulation in the KA, Fear and MS datasets.](16_activity_dist_bars.png "width=600 Normalized distance moved by each cell type under stimulation in the KA, Fear and MS datasets.")
+![Normalised distance moved by each cell type under stimulation in the KA, Fear and MS datasets.](16_activity_dist_bars.png "width=600 Normalised distance moved by each cell type under stimulation in the KA, Fear and MS datasets.")
 
 We ran ablations on them. Unlike Fig. 4, these use training-fold peaks, so the DNA was seen in training; only the cell state is new.
 
 The preprint only gives AP-1 settings for specific groups, not for each cell type (see the table in the previous section), so we drew one random AP-1 value per pseudobulk from the preprint's range [−3, 8].
 
-We reconstructed the measured AP-1 score per pseudobulk with the same method mentioned above. In the "measured" settings, the model gets the stimulated pseudobulk's own score. In the "shuffled" settings, the same scores are permuted among pseudobulks within each dataset.
+We reconstructed the measured AP-1 score per pseudobulk with the same method mentioned above. In the "measured" settings, the model gets the stimulated pseudobulk's own reconstructed AP-1 score. In the "shuffled" settings, the same scores are permuted among pseudobulks within each dataset.
 
 We score only high-coverage peaks (genes), those with ≥ 10 reads (UMIs) on average. Below this, counting noise can dominate the profile.
 
 The ceiling here is *r* between two random halves of each pseudobulk's metacells, corrected to full depth (Spearman–Brown, square root; mean of 100 splits).
 
-Light bars are without the reference signal and dark bars are with it.
+Light bars are without the reference signal (DNA-only mode) and dark bars are with it.
 
 The grey bar copies the matched control profile without any model, so it is the baseline to beat (dotted line). The red dashed line is the ceiling, i.e. how well the data agree with themselves. Moving left to right, the model gets more information about the stimulated state: first the control embedding, then the stimulated embedding. Each is run with Bolero-10M (no AP-1 input) and with the AP-1 model (Bolero-AP1-Score in the preprint) given measured, shuffled or random AP-1 in the preprint's range. Coloured dots are the dataset means.
 
 For ATAC:
 
-![ATAC ablations on the KA, Fear and MS datasets. Grey: copy-control baseline. Red dashed line: ceiling. Light bars: without the reference signal. Dark bars: with it.](17_activity_atac_ablation.png "width=900 ATAC ablations on the KA, Fear and MS datasets. Grey: copy-control baseline. Red dashed line: ceiling. Light bars: without the reference signal. Dark bars: with it.")
+![ATAC ablations on the KA, Fear and MS datasets. Grey: copy-control baseline. Red dashed line: ceiling. Light bars: without the reference signal. Dark bars: with it. Coloured dots: dataset means. Triangles: each dataset's own ceiling.](17_activity_atac_ablation.png "width=900 ATAC ablations on the KA, Fear and MS datasets. Grey: copy-control baseline. Red dashed line: ceiling. Light bars: without the reference signal. Dark bars: with it. Coloured dots: dataset means. Triangles: each dataset's own ceiling.")
 
 AP-1 adds approximately nothing. Measured, shuffled and random AP-1 give the same *r* (0.80, 0.79, 0.78). Bolero-10M, which has no AP-1 input, also gives 0.80.
 
