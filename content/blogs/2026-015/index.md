@@ -127,9 +127,9 @@ _(Note: The +4/-4 shift is a convention. E.g., Shifts of +5/-3, +3/-5, +7/-1, et
 __DNase-seq__: However, unlike Tn5 transposase, when DNase I–a monomer enzyme–cleaves DNA, it simply creates one double-stranded break at a single site. While mechanistically, this is easier to understand and visualize, when synchronizing reads from the forward strand and the reverse strand, as the gap is even (0 bp), there is no longer an integer shift that can align the reads symmetrically, and each read would need to be shifted by half a position (+0.5/-0.5) to stay symmetric–which in a discrete, one-hot coordinate system, is not possible.
 
 Therefore, generally, we have the following options to shift and synchronize the fragments: 
-- Option I: Align on the position of the forward strand's read, by keeping the forward strand's read position constant and shifting the reverse strand read to the right by 1 bp (0/+1; i.e., the "right-hand" convention)
-- Option II: Align on the position of the reverse strand's read, by keeping the reverse strand's read position constant and shifting the forward strand's read to the left by 1 bp (-1/0; i.e., the "left-hand" convention)
-- Option III: Align on _both_ the forward and reverse strand's position, by assigning a read on both positions (-1/0 and 0/+1). 
+- _Option I_: Align on the position of the forward strand's read, by keeping the forward strand's read position constant and shifting the reverse strand read to the right by 1 bp (0/+1) i.e., the "right-hand" convention.
+- _Option II_: Align on the position of the reverse strand's read, by keeping the reverse strand's read position constant and shifting the forward strand's read to the left by 1 bp (-1/0) i.e., the "left-hand" convention.
+- _Option III_: Align on _both_ the forward and reverse strand's position, by assigning a read on both positions (-1/0 and 0/+1) i.e., the "symmetric" convention.
 
 In the original ChromBPNet, we selected Option I: the right-hand side convention (0 bp shift on the positive strand, +1 bp shift on the negative strand). This ensured that irrespective of which direction of the break was sequenced, we stacked counts on the same position, despite the shift being asymmetric.
 
