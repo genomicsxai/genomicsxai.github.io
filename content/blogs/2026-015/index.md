@@ -72,13 +72,13 @@ __ChromBPNet__ is a deep learning model of regulatory DNA that models chromatin 
 
 ChromBPNet is a deep learning model of __chromatin accessibility__, where:
 - __Chromatin__: is the native state of a DNA molecule in eukaryotic cells, packaged into a dense, compact structure with other proteins, such as histones, and RNA. 
-- And __Accessibility__: quantifies how non-compact/exposed the DNA is at each position, for it to freely interact with other cellular processes, such as RNA transcription.
+- __Accessibility__: quantifies how non-compact/exposed the DNA is at each position, for it to freely interact with other cellular processes, such as RNA transcription.
 
 Differences in chromatin accessibility is a defining feature of cell type identity: different cell types can have drastically different levels of accesibility for a given position on the genome, that is typically related to its proximity towards essential genes for the given cell type.
 
 Given the importance of chromatin accessibility, many experiments have been developed to measure chromatin accessibility across different cell types: 
 - __DNase-seq__: uses the enzyme, DNase I, to cut exposed chromatin into small fragments, that are then sequenced to identify where the exposed regions are.
-- Similarly, __ATAC-seq__: uses the enzyme, Tn5 transposase, to fragment accessible chromatin, that again, is sequenced to identify accessible regions.
+- __ATAC-seq__: uses the enzyme, Tn5 transposase, to fragment accessible chromatin, that again, is sequenced to identify accessible regions.
 
 In short: The more accessible a region of chromatin is > The more its DNA gets cut up by the enzymes > Produces more short DNA fragments > More fragments are sequenced by next generation sequencing (NGS) > The sequenced fragments are mapped to find its genomic location > The number of sequenced fragments at each position are counted, piling up as a tall "peak" in the signal > Overall, the "height" of the signal quantifies how accessible the DNA is at that position.
 
