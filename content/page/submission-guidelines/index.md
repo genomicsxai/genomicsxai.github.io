@@ -15,8 +15,11 @@ url: "/submission-guidelines/"
 The blog covers how genomics and machine learning actually get done: methods,
 tools, results and ideas, including what did not work. A post can be:
 
-- **A tutorial or protocol**: a step-by-step guide, a port of a model to
-  another framework, a walk-through of code.
+- **A tutorial or protocol**: a step-by-step guide or a walk-through of code.
+- **A reimplementation**: a port of an existing model to another framework,
+  or a re-implementation of it. Say which version and weights you reproduce,
+  show how closely your outputs match the original's, and state the licenses
+  of the original code and weights. Tag it `reimplementation`.
 - **Insights and results**: incremental or negative results, benchmarks,
   lessons from building a model or a resource.
 - **A perspective**: opinion or commentary, such as how a class of models
