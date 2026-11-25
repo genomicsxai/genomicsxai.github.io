@@ -28,7 +28,7 @@ audience: ["new-to-field", "general"]
 disciplines: ["Sequence-to-Function Modeling"]
 labs: ["Pinello Lab"]
 status: "accepted"
-revision: 1
+revision: 3
 date_submitted: 2026-06-23
 date_accepted:
 date: 2026-07-17
@@ -45,6 +45,9 @@ revision_history:
     notes: "Updated after revision"
     doi: ""
     zenodo_url: ""
+  - version: 3
+    date: 2026-11-25
+    notes: "Added a PDF of the post to its Zenodo record. The post itself is unchanged."
 ---
 
 {{< summary >}}

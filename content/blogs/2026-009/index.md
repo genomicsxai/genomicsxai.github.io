@@ -26,7 +26,7 @@ audience: ["technical"]
 labs: ["Dias and Frazer lab"]
 
 status: "accepted"
-revision: 3
+revision: 4
 
 date_submitted: 2026-05-24
 date_accepted: 
@@ -52,6 +52,9 @@ revision_history:
     notes: "Addressed reviewer/editor feedback: clarified trans-acting SF3B1/identical WT-mutant sequence input, coverage binning no-op, annotated vs. predicted junction positions, and compute footprint; reworked debugging section structure and the fine-tuning recipe; expanded figure legends."
     doi: ""
     zenodo_url: ""
+  - version: 4
+    date: 2026-11-25
+    notes: "Added a PDF of the post to its Zenodo record. The post itself is unchanged."
 ---
 
 {{< summary >}}

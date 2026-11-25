@@ -34,7 +34,7 @@ audience: ["general"]
 labs: ["Koo lab"]
 
 status: "accepted"
-revision: 1
+revision: 2
 
 date_submitted: 2026-02-20
 date_accepted: 2026-02-20
@@ -48,6 +48,9 @@ revision_history:
     notes: "Initial submission"
     doi: ""
     zenodo_url: ""
+  - version: 2
+    date: 2026-11-25
+    notes: "Added a PDF of the post to its Zenodo record. The post itself is unchanged."
 ---
 
 {{< summary >}}
