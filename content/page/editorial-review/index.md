@@ -54,6 +54,13 @@ Almost all of the mechanical work around a post is handled by CI. Your job is th
 
 **For tutorials and protocols:** Steps are logically reproducible; code snippets are coherent (they need not be executed in review).
 
+**For reimplementations** (ports or re-implementations of an existing model):
+
+* The post names the original model, the version and weights it reproduces, and links the original paper and code
+* It shows how closely its outputs match the original's, e.g. prediction concordance on held-out inputs, and explains any differences, including deliberate bug fixes
+* The licenses or terms of use of the original code and weights allow the port, and any redistribution of weights, and the post states them
+* The post carries the `reimplementation` tag
+
 **For opinion or perspective-style pieces:** Framing is clear (opinion vs. established fact), and the piece is of interest to the genomics × AI community.
 
 **Decision rule:** If correctness is uncertain → escalate to the author (or optional second reviewer; see below).

@@ -16,9 +16,9 @@ authors_display:
     orcid: "0000-0003-3084-2287"
     contact: "akundaje@stanford.edu"
 
-editor: ["Editor Name", "Al-Murphy"]
+editor: ["Al-Murphy"]
 
-tags: ["genomics", "promoterai", "pytorch", "variant-interpretation", "seq2func", "fine-tuning", "benchmarking"]
+tags: ["genomics", "promoterai", "pytorch", "variant-interpretation", "seq2func", "fine-tuning", "benchmarking", "reimplementation"]
 categories: ["Blog Post", "Tutorial"]
 
 scope: ["tutorials", "protocols"]

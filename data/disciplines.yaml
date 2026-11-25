@@ -56,3 +56,9 @@
 - label: "Benchmarking & Evaluation"
   slug: "benchmarking"
   aliases: ["benchmark", "benchmarks", "evaluation", "model-evaluation", "evaluation-design", "model-validation"]
+
+# Ports and re-implementations of an existing model, e.g. in another framework
+# (AlphaGenome and PromoterAI to PyTorch).
+- label: "Reimplementation"
+  slug: "reimplementation"
+  aliases: ["re-implementation", "reimplementations", "re-implementations", "port", "porting", "model-port"]

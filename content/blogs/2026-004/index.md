@@ -30,7 +30,7 @@ authors_display:
 
 editor: ["Al-Murphy"]
 
-tags: ["genomics", "finetuning", "AlphaGenome", "seq2func", "PyTorch"]
+tags: ["genomics", "finetuning", "AlphaGenome", "seq2func", "PyTorch", "reimplementation"]
 categories: ["Blog Post"]
 
 scope: ["tutorials"]
