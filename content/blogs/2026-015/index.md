@@ -82,7 +82,7 @@ Given the importance of chromatin accessibility, many experiments have been deve
 
 In short: The more accessible a region of chromatin is > The more its DNA gets cut up by the enzymes > Produces more short DNA fragments > More fragments are sequenced by next generation sequencing (NGS) > The sequenced fragments are mapped to find its genomic location > The number of sequenced fragments at each position are counted, piling up as a tall "peak" in the signal > Overall, the "height" of the signal quantifies how accessible the DNA is at that position.
 
-![Figure: DNase-seq, ATAC-seq](ChromatinAccessibility.gif "width=600 DNase-seq and ATAC-seq experiments profile regions of accessible chromatin: (1) DNA that is wrapped around proteins and RNA, such as histones, is relatively inaccessible, whereas (2) exposed DNA can be cut by enzymes: DNase-I or Tn5 transposase. These enzymes preferentially act on accessible DNA, and the resulting fragments are isolated, (3) sequenced, and mapped back to the genome. (4) Regions where many fragments accumulate appear as peaks of chromatin accessibility.")
+![Figure: DNase-seq, ATAC-seq](ChromatinAccessibility.gif "width=600 DNase-seq and ATAC-seq experiments profile regions of accessible chromatin: (1) DNA that is wrapped around proteins and RNA, such as histones, is relatively inaccessible, whereas (2) exposed DNA can be cut by enzymes: DNase-I or Tn5 transposase. These enzymes preferentially act on accessible DNA, and the resulting fragments are isolated, (3) sequenced, and mapped back to the genome. (4) Regions where many fragments accumulate appear as peaks of chromatin accessibility. From [_Yun et al. (2026)](https://genomicsxai.github.io/blogs/2026-012/)")
 
 While measuring the accessibility of chromatin is the primary goal of the experiments, the enzymes–DNase I and Tn5 transposase–each have a unique DNA-cutting mechanism and an innate preference towards particular DNA sequences, that causes the observed signal to reflect a combination of both true chromatin accessibility and assay-specific artifacts. Deconvolving these two signals can be particularly important when understanding the signal at single-base resolution.
 
@@ -118,15 +118,15 @@ __Problem__: ChromBPNet is a supervised deep learning model that takes as input 
 
 To construct the observed experimental signal track at single-base resolution, we first map the sequenced DNA fragments, and count only the 5' end positions of each fragment. This prevents any read bias from fragments of different lengths. Next, we process the 5' end reads, so that reads from the forward (+) stand and the reverse (-) strand line up with each other. This processing depends on the type of enzyme used, depending on the enzyme's molecular mechanism of cleavage.
 
-__ATAC-seq__: When Tn5 transposase–a homodimer enzyme–cleaves DNA, it creates two distal single-stranded cuts (using each subunit to create one cut each) that are 9 bp away from each other. Therefore, for the same cleavage event, if viewed as raw 5' end reads, the read from the forward strand would be 9 bp away from the read from the reverse strand. Hence, depending on whether the cleavage event was identified by the forward strand or the reverse strand, the cleavage position would vary by 9 bp. Therefore, to synchronize the cuts from each strand to one coherent position, we symmetrically shift the forward strand forward by 4 bp (+4 shift), and shift the reverse strand backward by 4 bp (-4 shift). This allows the reads from either strand to pile up at the same position–at the center of the 9 bp gap. This has been the standard processing to construct the observed experimental track ATAC-seq in ChromBPNet, and remains consistent in `chrombpnet-refactor`.
+__ATAC-seq__: When Tn5 transposase–a homodimer enzyme–cleaves DNA, it creates two distal single-stranded cuts (using each subunit to create one cut each) that are 9 bp away from each other. Therefore, for the same cleavage event, if viewed as raw 5' end reads, the read from the forward strand would be 9 bp away from the read from the reverse strand. Hence, depending on whether the cleavage event was identified by the forward strand or the reverse strand, the cleavage position would vary by 9 bp (or, if both recorded, identified in two different positions). Instead, to synchronize the cuts from each strand to one coherent position, we symmetrically shift the forward strand forward by 4 bp (+4 shift) and the reverse strand backward by 4 bp (-4 shift). This allows the reads from either strand to pile up at the same position–at the center of the 9 bp gap. Simplified, we can think of this as the "position" of the Tn5 transposase enzyme during cleavage, if we were to pick one bp position. This has been the standard processing to construct the observed experimental track ATAC-seq in ChromBPNet, and remains consistent in `chrombpnet-refactor`.
 
 _(Note: The +4/-4 shift is a convention. E.g., Shifts of +5/-3, +3/-5, +7/-1, etc. would also all produce a feasible agreement between the forward and reverse strand reads. However, as the shift is asymmetric, the signal would be skewed towards one direction.)_
 
-![Figure: Processing ATAC-seq sequencing counts.](atac.png "width=600 Schematic of ATAC-seq using Tn5 transposase to measure chromatin accessibility, and its cut site convention at +4 bp / -4 bp.")
+![Figure: Processing ATAC-seq sequencing counts.](atac.png "width=600 Schematic of ATAC-seq using Tn5 transposase to measure chromatin accessibility, and its cut site shift convention at +4 bp / -4 bp. The convention remains consistent even after reverse complement.")
 
-__DNase-seq__: However, unlike Tn5 transposase, when DNase I–a monomer enzyme–cleaves DNA, it simply creates one double-stranded break at a single site. While mechanistically, this is easier to understand and visualize, when synchronizing reads from the forward strand and the reverse strand, as the gap is even (0 bp), there is no longer an integer shift that can align the reads symmetrically, and each read would need to be shifted by half a position (+0.5/-0.5) to stay symmetric–which in a discrete, one-hot coordinate system, is not possible.
+__DNase-seq__: However, unlike Tn5 transposase, when DNase I–a monomer enzyme–cleaves DNA, it simply creates one double-stranded break at a single site. While mechanistically, this is easier to understand, when synchronizing reads from the forward and reverse strands, because the gap is even (0 bp), there is no longer an integer shift that can align the two reads symmetrically. To stay symmetric, each read would need to be shifted by half a position (+0.5/-0.5) to stay symmetric–which in a discrete, one-hot coordinate system, is not possible.
 
-Therefore, generally, we have the following options to shift and synchronize the fragments: 
+Therefore, generally, we have the following options to shift and synchronize the forward and reverse strand fragments: 
 - _Option I_: Align on the position of the forward strand's read, by keeping the forward strand's read position constant and shifting the reverse strand read to the right by 1 bp (0/+1) i.e., the "right-hand" convention.
 - _Option II_: Align on the position of the reverse strand's read, by keeping the reverse strand's read position constant and shifting the forward strand's read to the left by 1 bp (-1/0) i.e., the "left-hand" convention.
 - _Option III_: Align on _both_ the forward and reverse strand's position, by assigning a read on both positions (-1/0 and 0/+1) i.e., the "symmetric" convention.
@@ -137,7 +137,7 @@ However, this __asymmetric shift__ led to an issue during a step in training. Du
 
 When taking the reverse complement, the operation not only inverted the sequence and signal, but also inverted the _shift convention_. For a symmetric convention (e.g., in ATAC-seq), the inverted convention was still identical. However, for a asymmetric convention (e.g., in DNase-seq), the inversion led to two different conventions between the original data and the reverse complement-augmented data: right-hand convention for the original data, and left-hand convention for the reverse complement-augmented data. Effectively, this smeared the single-base pair resolution of the original training signal across to two adjacent base pairs.
 
-![Figure: Processing DNase-seq sequencing counts.](dnase.png "width=600 Schematic of DNase-seq using DNase I to measure chromatin accessibility, and its right-hand side cut site convention at 0 bp / +1 bp.")
+![Figure: Processing DNase-seq sequencing counts.](dnase.png "width=600 Schematic of DNase-seq using DNase I to measure chromatin accessibility, and three possible cust site shift convention: (i) Right-hand side: 0 bp / +1 bp; (ii) Left-hand side: -1 bp / 0 bp; (iii) Symmetric on both sides: 0 bp / +1 bp and -1 bp / 0 bp. Only (iii) Symmetric on both sides convention stays consistent after reverse complement.")
 
 This explained several phenomena we had observed:
 
@@ -264,7 +264,7 @@ The robust model interpretation methods have been a key advantage of ChromBPNet,
 
 Lastly, we’ve added a few non-backward compatible improvements to the model (that will remain optional, given the demand for backward compatibility).
 
-### Profile-only bias model
+### 6-1. Profile-only bias model
 
 The original ChromBPNet pretrained a small bias model to learn the sequence preference of the assay enzyme (DNase-seq: DNase I, ATAC-seq: Tn5 transposase), predicting the enzyme’s effect on both the total accessibility across a 1,000 bp window (counts head prediction) and on the distribution of the sequencing reads (profile head prediction). However, the enzyme’s bias is typically not strong enough to affect the total accessibility summed across a 1,000bp window. Its effects are largely local, shifting the signal toward its preferred sequences. Hence, after training many ChromBPNet models for ENCODE GRAMMAR, we observed that the bias model was not affecting the counts head predictions, and almost exclusively contributing to the profile head predictions. Hence, in `chrombpnet-refactor`, we now train a bias model that predicts reads distribution only (profile head only), and is connected only to the profile head prediction of the full ChromBPNet model.
 
@@ -274,7 +274,7 @@ With the new profile-only bias model, we repeated the prediction and contributio
 
 ![Figure: Original ChromBPNet vs. `chrombpnet-refactor (default)` vs. `chrombpnet-refactor (updated)`: Test set predictions & DeepLIFT/DeepSHAP contribution scores.](chrombpnet_refactor_default_updated.png "width=600 Test set performance (top) and DeepLIFT/DeepSHAP scores against the original model's (bottom). `original`: the original TensorFlow model; `original (newly trained)`: retrained with the original codebase (white); `original (same model; diff seed)`: the original model rescored with another seed (grey). `chrombpnet-refactor (default)`: backward compatible (`pytorch` above). `chrombpnet-refactor (updated)`: profile-only bias model and Pearson r/JSD checkpoint selection.")
 
-### Student-Teacher distillation
+### 6-2. Student-Teacher distillation
 
 Another learning from ENCODE GRAMMAR (and following from the results shown by related models e.g., AlphaGenome): instead of using all k-fold models (from cross-validation) as an ensemble for downstream tasks (e.g., bias-corrected prediction, contribution scores), we have implemented an option to distill the ensemble of fold models (as a Teacher) into one (Student) model. During distillation, the single Student model trains on the k-fold ensemble’s mean predictions. The benefit of distilling k-fold folds into one model is the ease of use: instead of repeating k x downstream processes, then ensembling to obtain the average, downstream processes can now be performed  on one Student model once—without losing much of the benefits of ensembling.
 
@@ -288,7 +288,7 @@ Overall, we share a [reproducible, refactored version of ChromBPNet](https://git
 
 Moving forward, we recommend using the refactored ChromBPNet codebase for *__all future use cases of ChromBPNet__*. And we continue to welcome any further improvements to the model and codebase.
 
-## Appendix: Adaptable cut-site convention for DNase-seq (continued)
+## Appendix: Adaptable cut-site convention for DNase-seq _(continued)_
 
 __Cross-convention performance__: Along side models trained and tested on each shift convention and data augmention combination, we further performed a cross-evaluation between the newly trained models and their corresponding test set with the original model and its test set, by evaluating the newly trained models on the original model’s test set and vice versa. 
 
