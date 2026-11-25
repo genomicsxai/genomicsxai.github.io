@@ -51,7 +51,7 @@ audience: ["technical"]
 labs: ["Programmable Genomics Laboratory"]
 
 status: "accepted"
-revision: 2
+revision: 3
 
 date_submitted: 2026-07-13
 date_accepted: 2026-07-13
@@ -66,6 +66,9 @@ revision_history:
     # Optional: version-specific DOI / Zenodo record link
     doi: ""
     zenodo_url: ""
+  - version: 3
+    date: 2026-11-25
+    notes: "Added a PDF of the post to its Zenodo record. The post itself is unchanged."
 ---
 
 {{< summary >}}

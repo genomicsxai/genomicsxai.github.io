@@ -56,7 +56,7 @@ audience: ["new-to-field", "general"]
 labs: ["Kundaje Lab"]
 
 status: "accepted"
-revision: 1
+revision: 2
 
 date_submitted: 2026-08-03
 date_accepted: 
@@ -71,6 +71,9 @@ revision_history:
     # Optional: version-specific DOI / Zenodo record link
     doi: ""
     zenodo_url: ""
+  - version: 2
+    date: 2026-11-25
+    notes: "Added a PDF of the post to its Zenodo record. The post itself is unchanged."
 ---
 
 {{< summary >}}
