@@ -20,11 +20,11 @@
   },
   "2026-002": {
     "conceptrecid": "20272899",
-    "current_revision": 1,
-    "current_doi": "10.5281/zenodo.20272900",
-    "current_doi_url": "https://doi.org/10.5281/zenodo.20272900",
-    "current_zenodo_url": "https://zenodo.org/records/20272900",
-    "current_deposition_id": 20272900,
+    "current_revision": 2,
+    "current_doi": "10.5281/zenodo.24542113",
+    "current_doi_url": "https://doi.org/10.5281/zenodo.24542113",
+    "current_zenodo_url": "https://zenodo.org/records/24542113",
+    "current_deposition_id": 24542113,
     "revisions": {
       "1": {
         "doi": "10.5281/zenodo.20272900",
@@ -34,16 +34,25 @@
         "record_id": 20272900,
         "date": "2026-02-20",
         "notes": "Initial submission"
+      },
+      "2": {
+        "doi": "10.5281/zenodo.24542113",
+        "doi_url": "https://doi.org/10.5281/zenodo.24542113",
+        "zenodo_url": "https://zenodo.org/records/24542113",
+        "deposition_id": 24542113,
+        "record_id": 24542113,
+        "date": "2026-11-25",
+        "notes": "Added a PDF of the post to its Zenodo record. The post itself is unchanged."
       }
     }
   },
   "2026-003": {
     "conceptrecid": "20272903",
-    "current_revision": 1,
-    "current_doi": "10.5281/zenodo.20272904",
-    "current_doi_url": "https://doi.org/10.5281/zenodo.20272904",
-    "current_zenodo_url": "https://zenodo.org/records/20272904",
-    "current_deposition_id": 20272904,
+    "current_revision": 2,
+    "current_doi": "10.5281/zenodo.24542123",
+    "current_doi_url": "https://doi.org/10.5281/zenodo.24542123",
+    "current_zenodo_url": "https://zenodo.org/records/24542123",
+    "current_deposition_id": 24542123,
     "revisions": {
       "1": {
         "doi": "10.5281/zenodo.20272904",
@@ -53,6 +62,15 @@
         "record_id": 20272904,
         "date": "2026-02-25",
         "notes": "Initial submission"
+      },
+      "2": {
+        "doi": "10.5281/zenodo.24542123",
+        "doi_url": "https://doi.org/10.5281/zenodo.24542123",
+        "zenodo_url": "https://zenodo.org/records/24542123",
+        "deposition_id": 24542123,
+        "record_id": 24542123,
+        "date": "2026-11-25",
+        "notes": "Added a PDF of the post to its Zenodo record. The post itself is unchanged."
       }
     }
   },
@@ -86,11 +104,11 @@
   },
   "2026-005": {
     "conceptrecid": "20272909",
-    "current_revision": 2,
-    "current_doi": "10.5281/zenodo.20272910",
-    "current_doi_url": "https://doi.org/10.5281/zenodo.20272910",
-    "current_zenodo_url": "https://zenodo.org/records/20272910",
-    "current_deposition_id": 20272910,
+    "current_revision": 3,
+    "current_doi": "10.5281/zenodo.24542124",
+    "current_doi_url": "https://doi.org/10.5281/zenodo.24542124",
+    "current_zenodo_url": "https://zenodo.org/records/24542124",
+    "current_deposition_id": 24542124,
     "revisions": {
       "2": {
         "doi": "10.5281/zenodo.20272910",
@@ -100,6 +118,15 @@
         "record_id": 20272910,
         "date": "2026-04-15",
         "notes": "Updated with H100 results"
+      },
+      "3": {
+        "doi": "10.5281/zenodo.24542124",
+        "doi_url": "https://doi.org/10.5281/zenodo.24542124",
+        "zenodo_url": "https://zenodo.org/records/24542124",
+        "deposition_id": 24542124,
+        "record_id": 24542124,
+        "date": "2026-11-25",
+        "notes": "Added a PDF of the post to its Zenodo record. The post itself is unchanged."
       }
     }
   },
@@ -225,11 +252,11 @@
   },
   "2026-009": {
     "conceptrecid": "21535144",
-    "current_revision": 3,
-    "current_doi": "10.5281/zenodo.21535145",
-    "current_doi_url": "https://doi.org/10.5281/zenodo.21535145",
-    "current_zenodo_url": "https://zenodo.org/records/21535145",
-    "current_deposition_id": 21535145,
+    "current_revision": 4,
+    "current_doi": "10.5281/zenodo.24542127",
+    "current_doi_url": "https://doi.org/10.5281/zenodo.24542127",
+    "current_zenodo_url": "https://zenodo.org/records/24542127",
+    "current_deposition_id": 24542127,
     "revisions": {
       "3": {
         "doi": "10.5281/zenodo.21535145",
@@ -239,16 +266,25 @@
         "record_id": 21535145,
         "date": "2026-07-24",
         "notes": "Addressed reviewer/editor feedback: clarified trans-acting SF3B1/identical WT-mutant sequence input, coverage binning no-op, annotated vs. predicted junction positions, and compute footprint; reworked debugging section structure and the fine-tuning recipe; expanded figure legends."
+      },
+      "4": {
+        "doi": "10.5281/zenodo.24542127",
+        "doi_url": "https://doi.org/10.5281/zenodo.24542127",
+        "zenodo_url": "https://zenodo.org/records/24542127",
+        "deposition_id": 24542127,
+        "record_id": 24542127,
+        "date": "2026-11-25",
+        "notes": "Added a PDF of the post to its Zenodo record. The post itself is unchanged."
       }
     }
   },
   "2026-010": {
     "conceptrecid": "21535148",
-    "current_revision": 1,
-    "current_doi": "10.5281/zenodo.21535149",
-    "current_doi_url": "https://doi.org/10.5281/zenodo.21535149",
-    "current_zenodo_url": "https://zenodo.org/records/21535149",
-    "current_deposition_id": 21535149,
+    "current_revision": 3,
+    "current_doi": "10.5281/zenodo.24542135",
+    "current_doi_url": "https://doi.org/10.5281/zenodo.24542135",
+    "current_zenodo_url": "https://zenodo.org/records/24542135",
+    "current_deposition_id": 24542135,
     "revisions": {
       "1": {
         "doi": "10.5281/zenodo.21535149",
@@ -258,16 +294,25 @@
         "record_id": 21535149,
         "date": "2026-06-23",
         "notes": "Initial submission"
+      },
+      "3": {
+        "doi": "10.5281/zenodo.24542135",
+        "doi_url": "https://doi.org/10.5281/zenodo.24542135",
+        "zenodo_url": "https://zenodo.org/records/24542135",
+        "deposition_id": 24542135,
+        "record_id": 24542135,
+        "date": "2026-11-25",
+        "notes": "Added a PDF of the post to its Zenodo record. The post itself is unchanged."
       }
     }
   },
   "2026-011": {
     "conceptrecid": "21535160",
-    "current_revision": 2,
-    "current_doi": "10.5281/zenodo.21535161",
-    "current_doi_url": "https://doi.org/10.5281/zenodo.21535161",
-    "current_zenodo_url": "https://zenodo.org/records/21535161",
-    "current_deposition_id": 21535161,
+    "current_revision": 3,
+    "current_doi": "10.5281/zenodo.24542142",
+    "current_doi_url": "https://doi.org/10.5281/zenodo.24542142",
+    "current_zenodo_url": "https://zenodo.org/records/24542142",
+    "current_deposition_id": 24542142,
     "revisions": {
       "2": {
         "doi": "10.5281/zenodo.21535161",
@@ -277,16 +322,25 @@
         "record_id": 21535161,
         "date": "2026-07-13",
         "notes": "Minor revisions"
+      },
+      "3": {
+        "doi": "10.5281/zenodo.24542142",
+        "doi_url": "https://doi.org/10.5281/zenodo.24542142",
+        "zenodo_url": "https://zenodo.org/records/24542142",
+        "deposition_id": 24542142,
+        "record_id": 24542142,
+        "date": "2026-11-25",
+        "notes": "Added a PDF of the post to its Zenodo record. The post itself is unchanged."
       }
     }
   },
   "2026-012": {
     "conceptrecid": "21795359",
-    "current_revision": 1,
-    "current_doi": "10.5281/zenodo.21795360",
-    "current_doi_url": "https://doi.org/10.5281/zenodo.21795360",
-    "current_zenodo_url": "https://zenodo.org/records/21795360",
-    "current_deposition_id": 21795360,
+    "current_revision": 2,
+    "current_doi": "10.5281/zenodo.24542149",
+    "current_doi_url": "https://doi.org/10.5281/zenodo.24542149",
+    "current_zenodo_url": "https://zenodo.org/records/24542149",
+    "current_deposition_id": 24542149,
     "revisions": {
       "1": {
         "doi": "10.5281/zenodo.21795360",
@@ -296,16 +350,25 @@
         "record_id": 21795360,
         "date": "2026-08-03",
         "notes": "Initial submission"
+      },
+      "2": {
+        "doi": "10.5281/zenodo.24542149",
+        "doi_url": "https://doi.org/10.5281/zenodo.24542149",
+        "zenodo_url": "https://zenodo.org/records/24542149",
+        "deposition_id": 24542149,
+        "record_id": 24542149,
+        "date": "2026-11-25",
+        "notes": "Added a PDF of the post to its Zenodo record. The post itself is unchanged."
       }
     }
   },
   "2026-013": {
     "conceptrecid": "21795369",
-    "current_revision": 1,
-    "current_doi": "10.5281/zenodo.21795370",
-    "current_doi_url": "https://doi.org/10.5281/zenodo.21795370",
-    "current_zenodo_url": "https://zenodo.org/records/21795370",
-    "current_deposition_id": 21795370,
+    "current_revision": 2,
+    "current_doi": "10.5281/zenodo.24542172",
+    "current_doi_url": "https://doi.org/10.5281/zenodo.24542172",
+    "current_zenodo_url": "https://zenodo.org/records/24542172",
+    "current_deposition_id": 24542172,
     "revisions": {
       "1": {
         "doi": "10.5281/zenodo.21795370",
@@ -315,16 +378,25 @@
         "record_id": 21795370,
         "date": "2026-08-03",
         "notes": "Initial submission"
+      },
+      "2": {
+        "doi": "10.5281/zenodo.24542172",
+        "doi_url": "https://doi.org/10.5281/zenodo.24542172",
+        "zenodo_url": "https://zenodo.org/records/24542172",
+        "deposition_id": 24542172,
+        "record_id": 24542172,
+        "date": "2026-11-25",
+        "notes": "Added a PDF of the post to its Zenodo record. The post itself is unchanged."
       }
     }
   },
   "2026-014": {
     "conceptrecid": "23038830",
-    "current_revision": 1,
-    "current_doi": "10.5281/zenodo.23038831",
-    "current_doi_url": "https://doi.org/10.5281/zenodo.23038831",
-    "current_zenodo_url": "https://zenodo.org/records/23038831",
-    "current_deposition_id": 23038831,
+    "current_revision": 2,
+    "current_doi": "10.5281/zenodo.24542188",
+    "current_doi_url": "https://doi.org/10.5281/zenodo.24542188",
+    "current_zenodo_url": "https://zenodo.org/records/24542188",
+    "current_deposition_id": 24542188,
     "revisions": {
       "1": {
         "doi": "10.5281/zenodo.23038831",
@@ -334,6 +406,15 @@
         "record_id": 23038831,
         "date": "2026-08-18",
         "notes": "Initial submission"
+      },
+      "2": {
+        "doi": "10.5281/zenodo.24542188",
+        "doi_url": "https://doi.org/10.5281/zenodo.24542188",
+        "zenodo_url": "https://zenodo.org/records/24542188",
+        "deposition_id": 24542188,
+        "record_id": 24542188,
+        "date": "2026-11-25",
+        "notes": "Added a PDF of the post to its Zenodo record. The post itself is unchanged."
       }
     }
   },
