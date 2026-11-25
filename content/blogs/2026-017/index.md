@@ -37,7 +37,7 @@ authors_display:
     affiliation: "Simons Center for Quantitative Biology, Cold Spring Harbor Laboratory, Cold Spring Harbor, NY, USA"
     orcid: "0000-0001-8722-0038"
 
-editor: "TBD"
+editor: ["Al-Murphy"]
 submitter_github: "Al-Murphy"
 
 tags: ["genomics", "gene-regulation", "review", "context-seq2func", "seq2func", "single-cell", "interpretability", "ai-agents"]
