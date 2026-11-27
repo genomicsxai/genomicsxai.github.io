@@ -118,7 +118,7 @@ Panel order in the figures below:
 5. Bolero-10M, shown for reference only, since it saw fold 3 during training.
 6. Dataset-average baseline. As every cell type gets the same value, it carries no cell-type-specific information.
 
-### ATAC
+**ATAC**
 
 Cross-peak *r*:
 
@@ -132,7 +132,7 @@ Deviation *r* (subtract peak mean and cell type mean):
 
 Bolero clearly outperforms Scooby only when the reference signal is added at inference. With or without the reference signal during training, Bolero has roughly the same performance as Scooby.
 
-### RNA
+**RNA**
 
 Because Bolero predicts gene counts rather than the RNA coverage that Scooby predicts, here we set the ground truth to be whole-gene 10x counts, matching Bolero's training target.
 
@@ -154,7 +154,9 @@ Bolero-10M scores clearly higher than the retrained model. We cannot tell whethe
 
 Note that Bolero's gene-count head rarely predicts values near zero, so unexpressed genes are systematically over-predicted.
 
-## Comparison with AlphaGenome 2
+Spearman correlation leads to the same conclusions.
+
+### Comparison with AlphaGenome 2
 
 AlphaGenome 2 was recently released, so we added it to this benchmark. AlphaGenome 2 also uses NeurIPS BMMC as part of its training data, so it also saw all 21 cell types. The comparison therefore remains seen cell type, unseen DNA for all three models.
 
@@ -173,7 +175,7 @@ Panel order in the figures below:
 5. AlphaGenome 2, cell expression: the same model, given the scRNA-seq profiles of 256 cells of the cell type instead.
 6. Dataset-average baseline.
 
-### ATAC
+**ATAC**
 
 Cross-peak *r*:
 
@@ -187,7 +189,7 @@ Deviation *r* (subtract peak mean and cell type mean):
 
 Bolero with the reference signal and AlphaGenome 2 are nearly tied, outperforming Scooby and Bolero in DNA-only mode, which are also closely tied to each other.
 
-### RNA
+**RNA**
 
 Cross-gene *r*:
 
@@ -202,6 +204,8 @@ Deviation *r* (subtract gene mean and cell type mean):
 AlphaGenome 2 is clearly the best (0.50/0.49), signal-aware Bolero is in the middle (0.38), and DNA-only Bolero and Scooby are tied.
 
 The two ways of conditioning AlphaGenome 2 have little effect on its performance. With the reference signal, Bolero performs comparably to AlphaGenome 2 on across-peak and across-gene prediction and on cell-type-specific ATAC prediction, but falls behind on cell-type-specific RNA prediction. Without the reference signal, Bolero ties with Scooby and falls behind AlphaGenome 2.
+
+Spearman correlation leads to the same conclusions.
 
 ## Unseen cell state, unseen DNA
 
