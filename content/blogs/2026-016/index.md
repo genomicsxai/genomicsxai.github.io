@@ -107,7 +107,7 @@ Bolero has a published single-dataset training configuration (tutorial 06). We u
 
 We rebuilt Bolero's pseudobulks so that each contains one subclass only and no metacell is shared between pseudobulks, matched to Scooby's 21 cell types. Every model here saw all 21 cell types during training, so only the DNA is unseen (the Scooby paper also trained a model with normoblasts held out, but its weights are not public). The comparison is therefore fair with respect to cell types.
 
-We evaluated on fold 3. All scores are computed on log2(CPM + 1) values, with CPM normalised within each cell type.
+We evaluated on fold 3. All scores are computed on log2(CPM + 1) values, with CPM normalised within each cell type. Across-feature *r* is the mean of the 21 per-cell-type Pearson *r*.
 
 Panel order in the figures below:
 
